@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Hugging Face model downloader implementation (vLLM/Torch focused)
  * Handles downloading models from Hugging Face by spawning a Python script.
@@ -103,11 +105,8 @@ async function downloadModel(modelId, config = {}) {
     if (config.hfToken) {
         commandArgs.push('--token', config.hfToken);
     }
-    if (config.is_embedding_model) {
-        commandArgs.push('--is_embedding_model');
-    }
 
-    if (fs.existsSync(pythonWrapperScript)) {
+    if (fs.existsSync(pythonWrapperScript)) { 
         commandToRun = pythonWrapperScript; 
         commandArgs.unshift(downloadScriptPath); 
     } else { 
@@ -215,8 +214,7 @@ async function downloadModel(modelId, config = {}) {
           
           const modelConfigFromScript = resultPayload.full_config_on_disk || {};
           const embeddingDimension = resultPayload.embedding_dimension || modelConfigFromScript.hidden_size || null;
-          const isEmbeddingModel = resultPayload.is_embedding_model || false;
-
+          
           // Use context window from script (which tries multiple config fields) or fallback chain
           const contextWindow = resultPayload.context_window || 
                                config.context_window || 
@@ -261,7 +259,7 @@ async function downloadModel(modelId, config = {}) {
               modelId,
               0, // size_bytes
               promptFormatType,
-              isEmbeddingModel ? 1 : 0,
+              0, // is_embedding_model
               embeddingDimension,
               JSON.stringify({
                 quantization_method: quantizationMethod,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import apiService from './apiService';
 
 const MODEL_ENDPOINTS = {
@@ -86,12 +88,13 @@ const modelService = {
   },
 
   /**
-   * Deactivate the currently active local model (admin only)
+   * Deactivate a specific local model (admin only)
+   * @param {string|number} modelId - ID of the model to deactivate
    * @returns {Promise<Object>} Deactivation confirmation
    */
-  deactivateModel: async () => {
+  deactivateModel: async (modelId) => {
     try {
-      return await apiService.post(`/admin/models/deactivate`);
+      return await apiService.post(`/admin/models/${modelId}/deactivate`);
     } catch (error) {
       
       throw error; 

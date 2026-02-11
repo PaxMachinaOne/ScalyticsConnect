@@ -185,29 +185,33 @@ const useModelActions = (
      }
 
      try {
-       if (isExternal) { 
-         await modelService.updateModelStatus(modelId, { isActive: targetStatus }); 
+       let response = null;
+       if (isExternal) {
+         // External models are just a DB flag change, so a full refresh is fine.
+         await modelService.updateModelStatus(modelId, { isActive: targetStatus });
          setSuccess(`Model "${modelName}" ${targetStatus ? 'activated' : 'deactivated'} successfully.`);
-         setActivating(false);
-         setActivatingModelId(null);
-       } else { 
-         if (targetStatus) { 
-           // Activating local model - the service call is synchronous now
-           await modelService.activateModel(modelId);
-           setSuccess(`Model "${modelName}" activated successfully.`);
-           setActivating(false);
-           setActivatingModelId(null);
-         } else { 
-           // Deactivating local model - immediate feedback
-           await modelService.deactivateModel(); 
+         if (typeof refreshDataCallback === 'function') await refreshDataCallback();
+         if (typeof refreshPoolStatusCallback === 'function') await refreshPoolStatusCallback();
+       } else {
+         // Local models have a complex activation/deactivation process
+         if (targetStatus) {
+           // --- ACTIVATION ---
+           // Don't refresh data here. Let the websocket events handle UI updates.
+           response = await modelService.activateModel(modelId);
+           setSuccess(`Model "${modelName}" activation initiated.`);
+         } else {
+           // --- DEACTIVATION ---
+           await modelService.deactivateModel(modelId);
            setSuccess(`Model "${modelName}" deactivated successfully.`);
-           setActivating(false);
-           setActivatingModelId(null);
+           // Refresh data after deactivation to show the change.
+           if (typeof refreshDataCallback === 'function') await refreshDataCallback();
+           if (typeof refreshPoolStatusCallback === 'function') await refreshPoolStatusCallback();
          }
        }
        
-       if (typeof refreshDataCallback === 'function') await refreshDataCallback();
-       if (typeof refreshPoolStatusCallback === 'function') await refreshPoolStatusCallback();
+       if (response && response.activationId) {
+         return { success: true, activationId: response.activationId };
+       }
      } catch (err) {
        console.error('Error updating model status:', err);
        let specificErrorMessage = err.message || 'Unknown error';
@@ -221,6 +225,7 @@ const useModelActions = (
        setSuccess('');
        if (typeof refreshDataCallback === 'function') await refreshDataCallback();
        if (typeof refreshPoolStatusCallback === 'function') await refreshPoolStatusCallback();
+     } finally {
        setActivating(false);
        setActivatingModelId(null);
      }

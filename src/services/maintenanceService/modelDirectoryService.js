@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Model Directory Service
  * 
@@ -67,7 +69,7 @@ const MODELS_DIR = getModelsDir();
           fs.chmodSync(MODELS_DIR, 0o2775);
           
           // Group ownership (e.g., www-data) is handled by deployment/update scripts
-          // (like fix_maintenance_permissions.sh or saas/modules/fix_permissions.sh)
+          // (like fix_maintenance_permissions.sh or deploy/modules/fix_permissions.sh)
           // as Node.js often lacks permissions for chgrp.
           console.log('Skipping chgrp in Node.js; deployment scripts handle group ownership.');
         } catch (permSetErr) {

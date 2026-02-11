@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db');
 const { getSystemSetting } = require('../config/systemConfig'); 
 const MCPService = require('../services/agents/MCPService');
@@ -42,14 +44,14 @@ exports.getPublicToolStatus = async (req, res) => {
 
      activeTools.forEach(row => {
        statusMap[row.tool_name] = true; 
-       if (row.tool_name === 'live-search') {
-          isDeepSearchPotentiallyEnabled = true;
+       if (row.tool_name === 'deep-search') {
+          isDeepSearchPotentiallyEnabled = true; 
       }
     });
 
     // --- Perform dependency checks ---
 
-    // Check Live Search dependency on embedding model
+    // Check Deep Search dependency on embedding model
     if (isDeepSearchPotentiallyEnabled) {
       const preferredEmbeddingModelId = getSystemSetting('preferred_local_embedding_model_id', null);
       let embeddingModelOK = false;
@@ -60,7 +62,7 @@ exports.getPublicToolStatus = async (req, res) => {
       }
 
        if (!embeddingModelOK) {
-         if (statusMap['live-search']) statusMap['live-search'] = false;
+         if (statusMap['deep-search']) statusMap['deep-search'] = false;
        }
      }
 
@@ -112,6 +114,7 @@ exports.getUserImageGenConfig = async (req, res) => {
     if (toolConfig && toolConfig.config) {
       res.status(200).json({ success: true, data: JSON.parse(toolConfig.config) });
     } else {
+      // No specific config found, return empty or default
       res.status(200).json({ success: true, data: {} }); 
     }
   } catch (error) {

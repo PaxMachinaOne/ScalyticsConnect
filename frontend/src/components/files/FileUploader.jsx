@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import fileService from '../../services/fileService';

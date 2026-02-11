@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Simple client-side event bus for cross-component communication
  * Enables decoupled event-driven architecture in the frontend

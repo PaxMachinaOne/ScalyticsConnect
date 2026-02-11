@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { protect } = require('../middleware/authMiddleware');
 const apiKeyController = require('./apiKeyController'); // May not be needed anymore
 const apiKeyService = require('../services/apiKeyService'); // Still needed by privacyModeManagerService

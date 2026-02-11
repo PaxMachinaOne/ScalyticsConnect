@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Provides simple token counting utilities.
  * NOTE: These are rough approximations and do not replace proper tokenization.

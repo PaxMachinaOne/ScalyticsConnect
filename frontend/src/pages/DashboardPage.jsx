@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
@@ -7,6 +9,7 @@ import Stats from '../components/dashboard/Stats';
 import { useAuth } from '../contexts/AuthContext'; 
 import chatService from '../services/chatService';
 import modelService from '../services/modelService';
+import privacyService from '../services/privacyService'; 
 
 const DashboardPage = () => {
   const [loading, setLoading] = useState({
@@ -38,13 +41,20 @@ const DashboardPage = () => {
         });
         
         // Fetch chats, models, stats, privacy status, and token usage simultaneously
-        const [chatsResponse, modelData, tokenUsageResponse] = await Promise.all([
+        const [chatsResponse, modelData, privacyData, tokenUsageResponse] = await Promise.all([
           chatService.getChats(),
           modelService.getActiveModels(),
+          privacyService.getPrivacyStatus(),
           chatService.getMonthlyTokenUsage() // Fetch monthly token usage
         ]);
 
-        const isPrivacyEnabled = (modelData?.privacyModeEnabled === true);
+        // --- Process Privacy Status (copied from ModelSelector) ---
+        const privacyModeFromStatus = 
+          (privacyData?.data?.globalPrivacyMode === true) || 
+          (privacyData?.globalPrivacyMode === true);
+        const privacyModeFromModels = 
+          (modelData?.privacyModeEnabled === true);
+        const isPrivacyEnabled = privacyModeFromStatus || privacyModeFromModels;
         setPrivacyModeEnabled(isPrivacyEnabled);
         // --- End Privacy Status Processing ---
 

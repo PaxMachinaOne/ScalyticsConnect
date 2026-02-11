@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs'); // Keep original fs
 const fsPromises = require('fs').promises; // Use fs.promises for async operations
 
-const PYTHON_SERVICE_CONFIG_PATH = path.join(__dirname, '..', 'python_services', 'live_search_service', 'config.py');
+const PYTHON_SERVICE_CONFIG_PATH = path.join(__dirname, '..', 'python_services', 'deep_search_service', 'config.py');
 const VECTOR_STORE_PATH = path.join(__dirname, '..', '..', 'data', 'mcp_tools', 'deep_search_vector_store');
 
 /**

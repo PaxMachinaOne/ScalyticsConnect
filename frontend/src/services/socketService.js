@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * WebSocket service for real-time communication
  * Uses native WebSockets instead of Socket.IO
@@ -38,8 +40,9 @@ class WebSocketService {
         this.disconnect();
       }
 
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const socketUrl = `${wsProtocol}//localhost:3001/socket?clientId=${this.clientId}`;
+      const apiUrl = process.env.REACT_APP_API_URL || window.location.origin;
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socketUrl = `${wsProtocol}//${apiUrl.replace(/^https?:\/\//, '').replace(/\/api$/, '')}/socket?clientId=${this.clientId}`;
 
       try {
         this.socket = new WebSocket(socketUrl);
@@ -159,7 +162,6 @@ const socketUrl = `${wsProtocol}//localhost:3001/socket?clientId=${this.clientId
     try {
       const message = JSON.parse(event.data);
       const { type, payload } = message;
-
 
       switch (type) {
         case 'connection:established':
@@ -333,6 +335,14 @@ const socketUrl = `${wsProtocol}//localhost:3001/socket?clientId=${this.clientId
           }
           break;
         
+        case 'pre_flight_answer':
+          if (payload && payload.chatId && payload.toolExecutionId && payload.answer_text) {
+            streamingManager.handlePreFlightAnswer(payload);
+          } else {
+            console.warn('[SocketService] Received invalid pre_flight_answer payload:', payload);
+          }
+          break;
+        
         case 'tool_stream_complete':
           if (payload && payload.toolName && payload.chatId && payload.toolExecutionId) { 
             streamingManager.handleToolStreamComplete(payload);
@@ -392,7 +402,16 @@ const socketUrl = `${wsProtocol}//localhost:3001/socket?clientId=${this.clientId
           break;
         // --- End Model Activation Events ---
 
-      } 
+        case 'pool:status_update':
+          if (payload && payload.workers) {
+            // This should publish to the global event bus, not the internal emitter
+            eventBus.publish('pool:status_update', payload);
+          } else {
+            console.warn('[SocketService] Received invalid pool:status_update payload:', payload);
+          }
+          break;
+
+      }
     } catch (error) {
       console.error('Error handling WebSocket message:', error); 
     }

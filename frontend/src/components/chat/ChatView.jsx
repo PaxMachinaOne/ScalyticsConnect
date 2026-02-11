@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react'; 
 import PropTypes from 'prop-types';
 import ChatContent from './ChatContent';
@@ -49,6 +51,7 @@ SimpleTooltip.propTypes = {
 
 const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShareModal }) => { 
   const [chat, setChat] = useState(null);
+  const [reasoningSteps, setReasoningSteps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [model, setModel] = useState(null); 
@@ -78,6 +81,7 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
       setError('');
       const chatData = await chatService.getChat(chatId);
       setChat(chatData);
+      setReasoningSteps(chatData.reasoningSteps || []);
 
       if (chatData && chatData.model_id) {
         try {
@@ -300,6 +304,7 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
           isModelActive={model?.is_active ?? false} 
           isToolStreamingThisChat={isToolStreamingThisChat}
           currentToolExecutionId={currentToolExecutionId}
+          reasoningSteps={reasoningSteps}
          />
         {apiKeyError && (
           <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">

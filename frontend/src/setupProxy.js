@@ -1,16 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
-  app.use(
-    '/socket',
-    createProxyMiddleware({
-      target: 'http://localhost:3001',
-      ws: true,
-      onProxyReq: (proxyReq, req, res) => {
-        proxyReq.setHeader('origin', 'http://localhost:3001');
-      },
-    })
-  );
   app.use(
     '/api-docs',
     createProxyMiddleware({

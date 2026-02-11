@@ -1,12 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import ProfileSettings from '../components/settings/ProfileSettings';
+import ReadOnlyProfileView from '../components/settings/ReadOnlyProfileView';
 import ApiKeyManager from '../components/settings/ApiKeyManager';
 import ThemeSettings from '../components/settings/ThemeSettings';
 import TransparencySettings from '../components/settings/TransparencySettings'; 
 import authService from '../services/auth'; 
 import modelService from '../services/modelService'; 
+import integrationService from '../services/integrationService';
+import { getProviderDisplayName } from '../components/auth/OAuthProviderIcons';
 
 const SettingsPage = () => {
   const { section = 'profile' } = useParams();
@@ -14,6 +19,8 @@ const SettingsPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeOAuthProvider, setActiveOAuthProvider] = useState(null);
+  const [loadingProviders, setLoadingProviders] = useState(true);
   const [isScalaPromptEnforcedForDefault, setIsScalaPromptEnforcedForDefault] = useState(false); 
   
   useEffect(() => {
@@ -57,6 +64,43 @@ const SettingsPage = () => {
     };
 
     fetchData();
+  }, []);
+
+  // Fetch active OAuth providers on component mount
+  useEffect(() => {
+    const fetchOAuthProviders = async () => {
+      try {
+        setLoadingProviders(true);
+        const response = await integrationService.getAuthConfig();
+        
+        if (response && Object.keys(response).length > 0) {
+          // Priority order: GitHub, Google, Microsoft, Azure AD, Okta
+          const providerPriority = ['github', 'google', 'microsoft', 'azure_ad', 'okta'];
+          
+          let firstEnabledProvider = null;
+          for (const provider of providerPriority) {
+            if (response[provider]) {
+              firstEnabledProvider = provider;
+              break;
+            }
+          }
+          
+          if (firstEnabledProvider) {
+            setActiveOAuthProvider({
+              provider: firstEnabledProvider,
+              displayName: getProviderDisplayName(firstEnabledProvider)
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching OAuth providers:', error);
+        setActiveOAuthProvider(null);
+      } finally {
+        setLoadingProviders(false);
+      }
+    };
+    
+    fetchOAuthProviders();
   }, []);
 
   const tabs = [
@@ -130,7 +174,7 @@ const SettingsPage = () => {
             
             {/* Content based on selected tab */}
             <div className="mt-4">
-              {loading ? (
+              {loading || loadingProviders ? (
                 <div className="animate-pulse p-4 space-y-4">
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
                   <div className="space-y-2">
@@ -141,10 +185,22 @@ const SettingsPage = () => {
               ) : (
                 <>
                   {section === 'profile' && (
-                    <ProfileSettings 
-                      user={user} 
-                      onProfileUpdated={setUser} 
-                    />
+                    <>
+                      {/* Show different profile view based on authentication type */}
+                      {activeOAuthProvider && !user?.isAdmin ? (
+                        /* Read-only view for OAuth users who aren't admins */
+                        <ReadOnlyProfileView 
+                          user={user} 
+                          oauthProvider={activeOAuthProvider}
+                        />
+                      ) : (
+                        /* Editable profile for password users and admins */
+                        <ProfileSettings 
+                          user={user} 
+                          onProfileUpdated={setUser} 
+                        />
+                      )}
+                    </>
                   )}
                   
                   {section === 'api-keys' && user && ( // Ensure user data is loaded

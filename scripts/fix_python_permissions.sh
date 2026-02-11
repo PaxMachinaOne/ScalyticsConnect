@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # Script to fix Python package permissions for APP_USER
 # This script detects and fixes permission issues with Python packages
 # that may prevent pip from working correctly

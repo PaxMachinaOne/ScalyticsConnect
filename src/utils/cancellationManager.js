@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Manages cancellation requests for long-running asynchronous workflows,
  * typically identified by a chatId.

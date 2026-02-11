@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 // src/utils/securityUtils.js
 const crypto = require('crypto');
 const fs = require('fs');

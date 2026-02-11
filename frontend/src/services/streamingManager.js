@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 class StreamingManager {
   constructor(existingInstance = null) {
     if (existingInstance && existingInstance.activeStreams instanceof Map && existingInstance.subscribers instanceof Map) {
@@ -26,7 +28,7 @@ class StreamingManager {
       tempMessageId: tempMessageId,
       accumulatedContent: '',
       progressUpdates: [],
-      keySummaries: [], // Added for key summaries
+      keySummaries: [], 
       status: 'initializing',
       finalMessageId: null,
       errorDetails: null,
@@ -50,30 +52,43 @@ class StreamingManager {
 
     let newContent = stream.accumulatedContent;
     let newProgressUpdates = stream.progressUpdates;
-    let newKeySummaries = stream.keySummaries || []; // Initialize if undefined
+    let newKeySummaries = stream.keySummaries || [];
+    let preFlightAnswer = stream.preFlightAnswer;
+    let eventType = 'chunk_received';
 
     if (payload.chunkType === 'progress_update' && payload.data) {
-      if (payload.data.content) { // Existing progress updates
+      if (payload.data.content) {
         newProgressUpdates = [...stream.progressUpdates, payload.data.content];
       }
-      if (payload.data.is_key_summary && payload.data.message) { // New: Handle key summaries
-        console.log('[StreamingManager] Received key summary payload.data:', JSON.stringify(payload.data));
-        console.log('[StreamingManager] stream.keySummaries BEFORE update:', JSON.stringify(stream.keySummaries));
-        newKeySummaries = [...newKeySummaries, { message: payload.data.message, timestamp: new Date().toISOString() }];
-        console.log('[StreamingManager] newKeySummaries AFTER update:', JSON.stringify(newKeySummaries));
+      if (payload.data.is_key_summary && payload.data.message) {
+        const reasoningStep = {
+          message: payload.data.message,
+          timestamp: new Date().toISOString(),
+          status: 'running' 
+        };
+        
+        newKeySummaries = [...newKeySummaries, reasoningStep];
+        
+        if (payload.data.message && stream.toolName === 'deep-search') {
+          this.persistReasoningStep(stream.chatId, payload.toolExecutionId, payload.data.message);
+        }
       }
     } else if (payload.chunkType === 'partial_data' && payload.data && payload.data.content_chunk) {
       newContent += payload.data.content_chunk;
+    } else if (payload.chunkType === 'pre_flight_answer' && payload.data && payload.data.answer_text) {
+      preFlightAnswer = payload.data.answer_text;
+      eventType = 'pre_flight_answer_received';
     }
 
     stream.accumulatedContent = newContent;
     stream.progressUpdates = newProgressUpdates;
-    stream.keySummaries = newKeySummaries; // Store key summaries
+    stream.keySummaries = newKeySummaries;
+    stream.preFlightAnswer = preFlightAnswer;
     stream.status = 'streaming';
 
     this.activeStreams.set(payload.toolExecutionId, stream); 
 
-    this.notifySubscribers(payload.chatId, { type: 'chunk_received', streamId: payload.toolExecutionId });
+    this.notifySubscribers(payload.chatId, { type: eventType, streamId: payload.toolExecutionId });
   }
 
   handleToolStreamComplete(payload) {
@@ -94,6 +109,24 @@ class StreamingManager {
 
 
     this.notifySubscribers(payload.chatId, { type: 'stream_completed', streamId: payload.toolExecutionId });
+  }
+
+  handlePreFlightAnswer(payload) {
+    if (!payload || !payload.chatId || !payload.toolExecutionId || !payload.answer_text) {
+      console.warn('[StreamingManager] Received invalid pre_flight_answer payload:', payload);
+      return;
+    }
+
+    const stream = this.activeStreams.get(payload.toolExecutionId);
+    if (!stream) {
+      console.warn(`[StreamingManager] Received pre_flight_answer for unknown stream: ${payload.toolExecutionId}`);
+      return;
+    }
+
+    stream.preFlightAnswer = payload.answer_text;
+    this.activeStreams.set(payload.toolExecutionId, stream);
+
+    this.notifySubscribers(payload.chatId, { type: 'pre_flight_answer_received', streamId: payload.toolExecutionId });
   }
 
   handleToolStreamError(payload) {
@@ -150,7 +183,6 @@ class StreamingManager {
     const streamsForChat = Array.from(this.activeStreams.values()).filter(stream => String(stream.chatId) === currentChatIdStr);
     
     if (streamsForChat.length === 0 && Array.from(this.activeStreams.values()).some(s => String(s.chatId) === currentChatIdStr)) {
-        // Intentionally keeping this specific warn for potential race conditions or state issues.
         console.warn(`[StreamingManager] notifySubscriber: streamsForChat is empty for chatId ${currentChatIdStr}, but activeStreams contains matching entries. This might indicate an issue or a race condition if a stream just ended.`, {
             chatId: currentChatIdStr,
             activeStreamsContent: Array.from(this.activeStreams.values())
@@ -167,9 +199,41 @@ class StreamingManager {
   getStream(toolExecutionId) {
     return this.activeStreams.get(toolExecutionId);
   }
+
+  /**
+   * Persists a reasoning step to the database
+   * @param {string} chatId - Chat ID
+   * @param {string} taskId - Task execution ID
+   * @param {string} message - Reasoning message
+   */
+  async persistReasoningStep(chatId, taskId, message) {
+    try {
+      const apiService = await import('./apiService.js');
+      
+      let stepMessage = 'reasoning';
+      let explanation = message;
+      
+      if (message.includes(' → ')) {
+        const parts = message.split(' → ');
+        stepMessage = parts[0].trim();
+        explanation = parts[1].trim();
+      } else if (message.startsWith('I ')) {
+        stepMessage = 'reasoning';
+        explanation = message;
+      }
+
+      await apiService.default.post('/chat/reasoning-steps', {
+        chatId: parseInt(chatId),
+        taskId: taskId,
+        stepMessage: stepMessage,
+        explanationMessage: explanation
+      });
+    } catch (error) {
+      console.error('[StreamingManager] Failed to persist reasoning step:', error);
+    }
+  }
 }
 
-// Attempt with a global symbol for the singleton instance, trying to preserve maps
 const STREAMING_MANAGER_SYMBOL = Symbol.for("app.StreamingManager");
 
 let instance = global[STREAMING_MANAGER_SYMBOL];

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController');
@@ -13,7 +15,6 @@ router.post('/', checkModelAccess, chatController.createChat);
 router.get('/', chatController.getChats); 
 router.get('/shared-with-me', chatController.getSharedWithMeChats); 
 router.get('/:id', chatController.getChat);
-router.put('/:id', chatController.updateChat);
 router.delete('/:id', chatController.deleteChat);
 router.post('/:id/messages', chatController.sendMessage);
 
@@ -36,5 +37,12 @@ router.post('/:chatId/run-tool', agentController.runToolInChat);
 
 // Route for user-triggered chat summarization
 router.post('/:id/summarize', chatController.summarizeChatHistory);
+
+// Agent Reasoning Steps
+const reasoningController = require('../controllers/reasoningController');
+router.post('/reasoning-steps', reasoningController.createReasoningStep);
+router.get('/:chatId/reasoning-steps', reasoningController.getReasoningStepsForChat);
+router.get('/reasoning-steps/task/:taskId', reasoningController.getReasoningStepsForTask);
+router.put('/reasoning-steps/:stepId/status', reasoningController.updateReasoningStepStatus);
 
 module.exports = router;

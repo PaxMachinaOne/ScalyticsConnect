@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Streaming model provider implementation (Refactored for Inference Router)
  *
@@ -6,7 +8,7 @@
  *
  * Enhanced with response filtering, context window management, and markdown sanitization.
  */
-const { tokenProcessor } = require('../../config/socketHandlers');
+const { tokenProcessor } = require('../../config/socket');
 const { routeInferenceRequest } = require('../inferenceRouter');
 const Model = require('../../models/Model');
 const Message = require('../../models/Message'); // Import Message model for DB updates

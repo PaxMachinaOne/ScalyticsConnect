@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Adaptive LLM parameter utility for handling different parameter naming schemes
  * across various versions of llama-cpp-python and other libraries.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * External API Provider Handler
  */
@@ -324,6 +326,51 @@ function formatMessagesForProvider(providerName, previousMessages, userMessage) 
   return formattedMessages;
 }
 
+async function handleExternalSummarizationRequest({ model, prompt, userId }) {
+  const providerDetails = await db.getAsync('SELECT * FROM api_providers WHERE id = ?', [model.external_provider_id]);
+  if (!providerDetails) {
+    throw new Error(`API provider configuration not found for ID ${model.external_provider_id}`);
+  }
+
+  let apiKey;
+  if (userId) {
+    const apiKeyData = await apiKeyService.getBestApiKey(userId, providerDetails.name);
+    if (!apiKeyData || !apiKeyData.key) {
+      throw new Error(`No valid API key found for ${providerDetails.name} for user ${userId}`);
+    }
+    apiKey = apiKeyData.key;
+  } else {
+    const globalKeyData = await db.getAsync(
+      'SELECT key_value, is_encrypted FROM api_keys WHERE provider_id = ? AND is_global = 1 AND is_active = 1',
+      [providerDetails.id]
+    );
+    if (!globalKeyData || !globalKeyData.key_value) {
+      throw new Error(`No active global system API key configured for ${providerDetails.name}.`);
+    }
+    apiKey = globalKeyData.is_encrypted 
+      ? require('../utils/encryptionUtils').encryptionHelpers.decrypt(globalKeyData.key_value) 
+      : globalKeyData.key_value;
+  }
+
+  const messages = formatMessagesForProvider(providerDetails.name, [], prompt);
+  
+  const result = await executeProviderCall(
+    providerDetails, 
+    model, 
+    apiKey,
+    messages, 
+    prompt, 
+    [], 
+    null, // No streaming context
+    null, // No onToken callback
+    false, 
+    userId
+  );
+
+  return result.message; // Assuming the result object has a 'message' property with the summary
+}
+
 module.exports = {
-  handleExternalApiRequest
+  handleExternalApiRequest,
+  handleExternalSummarizationRequest,
 };

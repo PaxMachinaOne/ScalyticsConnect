@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const privacyController = require('../controllers/privacyController');
 
 // Public routes
 router.post('/login', authController.login);
@@ -23,5 +26,7 @@ router.get('/profile', authController.getProfile); // Alias for /me
 // Settings routes
 router.put('/settings', authController.updateSettings);
 
+// Privacy status for all authenticated users
+router.get('/privacy-status', privacyController.getPrivacyStatus);
 
 module.exports = router;

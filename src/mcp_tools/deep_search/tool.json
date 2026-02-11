@@ -1,0 +1,48 @@
+{
+  "name": "deep-search",
+  "description": "Performs iterative web research using multiple search engines and LLM reasoning/synthesis to answer a query.",
+  "path": "src/mcp_tools/deep_search/deepSearchTool.js",
+  "function_name": "run",
+  "arguments_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The user's search query or topic."
+      },
+      "reasoningModelName": {
+        "type": "string",
+        "description": "Name/ID of the model for iterative reasoning and query generation. If not provided or empty, the system's active local model will be used as a fallback."
+      },
+      "search_providers": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["google", "bing", "brave", "openalex", "wikipedia", "duckduckgo", "courtlistener"]
+        },
+        "description": "Search providers to use (e.g., Google Search, Bing, Brave, OpenAlex, Wikipedia, DuckDuckGo). Leave empty to use default (DuckDuckGo + OpenAlex).",
+        "default": []
+      },
+      "fileIds": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "description": "Optional array of file IDs to include as context.",
+        "default": []
+      },
+      "max_iterations": {
+        "type": "integer",
+        "description": "Maximum number of research iterations (search -> reason -> new query).",
+        "default": 10,
+        "minimum": 1,
+        "maximum": 30
+      }
+    },
+    "required": [
+      "query"
+    ]
+  },
+  "category": "Research",
+  "enabled": true
+}

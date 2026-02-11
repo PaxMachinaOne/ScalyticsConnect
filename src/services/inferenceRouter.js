@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Inference Router
  *
@@ -13,7 +15,6 @@ if (typeof global.fetch === 'function') {
   fetchApi = global.fetch.bind(global);
 } else {
   try {
-    // Ensure you have node-fetch v2 installed: npm install node-fetch@2
     fetchApi = require('node-fetch');
   } catch (err) {
     console.error('Fetch API is unavailable. Please upgrade Node.js to >=18 or install node-fetch@2.');
@@ -22,6 +23,9 @@ if (typeof global.fetch === 'function') {
 }
 
 const vllmService = require('./vllmService');
+const summarizationService = require('./summarizationService');
+const chatService = require('./chatService');
+const Message = require('../models/Message');
 const Model = require('../models/Model');
 const User = require('../models/User');
 const { handleExternalApiRequest } = require('./providers/handler');
@@ -33,8 +37,6 @@ const {
 const { createParser } = require('eventsource-parser');
 const eventBus = require('../utils/eventBus');
 
-const activeRequests = new Map();
-
 /**
  * Validates and fixes message sequence to ensure vLLM compatibility
  * vLLM (especially Gemma) requires clean alternating user/assistant roles
@@ -45,26 +47,21 @@ function validateAndFixMessageSequence(messages) {
     return [];
   }
   
-  // Separate system messages and conversation messages
   const systemMessages = messages.filter(m => m.role === 'system');
   const conversationMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant');
   
-  // Build clean alternating sequence
   const fixed = [];
   
-  // Add system messages at the beginning (combine them)
   if (systemMessages.length > 0) {
     const combinedSystemContent = systemMessages.map(m => m.content).join('\n');
     fixed.push({ role: 'system', content: combinedSystemContent });
   }
   
-  // Now build perfect alternation from conversation messages
   let expectedNextRole = 'user';
   
   for (let i = 0; i < conversationMessages.length; i++) {
     const msg = conversationMessages[i];
     
-    // If we get the wrong role, inject a placeholder
     if (msg.role !== expectedNextRole) {
       const placeholderContent = expectedNextRole === 'user'
         ? '[User input missing]'
@@ -73,7 +70,6 @@ function validateAndFixMessageSequence(messages) {
       expectedNextRole = expectedNextRole === 'user' ? 'assistant' : 'user';
     }
     
-    // Add the actual message
     fixed.push(msg);
     expectedNextRole = msg.role === 'user' ? 'assistant' : 'user';
   }
@@ -81,147 +77,8 @@ function validateAndFixMessageSequence(messages) {
   return fixed;
 }
 
-// --- Constants ---
 const CONTEXT_WARNING_THRESHOLD_PERCENT = 85;
 const SUMMARIZATION_THRESHOLD_PERCENT = 90;
-const SUMMARIZATION_PROMPT =
-  "Concisely summarize the key points, decisions, and unanswered questions from the following conversation excerpt, focusing on information relevant for continuing the chat. Output only the summary text:\n\n";
-const TURNS_TO_KEEP_AFTER_SUMMARY = 3;
-
-/**
- * Summarize history helper (internal)
- */
-async function _summarizeHistory(originalMessages, userSettings, currentModelId) {
-  try {
-    let summarizationModelId = null;
-    let summarizationModel = null;
-    const currentModel = await Model.findById(currentModelId);
-
-    if (!currentModel) {
-      console.error(`[Router Summarize] Model ${currentModelId} not found.`);
-      return null;
-    }
-
-    // Only local models can summarize
-    if (!currentModel.external_provider_id) {
-      if (vllmService.activeModelId === currentModelId) {
-        summarizationModelId = currentModelId;
-        summarizationModel = currentModel;
-      } else {
-        console.error(
-          `[Router Summarize] Local model ${currentModelId} is not active.`
-        );
-        return null;
-      }
-    } else {
-      const userSelectedLocalModelId = userSettings.summarization_model_id;
-      if (userSelectedLocalModelId) {
-        const userModel = await Model.findById(userSelectedLocalModelId);
-        if (
-          userModel &&
-          !userModel.external_provider_id &&
-          vllmService.activeModelId === userSelectedLocalModelId
-        ) {
-          summarizationModelId = userSelectedLocalModelId;
-          summarizationModel = userModel;
-        } else return null;
-      } else return null;
-    }
-
-    if (!summarizationModel) {
-      console.error(
-        '[Router Summarize] No valid local model available for summarization.'
-      );
-      return null;
-    }
-
-    // Determine temperature
-    let temperature = 0.4;
-    switch (userSettings.summarization_temperature_preset) {
-      case 'strict':
-        temperature = 0.1;
-        break;
-      case 'balanced':
-        temperature = 0.4;
-        break;
-      case 'detailed':
-        temperature = 0.7;
-        break;
-    }
-
-    // Identify chat messages to summarize (exclude recent)
-    const lastCheckpointIndex = originalMessages
-      .map(m => m.role === 'system' && m.content?.startsWith('Summary of conversation up to this point'))
-      .lastIndexOf(true);
-    const relevant =
-      lastCheckpointIndex >= 0
-        ? originalMessages.slice(lastCheckpointIndex + 1)
-        : originalMessages;
-
-    const chatMsgs = relevant.filter(m => m.role !== 'system');
-    const keepCount = TURNS_TO_KEEP_AFTER_SUMMARY * 2;
-
-    if (chatMsgs.length <= keepCount) {
-      return null;
-    }
-
-    const toSummarize = chatMsgs.slice(0, -keepCount);
-    const toKeep = chatMsgs.slice(-keepCount);
-
-    const excerpt = toSummarize.map(m => `${m.role}: ${m.content}`).join('\n');
-    const prompt = SUMMARIZATION_PROMPT + excerpt;
-    const formatted = await formatPromptForModel(
-      summarizationModelId,
-      [{ role: 'user', content: prompt }]
-    );
-
-    const params = {
-      temperature,
-      max_tokens: Math.min(512, summarizationModel.n_ctx / 4),
-      stop: ['\nUser:', '\nAssistant:', '<|endoftext|>'],
-    };
-
-    const url = `${vllmService.getVllmApiUrl()}/v1/chat/completions`;
-    const res = await fetchApi(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: summarizationModel.name,
-        messages: [{ role: 'user', content: formatted }],
-        ...params,
-        stream: false,
-      }),
-    });
-
-    if (!res.ok) {
-      console.error(
-        `[Router Summarize] vLLM error ${res.status}: ${await res.text()}`
-      );
-      return null;
-    }
-
-    const data = await res.json();
-    const summary = data.choices?.[0]?.message?.content;
-    if (!summary) return null;
-
-    // Build new history
-    const preservedSystem = originalMessages.filter(
-      m => m.role === 'system' && !m.content?.startsWith('Summary of earlier')
-    );
-    const newHistory = [...preservedSystem];
-    newHistory.push({
-      role: 'system',
-      content: `Summary of earlier conversation:\n${summary.trim()}`,
-    });
-    newHistory.push(...toKeep);
-
-    return newHistory;
-  } catch (err) {
-    console.error('[Router Summarize] Error:', err);
-    return null;
-  }
-}
-// --- End Summarization Helper ---
 
 /**
  * Routes an inference request to the appropriate handler after validating context size
@@ -237,6 +94,7 @@ async function routeInferenceRequest(options) {
     files,
     streamingContext,
     autoTruncate = true,
+    signal, 
   } = options;
 
   if (!modelId) throw new Error('modelId is required');
@@ -248,56 +106,85 @@ async function routeInferenceRequest(options) {
     if (!model) throw new Error(`Model ${modelId} not found.`);
 
     let processed = messages;
+    const chatId = streamingContext?.chatId;
+    const originalUserMessage = messages[messages.length - 1];
+    let wasSummarized = false;
 
-    // User-specific summarization
-    if (userId) {
+    if (userId && chatId) {
       try {
         const user = await User.findById(userId);
         if (user?.summarization_enabled) {
           const check = await validateContextForModel(modelId, processed);
-          if (
-            check.contextSize &&
-            check.estimatedTokens > (check.contextSize * SUMMARIZATION_THRESHOLD_PERCENT) / 100
-          ) {
+          if (check.contextSize && check.estimatedTokens > (check.contextSize * SUMMARIZATION_THRESHOLD_PERCENT) / 100) {
             const settings = {
               summarization_model_id: user.summarization_model_id,
-              summarization_temperature_preset:
-                user.summarization_temperature_preset,
-              display_summarization_notice:
-                user.display_summarization_notice ?? true,
+              summarization_temperature_preset: user.summarization_temperature_preset,
             };
-            const summarized = await _summarizeHistory(
-              processed,
-              settings,
-              modelId
-            );
-            if (summarized) processed = summarized;
+            
+            const summaryResult = await summarizationService.summarizeHistory(processed, settings, modelId, userId);
+
+            if (summaryResult.summaryText) {
+              wasSummarized = true;
+              // 1. Persist the new history
+              await chatService.replaceChatHistory(chatId, summaryResult.newHistory);
+              
+              // 2. Create and send the summary message as a *complete* message
+              const summaryNotice = {
+                role: 'assistant',
+                content: `The conversation history is long, so I've created a summary:\n\n${summaryResult.summaryText}`,
+                isLoading: false,
+              };
+              const noticeId = await Message.create({ chat_id: chatId, ...summaryNotice });
+              eventBus.publish('chat:complete', {
+                chatId: chatId,
+                messageId: noticeId,
+                message: summaryNotice.content,
+                status: 'completed_summary',
+                timestamp: new Date().toISOString()
+              });
+              
+              // 3. Set up the 'processed' history for the *actual* user question
+              processed = [...summaryResult.newHistory, originalUserMessage];
+            }
           }
         }
       } catch (e) {
-        console.error('[Router] User settings fetch error:', e);
+        console.error('[Router] User settings or summarization fetch error:', e);
       }
     }
 
     // --- New Context Validation and Max Tokens Calculation ---
-    let validation = await validateContextForModel(modelId, processed);
-
-    // 1. Handle prompts that are too long
-    if (validation.isTooLong) {
-      if (autoTruncate) {
-        console.log(`[InferenceRouter] History is too long (${validation.estimatedTokens} >= ${validation.contextSize}). Truncating...`);
-        processed = await truncateHistoryForModel(modelId, processed);
-        // Re-validate after truncation
-        validation = await validateContextForModel(modelId, processed);
+    if (!wasSummarized) {
+        let validation = await validateContextForModel(modelId, processed);
         if (validation.isTooLong) {
-          // If it's still too long after truncation, something is wrong.
-          throw new Error(`History still exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) even after truncation.`);
+          if (autoTruncate) {
+            console.log(`[InferenceRouter] History is too long (${validation.estimatedTokens} >= ${validation.contextSize}). Truncating...`);
+            
+            const originalMessageCount = processed.length;
+            processed = await truncateHistoryForModel(modelId, processed);
+            
+            // Check if truncation actually happened and notify the user.
+            if (processed.length < originalMessageCount && chatId) {
+                const truncationNotice = {
+                    role: 'system',
+                    content: 'Note: To keep our conversation going, some earlier parts of the chat have been summarized to fit within the context limit.',
+                    isLoading: false,
+                };
+                const noticeId = await Message.create({ chat_id: chatId, ...truncationNotice });
+                eventBus.publish('chat:new_message', { chatId, message: { id: noticeId, ...truncationNotice } });
+            }
+
+            validation = await validateContextForModel(modelId, processed);
+            if (validation.isTooLong) {
+              throw new Error(`History still exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) even after truncation.`);
+            }
+            console.log(`[InferenceRouter] History truncated. New token count: ${validation.estimatedTokens}`);
+          } else {
+            throw new Error(`History exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) and auto-truncate is disabled.`);
+          }
         }
-        console.log(`[InferenceRouter] History truncated. New token count: ${validation.estimatedTokens}`);
-      } else {
-        throw new Error(`History exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) and auto-truncate is disabled.`);
-      }
     }
+
 
     // --- End New Context Validation ---
     // max_tokens is intentionally removed to allow the model to determine the response length based on the prompt.
@@ -334,10 +221,12 @@ async function routeInferenceRequest(options) {
     }
 
     // Local vLLM
-    if (vllmService.activeModelId !== modelId)
+    const modelApiUrl = vllmService.getVllmApiUrl(modelId);
+    if (!modelApiUrl) {
       throw new Error(
-        `Local model ${modelId} not active (active: ${vllmService.activeModelId}).`
+        `Local model ${modelId} is not active or its endpoint is not available.`
       );
+    }
 
     const validatedSeq = validateAndFixMessageSequence(processed);
 
@@ -372,27 +261,14 @@ async function routeInferenceRequest(options) {
       stream: true,
     };
 
-    // Handle streaming
-    const controller = new AbortController();
-    if (streamingContext?.messageId) {
-      activeRequests.set(streamingContext.messageId, controller);
-    }
-    const vllmResponse = await streamVllmRequest(
+    // Pass the signal directly to the streaming request handler
+    return await streamVllmRequest(
+      modelApiUrl, // Pass the specific model's URL
       vllmPayload,
       onToken,
       streamingContext,
-      controller.signal
+      signal
     );
-
-    try {
-      // The actual stream processing is now handled within streamVllmRequest
-      // which will call onToken directly. We await its final result.
-      return await vllmResponse;
-    } finally {
-      if (streamingContext?.messageId) {
-        activeRequests.delete(streamingContext.messageId);
-      }
-    }
   } catch (err) {
     if (err.name !== 'AbortError') console.error(err);
     throw err;
@@ -402,14 +278,21 @@ async function routeInferenceRequest(options) {
 /**
  * Handles the streaming HTTP request to the vLLM server and processes the SSE stream.
  */
-async function streamVllmRequest(payload, onToken, streamingContext, signal) {
-  const url = `${vllmService.getVllmApiUrl()}/v1/chat/completions`;
-  const response = await fetchApi(url, {
+async function streamVllmRequest(modelApiUrl, payload, onToken, streamingContext, signal) {
+  const url = `${modelApiUrl}/v1/chat/completions`;
+  
+  // Set a generous timeout to allow for vLLM queueing and model loading
+  const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     signal,
-  });
+    // undici-specific options for timeouts
+    bodyTimeout: 600000, // 10 minutes for the body to start streaming
+    headersTimeout: 600000, // 10 minutes for headers
+  };
+
+  const response = await fetchApi(url, requestOptions);
 
   if (!response.ok) {
     const errBody = await response.text();
@@ -436,12 +319,10 @@ async function streamVllmRequest(payload, onToken, streamingContext, signal) {
               onToken(token);
             }
           }
-          // Check for final usage stats which vLLM sends in a separate chunk
           if (json.usage) {
             usage = json.usage;
           }
         } catch (e) {
-          // Ignore parsing errors for non-JSON data that might appear
         }
       }
     };
@@ -454,15 +335,12 @@ async function streamVllmRequest(payload, onToken, streamingContext, signal) {
       try {
         for await (const chunk of response.body) {
           if (signal?.aborted) {
-            // Manually abort if the signal was triggered
             console.log('[streamVllmRequest] Stream processing aborted by signal.');
-            // The rejection will be caught and handled as an abort.
             throw new Error('AbortError');
           }
           const chunkStr = decoder.decode(chunk, { stream: true });
           parser.feed(chunkStr);
         }
-        // Stream finished normally
         parser.reset();
         resolve({ message: fullContent, usage });
       } catch (error) {
@@ -480,27 +358,11 @@ async function streamVllmRequest(payload, onToken, streamingContext, signal) {
 
     if (signal) {
       signal.addEventListener('abort', () => {
-        // The for-await loop will see the signal and throw an AbortError.
-        // No need to destroy the stream directly here as it can cause race conditions.
       });
     }
   });
 }
 
-/**
- * Cancels an active inference request.
- */
-function cancelInferenceRequest(requestId) {
-  const controller = activeRequests.get(requestId);
-  if (controller) {
-    controller.abort();
-    activeRequests.delete(requestId);
-    return true;
-  }
-  return false;
-}
-
 module.exports = {
   routeInferenceRequest,
-  cancelInferenceRequest,
 };

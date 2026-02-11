@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const path = require('path');
 const fs = require('fs').promises;
 const { exec, execSync } = require('child_process');
@@ -67,13 +69,6 @@ exports.getLocalModels = async (req, res) => {
             sizeInfo.error = `Error processing path: ${err.message}`;
         }
       }
-      let effective_context_window = model.context_window;
-      if (model.n_ctx !== null && model.n_ctx !== undefined && String(model.n_ctx).trim() !== '') {
-          const parsedNCtx = parseInt(model.n_ctx, 10);
-          if (!isNaN(parsedNCtx) && parsedNCtx > 0) {
-              effective_context_window = parsedNCtx;
-          }
-      }
 
       // Calculate VRAM requirement
       const vramRequirement = calculateVRAMRequirement({
@@ -100,7 +95,6 @@ exports.getLocalModels = async (req, res) => {
       return { 
         ...model, 
         ...sizeInfo, 
-        effective_context_window,
         estimatedVramGb: vramRequirement,
         auto_detected_context
       };
@@ -129,91 +123,26 @@ let healthCheckCache = {
 };
 
 /**
- * Get the status of the vLLM service.
+ * Get the status of the model worker pool.
  * @param {object} req - Express request object
  * @param {object} res - Express response object
  */
 exports.getWorkerPoolStatus = async (req, res) => {
   try {
-    const activeModelId = vllmService.activeModelId;
-    const isProcessRunning = vllmService.vllmProcess && !vllmService.vllmProcess.killed;
-    
-    let status = {
-      activeModelId: activeModelId,
-      isProcessRunning: isProcessRunning,
-      status: 'idle'
-    };
+    const modelPoolManager = require('../../services/modelPoolManager');
+    const poolState = modelPoolManager.getPoolState();
 
-    if (activeModelId && isProcessRunning) {
-      const now = Date.now();
-      const cacheValid = healthCheckCache.lastCheck && 
-                        (now - healthCheckCache.lastCheck) < healthCheckCache.ttl &&
-                        healthCheckCache.status;
-
-      // Use cached status if available and recent
-      if (cacheValid) {
-        status.status = healthCheckCache.status;
-        if (healthCheckCache.data) {
-          status.availableModels = healthCheckCache.data;
-        }
-        // log cache usage periodically to reduce noise
-        if ((now - healthCheckCache.lastCheck) > 30000) {
-          console.log(`[API PoolStatus] Using cached vLLM status: ${status.status} (${Math.round((now - healthCheckCache.lastCheck)/1000)}s ago)`);
-        }
-      } else {
-        // health check
-        try {
-          const healthCheckUrl = `${vllmService.getVllmApiUrl()}/v1/models`;
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
-          
-          const response = await fetch(healthCheckUrl, { 
-            signal: controller.signal,
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.data && data.data.length > 0) {
-              status.status = 'ready';
-              status.availableModels = data.data;
-              
-              // Cache the successful result
-              healthCheckCache = {
-                lastCheck: now,
-                status: 'ready',
-                data: data.data,
-                ttl: 60000 // 1 minute cache for healthy status
-              };
-              
-              console.log(`[API PoolStatus] vLLM health check: ready (cached for 60s)`);
-            } else {
-              status.status = 'activating';
-              // Don't cache 'activating' status - keep checking frequently
-              healthCheckCache = { lastCheck: 0, status: null, data: null, ttl: 60000 };
-            }
-          } else {
-            status.status = 'activating';
-            healthCheckCache = { lastCheck: 0, status: null, data: null, ttl: 60000 };
-          }
-        } catch (error) {
-          status.status = 'activating';
-          healthCheckCache = { lastCheck: 0, status: null, data: null, ttl: 60000 };
-          console.log(`[API PoolStatus] vLLM health check failed: ${error.message}`);
-        }
-      }
-    } else if (activeModelId && !isProcessRunning) {
-      status.status = 'failed';
-      healthCheckCache = { lastCheck: 0, status: null, data: null, ttl: 60000 };
-    } else {
-      healthCheckCache = { lastCheck: 0, status: null, data: null, ttl: 60000 };
+    // The frontend expects a 'workers' object, so we format the response.
+    // We also remove the circular 'process' object before sending.
+    const sanitizedState = {};
+    for (const key in poolState) {
+      const { process, ...rest } = poolState[key];
+      sanitizedState[key] = rest;
     }
 
     res.status(200).json({
       success: true,
-      data: status
+      workers: sanitizedState,
     });
   } catch (error) {
     console.error('[API PoolStatus] Error getting vLLM status:', error);
@@ -261,8 +190,12 @@ exports.deleteModel = async (req, res) => {
 
     // Stop the vLLM service if it's running this model
     try {
-      if (vllmService.activeModelId === modelId) {
-        await vllmService.deactivateCurrentModel();
+      const modelPoolManager = require('../../services/modelPoolManager');
+      const activeProcesses = modelPoolManager.getPoolState();
+      const processKey = Object.keys(activeProcesses).find(key => activeProcesses[key].modelId === parseInt(modelId, 10));
+      if (processKey) {
+        const { gpuId } = activeProcesses[processKey];
+        await vllmService.deactivateModel(modelId, gpuId);
       }
     } catch (stopError) {
       console.error(`Error stopping vLLM process for model ID ${modelId}:`, stopError.message);
@@ -313,6 +246,10 @@ exports.activateModel = async (req, res) => {
     if (!modelToActivate) {
       return res.status(404).json({ success: false, message: 'Model not found for activation.' });
     }
+    
+    if (modelToActivate.is_embedding_model) {
+        return res.status(400).json({ success: false, message: 'Embedding models are managed automatically by the system and cannot be manually activated through this interface.' });
+    }
 
     if (modelToActivate.model_format !== 'torch') {
       return res.status(400).json({ success: false, message: 'Only torch-format models can be activated with the vLLM engine.' });
@@ -354,25 +291,29 @@ exports.activateModel = async (req, res) => {
 };
 
 /**
- * Deactivate the currently active local model.
+ * Deactivate a specific local model.
  * @param {object} req - Express request object
  * @param {object} res - Express response object
  */
 exports.deactivateModel = async (req, res) => {
+  const modelId = parseInt(req.params.id, 10);
+
+  if (isNaN(modelId)) {
+    return res.status(400).json({ success: false, message: 'Invalid Model ID provided.' });
+  }
+
   try {
-    const activeModelId = vllmService.activeModelId;
-    if (activeModelId) {
-      const modelToDeactivate = await Model.findById(activeModelId);
-      if (modelToDeactivate && modelToDeactivate.is_embedding_model) {
-        await handleEmbeddingModelChange();
-      }
+    const modelToDeactivate = await Model.findById(modelId);
+    if (modelToDeactivate && modelToDeactivate.is_embedding_model) {
+      await handleEmbeddingModelChange();
     }
 
-    await vllmService.deactivateCurrentModel();
+    // This will stop the process if it's running and update the DB
+    await vllmService.deactivateModel(modelId);
 
     res.status(200).json({
       success: true,
-      message: 'Current local model deactivated successfully.'
+      message: `Model ID ${modelId} deactivated successfully.`
     });
   } catch (error) {
     console.error(`[API Deactivate] Error deactivating model:`, error);
@@ -549,21 +490,6 @@ exports.getAvailableModels = async (req, res) => {
         }
       }
 
-      let effective_context_window = model.context_window; 
-
-      if (!model.external_provider_id && model.config && typeof model.config === 'string') {
-        try {
-          const parsedConfig = JSON.parse(model.config);
-          if (parsedConfig.n_ctx !== null && parsedConfig.n_ctx !== undefined) {
-            const parsedNCtxVal = parseInt(parsedConfig.n_ctx, 10);
-            if (!isNaN(parsedNCtxVal) && parsedNCtxVal > 0) {
-              effective_context_window = parsedNCtxVal;
-            }
-          }
-        } catch (e) {
-          console.error(`Error parsing config for model ${model.id} in getAvailableModels: ${model.config}`, e);
-        }
-      }
       // Calculate VRAM requirement
       const vramRequirement = calculateVRAMRequirement({
         ...model,
@@ -573,7 +499,6 @@ exports.getAvailableModels = async (req, res) => {
       const resultModel = {
         ...model,
         ...extraInfo,
-        effective_context_window: effective_context_window,
         estimatedVramGb: vramRequirement
       };
       return resultModel;

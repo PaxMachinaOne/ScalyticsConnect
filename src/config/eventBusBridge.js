@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Event Bus Bridge
  * 
  * This module connects the event bus to WebSockets for real-time updates
  */
 const eventBus = require('../utils/eventBus');
-const { broadcastToRoom, broadcastToAll } = require('./socketHandlers');
+const { broadcastToRoom, broadcastToAll } = require('./socket');
 
 /**
  * Set up event bus to WebSocket bridge
@@ -270,6 +272,15 @@ function setupEventBusBridge(wsServer) {
     });
   });
 
+  // Pool status update events
+  eventBus.subscribe('pool:status_update', (poolState) => {
+    broadcastToAll({
+      type: 'pool:status_update',
+      payload: {
+        workers: poolState
+      }
+    });
+  });
 }
 
 module.exports = { setupEventBusBridge };

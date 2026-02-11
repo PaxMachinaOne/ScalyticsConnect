@@ -1,13 +1,7 @@
-#vLLM 0.9.1
---index-url https://pypi.org/simple
---extra-index-url https://download.pytorch.org/whl/test/cu126 
-torch==2.7.0+cu126; sys_platform != 'darwin'
-torch==2.7.0; sys_platform == 'darwin'
-torchvision==0.22.0
-torchaudio==2.7.0
-vllm==0.11.0
+# Torch will be installed as a dependency of vLLM, which will select the correct backend.
+vllm==0.10.1.1
+flashinfer-python
 bitsandbytes>=0.45.3; sys_platform == 'linux'
-bitsandbytes==0.41.3; sys_platform == 'darwin'
 triton; sys_platform == 'linux'
 compressed-tensors>=0.10
 gguf>=0.13
@@ -34,13 +28,14 @@ sentence-transformers
 lancedb>=0.3.0
 pylance
 tantivy
-duckduckgo_search
+ddgs
 google-api-python-client
 readability-lxml
 scrapy-playwright
 langchain>=0.1.0
 langchain-core
 langgraph
+langdetect
 playwright
 spacy>=3.7.0,<3.8.0
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz
@@ -68,7 +63,8 @@ pydantic
 pydantic-settings
 sse-starlette
 python-dotenv
-Scrapy==2.11.2
+aiosqlite>=0.19.0
+Scrapy>=2.11.2
 
 # For text extraction from uploaded files
 PyPDF2>=3.0.0
@@ -76,3 +72,6 @@ pdfplumber>=0.10.0 # Added for PDF text and table extraction
 python-docx>=1.1.0
 pandas>=2.0.0
 openpyxl>=3.1.0
+
+# To replace deprecated pynvml, a sub-dependency of torch
+nvidia-ml-py

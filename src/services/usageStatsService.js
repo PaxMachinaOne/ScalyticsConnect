@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db');
 
 class UsageStatsService {
@@ -10,7 +12,7 @@ class UsageStatsService {
    * @param {number} usageData.promptTokens - Number of tokens in the prompt.
    * @param {number} usageData.completionTokens - Number of tokens in the completion.
    * @param {number} [usageData.latencyMs] - Optional latency in milliseconds for the operation.
-   * @param {string} [usageData.source] - Optional source of the usage log (e.g., 'chat', 'live_search_tool'). Not stored in DB currently.
+   * @param {string} [usageData.source] - Optional source of the usage log (e.g., 'chat', 'deep_search_tool'). Not stored in DB currently.
    */
   static async recordTokens({ userId, modelId, chatId, promptTokens, completionTokens, latencyMs, source }) {
     if (userId === undefined || modelId === undefined || promptTokens === undefined || completionTokens === undefined) {

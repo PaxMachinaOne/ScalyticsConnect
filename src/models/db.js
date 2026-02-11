@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const DB_DIR = path.join(__dirname, '../../data');
-const DB_PATH = path.join(DB_DIR, 'community.db');
+const DB_PATH = path.join(DB_DIR, 'mcp.db');
 const SCHEMA_PATH = path.join(DB_DIR, 'schema.sql');
 const ORIGINAL_SCHEMA_PATH = path.join(__dirname, '../../schema.sql');
 
@@ -172,23 +172,12 @@ async function initializeDatabase() {
        console.error(`=== DATABASE: Error executing schema: ${execError.message} ===`);
        console.warn('=== DATABASE: Continuing initialization despite schema execution error ===');
     }
-
-    try {
-        const modelsCols = await db.allAsync('PRAGMA table_info(models)');
-        if (!modelsCols.some(c => c.name === 'embedding_dimension')) {
-            await db.runAsync('ALTER TABLE models ADD COLUMN embedding_dimension INTEGER');
-        }
-        const providersCols = await db.allAsync('PRAGMA table_info(api_providers)');
-        if (!providersCols.some(c => c.name === 'category')) {
-            await db.runAsync('ALTER TABLE api_providers ADD COLUMN category TEXT');
-        }
-    } catch (alterError) {
-        console.error('=== DATABASE: Error altering tables:', alterError);
-    }
     
     await ensureAdminUser();
     const { initializeProviderConfigs } = require('../utils/providerConfig');
     await initializeProviderConfigs();
+    await validateGroupTables();
+    await ensureAdminGroupMembership();
     
     return true;
   } catch (err) {
@@ -351,6 +340,100 @@ async function ensureAdminUser() {
   }
 }
 
+/**
+ * Validates and initializes group-related tables
+ * @returns {Promise<void>}
+ */
+async function validateGroupTables() {
+  try {
+    const tables = await db.allAsync(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' 
+      AND name IN ('groups', 'user_groups', 'group_model_access')
+    `);
+    
+    const existingTables = tables.map(t => t.name);
+
+    await db.execAsync('PRAGMA foreign_keys = ON');
+    const fkEnabled = await db.getAsync('PRAGMA foreign_keys');
+
+    const orphanedGroups = await db.allAsync(`
+      SELECT ug.* FROM user_groups ug
+      LEFT JOIN users u ON ug.user_id = u.id
+      LEFT JOIN groups g ON ug.group_id = g.id
+      WHERE u.id IS NULL OR g.id IS NULL
+    `);
+
+    if (orphanedGroups.length > 0) {
+      await db.runAsync(`
+        DELETE FROM user_groups 
+        WHERE user_id IN (
+          SELECT ug.user_id FROM user_groups ug 
+          LEFT JOIN users u ON ug.user_id = u.id 
+          WHERE u.id IS NULL
+        ) OR group_id IN (
+          SELECT ug.group_id FROM user_groups ug 
+          LEFT JOIN groups g ON ug.group_id = g.id 
+          WHERE g.id IS NULL
+        )
+      `);
+    }
+
+  } catch (err) {
+    console.error('=== DATABASE: Error validating group tables ===', err);
+    throw err;
+  }
+}
+
+/**
+ * Ensures admin user is member of necessary groups
+ * @returns {Promise<void>}
+ */
+async function ensureAdminGroupMembership() {
+  try {
+    
+    const adminUser = await db.getAsync('SELECT id FROM users WHERE is_admin = 1 LIMIT 1');
+    if (!adminUser) {
+      console.error('=== DATABASE: Admin user not found ===');
+      return;
+    }
+
+    const defaultGroups = [
+      { name: 'Online Models', description: 'Access to online models' },
+      { name: 'Administrator', description: 'Admin access group' } 
+    ];
+
+    for (const group of defaultGroups) {
+      let existingGroup = await db.getAsync('SELECT id FROM groups WHERE name = ?', [group.name]);
+      
+      if (!existingGroup) {
+        const result = await db.runAsync(
+          'INSERT INTO groups (name, description) VALUES (?, ?)',
+          [group.name, group.description]
+        );
+        existingGroup = { id: result.lastID };
+      }
+      if (group.name === 'Administrator' || group.name === 'Online Models') {
+        const membership = await db.getAsync(
+          'SELECT 1 FROM user_groups WHERE user_id = ? AND group_id = ?',
+          [adminUser.id, existingGroup.id]
+        );
+
+        if (!membership) {
+          await db.runAsync(
+            'INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)',
+            [adminUser.id, existingGroup.id]
+          );
+        }
+      } else {
+      }
+    }
+
+  } catch (err) {
+    console.error('=== DATABASE: Error ensuring admin group membership ===', err);
+    throw err;
+  }
+}
 
 process.on('SIGINT', () => {
   db.close((err) => {
@@ -364,5 +447,7 @@ process.on('SIGINT', () => {
 
 module.exports = {
   db,
-  initializeDatabase
+  initializeDatabase,
+  validateGroupTables,
+  ensureAdminGroupMembership
 };

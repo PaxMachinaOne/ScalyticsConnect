@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const swaggerJsdoc = require('swagger-jsdoc');
 
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Scalytics Connect API',
-      version: '1.0.0', 
-      description: 'API documentation for Scalytics Connect, including the OpenAI-compatible Scalytics API.',
+      title: 'Scalytics Copilot API',
+      version: '4.0.1', 
+      description: 'API documentation for Scalytics Copilot, including the OpenAI-compatible Scalytics API.',
     },
     servers: [
       {

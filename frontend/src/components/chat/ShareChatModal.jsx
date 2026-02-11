@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../services/apiService';
 import eventBus from '../../utils/eventBus'; // Import eventBus

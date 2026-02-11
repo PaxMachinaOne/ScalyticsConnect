@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios'); 
 const { db } = require('../models/db');
 const Chat = require('../models/Chat');
@@ -13,6 +15,7 @@ const path = require('path');
 const summarizationService = require('../services/summarizationService'); 
 const User = require('../models/User'); 
 const eventBus = require('../utils/eventBus'); 
+const reasoningLoggerService = require('../services/reasoningLoggerService');
 
 exports.getChats = async (req, res) => {
   try {
@@ -114,11 +117,7 @@ exports.summarizeChatHistory = async (req, res) => {
     }
 
     // Check if summarization actually changed the history
-    // (summarizationService returns original messages on failure or if no summary needed)
     if (tempSummarizedHistory === messages || tempSummarizedHistory.length === messages.length) {
-      // This simple check might not be robust enough if message objects are different but content is same.
-      // A more robust check would compare content or if a summary message is actually present.
-      // For now, if the service intended to do nothing, we assume it returned the original array.
       const actualSummaryMessageInNewHistory = tempSummarizedHistory.find(
         msg => msg.role === 'system' && msg.content && msg.content.startsWith('Summary of earlier conversation:')
       );
@@ -259,6 +258,8 @@ exports.getChat = async (req, res) => {
       message.files = await getFilesForMessage(message.id);
     }
 
+    const reasoningSteps = await reasoningLoggerService.getStepsForChat(chat.id);
+
     const model = await Model.findById(chat.model_id);
     let effectiveSystemPrompt = ''; 
 
@@ -283,7 +284,8 @@ exports.getChat = async (req, res) => {
         is_viewing_shared: !isOwner && isSharedWithUser, 
         model: model ? { id: model.id, name: model.name } : null,
         messages,
-        effectiveSystemPrompt
+        effectiveSystemPrompt,
+        reasoningSteps
       }
     });
 
@@ -295,9 +297,6 @@ exports.getChat = async (req, res) => {
     });
   }
 };
-
-
-// --- Chat Sharing Routes (Owner Actions) ---
 
 // Invite a user to share a chat
 exports.createShareInvitation = async (req, res) => {
@@ -423,7 +422,7 @@ exports.removeShare = async (req, res) => {
   }
 };
 
-// --- Chat Sharing Routes (Recipient Actions) --- ADDED ---
+// --- Chat Sharing Routes (Recipient Actions)
 
 // Get pending share invitations for the logged-in user
 exports.getPendingShares = async (req, res) => {
@@ -461,7 +460,7 @@ exports.acceptShare = async (req, res) => {
     }
     
     const chat = await Chat.findById(share.chat_id);
-    if (!chat || chat.is_archived) { // Prevent accepting share for archived chats
+    if (!chat || chat.is_archived) { 
         return res.status(400).json({ success: false, message: 'Cannot accept invitation for an archived or non-existent chat.' });
     }
 
@@ -648,60 +647,6 @@ exports.createChat = async (req, res) => {
   }
 };
 
-exports.updateChat = async (req, res) => {
-  try {
-    const { title } = req.body;
-
-    if (!title) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide title'
-      });
-    }
-
-    const chat = await Chat.findById(req.params.id);
-    if (!chat) {
-      return res.status(404).json({
-        success: false,
-        message: 'Chat not found'
-      });
-    }
-    if (chat.is_archived && !req.user.is_admin) { 
-        return res.status(403).json({ success: false, message: 'Cannot update an archived chat.' });
-    }
-
-    if (chat.user_id !== req.user.id && !req.user.is_admin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this chat'
-      });
-    }
-
-    const updated = await Chat.update(req.params.id, { title });
-
-    if (!updated) {
-      return res.status(400).json({
-        success: false,
-        message: 'Chat not updated'
-      });
-    }
-
-    const updatedChat = await Chat.findById(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Chat updated successfully',
-      data: updatedChat
-    });
-  } catch (error) {
-    console.error('Update chat error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating chat'
-    });
-  }
-};
-
 exports.deleteChat = async (req, res) => {
   const { getSystemSetting } = require('../config/systemConfig'); 
   try {
@@ -723,7 +668,7 @@ exports.deleteChat = async (req, res) => {
     const chatIdToDelete = req.params.id;
 
     try {
-      const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+      const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
       if (pythonServiceBaseUrl && pythonServiceBaseUrl.startsWith('http')) {
         const deleteVectorDocsUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
         await axios.post(deleteVectorDocsUrl, { group_id: chatIdToDelete.toString() });
@@ -958,7 +903,8 @@ exports.sendMessage = async (req, res) => {
 
           await Message.update(placeholderAssistantMessageId, {
             content: originalMessage, 
-            isLoading: false
+            isLoading: false,
+            mcp_metadata: completion.mcp_metadata 
           });
 
           const finalMessageId = completion.messageId || placeholderAssistantMessageId;
@@ -993,8 +939,9 @@ exports.sendMessage = async (req, res) => {
               if (currentChat && currentChat.title === 'New Chat') {
                 const firstUserMessageContent = allMessages.find(m => m.role === 'user')?.content || '';
                 if (firstUserMessageContent) {
-                  await Chat.update(chatId, { title: firstUserMessageContent });
-                  eventBus.publish('chat:title_updated', { chatId: chatId, newTitle: firstUserMessageContent });
+                  const newTitle = firstUserMessageContent.length > 50 ? `${firstUserMessageContent.substring(0, 50)}...` : firstUserMessageContent;
+                  await Chat.update(chatId, { title: newTitle });
+                  eventBus.publish('chat:title_updated', { chatId: chatId, newTitle: newTitle });
                 }
               }
             }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db'); 
 const providerManager = require('../services/providers'); 
 const Chat = require('../models/Chat');
@@ -190,7 +192,7 @@ exports.startAgentChat = async (req, res) => {
 };
 
 /**
- * Handle Live Search Request
+ * Handle Deep Search Request
  * Orchestrates fetching search results, filtering, and AI analysis.
  * @param {Object} req - Request object
  * @param {Object} res - Response object
@@ -207,18 +209,18 @@ exports.handleDeepSearchRequest = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Search query or file upload is required.' });
   }
 
-  // --- Fetch User Tool Config for 'live-search' ---
+  // --- Fetch User Tool Config for 'deep-search' ---
   let reasoningModelName; 
   let actualModelIdentifier; 
   try {
     const configRow = await db.getAsync(
       'SELECT config FROM user_tool_configs WHERE user_id = ? AND tool_name = ?',
-      [userId, 'live-search'] 
+      [userId, 'deep-search'] 
     );
 
     if (!configRow || !configRow.config) {
-      console.warn(`[Live Search Ctrl] User ${userId} attempted live search without configuration for 'live-search'.`);
-      return res.status(400).json({ success: false, message: 'Live Search configuration not found. Please configure the tool models in the Agent settings.' });
+      console.warn(`[Deep Search Ctrl] User ${userId} attempted deep search without configuration for 'deep-search'.`);
+      return res.status(400).json({ success: false, message: 'Deep Search configuration not found. Please configure the tool models in the Agent settings.' });
     }
 
     const toolConfig = JSON.parse(configRow.config);
@@ -226,8 +228,8 @@ exports.handleDeepSearchRequest = async (req, res) => {
 
     // Validate reasoningModelName
     if (!reasoningModelName || typeof reasoningModelName !== 'string' || reasoningModelName.trim() === '') {
-      console.warn(`[Live Search Ctrl] User ${userId} has incomplete configuration (missing or invalid reasoningModelName). Config:`, toolConfig);
-      return res.status(400).json({ success: false, message: 'Live Search configuration is incomplete or invalid. Please configure the reasoning model.' });
+      console.warn(`[Deep Search Ctrl] User ${userId} has incomplete configuration (missing or invalid reasoningModelName). Config:`, toolConfig);
+      return res.status(400).json({ success: false, message: 'Deep Search configuration is incomplete or invalid. Please configure the reasoning model.' });
     }
     reasoningModelName = reasoningModelName.trim(); 
 
@@ -244,14 +246,14 @@ exports.handleDeepSearchRequest = async (req, res) => {
             }
             actualModelIdentifier = modelRecord.external_model_id || modelRecord.name;
         } catch (resolveError) {
-            console.error(`[Live Search Ctrl] Error resolving reasoning model ID ${reasoningModelName}:`, resolveError);
+            console.error(`[Deep Search Ctrl] Error resolving reasoning model ID ${reasoningModelName}:`, resolveError);
             return res.status(500).json({ success: false, message: `Failed to resolve configured reasoning model: ${resolveError.message}` });
         }
     } else {
     }
 
   } catch (err) {
-    console.error(`[Live Search Ctrl] Error fetching/parsing/resolving tool config for user ${userId}:`, err);
+    console.error(`[Deep Search Ctrl] Error fetching/parsing/resolving tool config for user ${userId}:`, err);
     const userMessage = err instanceof SyntaxError ? 'Stored configuration is invalid.' : `Failed to load tool configuration: ${err.message}`;
      return res.status(500).json({ success: false, message: userMessage });
   }
@@ -274,12 +276,12 @@ exports.handleDeepSearchRequest = async (req, res) => {
     }
 
     if (!userDefaultModelId) {
-        console.error(`[Live Search Ctrl] Could not determine a default model for user ${userId} or system.`);
+        console.error(`[Deep Search Ctrl] Could not determine a default model for user ${userId} or system.`);
         return res.status(500).json({ success: false, message: 'Could not determine a default model to create the chat.' });
     }
 
-    const chatTitleBase = query ? query : (fileIds && fileIds.length > 0 ? `Analysis of ${fileIds.length} file(s)` : 'Live Search Task');
-    const finalChatTitle = title || `Live Search: ${chatTitleBase.substring(0, 30)}${chatTitleBase.length > 30 ? '...' : ''}`;
+    const chatTitleBase = query ? query : (fileIds && fileIds.length > 0 ? `Analysis of ${fileIds.length} file(s)` : 'Deep Search Task');
+    const finalChatTitle = title || `Deep Search: ${chatTitleBase.substring(0, 30)}${chatTitleBase.length > 30 ? '...' : ''}`;
 
     chatId = await Chat.create({ userId, modelId: userDefaultModelId, title: finalChatTitle });
 
@@ -289,24 +291,24 @@ exports.handleDeepSearchRequest = async (req, res) => {
     res.status(201).json({ success: true, message: 'Deep search chat created.', data: { chatId, initialUserMessage } });
 
   } catch (chatCreateError) {
-    console.error('[Live Search] Error creating initial chat/message:', chatCreateError);
+    console.error('[Deep Search] Error creating initial chat/message:', chatCreateError);
     if (!res.headersSent) {
-        return res.status(500).json({ success: false, message: 'Failed to initialize live search chat.' });
+        return res.status(500).json({ success: false, message: 'Failed to initialize deep search chat.' });
     } else {
-        console.error('[Live Search] Headers already sent, could not send chat creation error response.');
+        console.error('[Deep Search] Headers already sent, could not send chat creation error response.');
         return; 
     }
   }
 
   // Ensure chatId is valid before proceeding
   if (!chatId) {
-      console.error('[Live Search Ctrl] Chat ID is invalid after chat creation attempt.');
+      console.error('[Deep Search Ctrl] Chat ID is invalid after chat creation attempt.');
       return;
   }
 
   // --- Trigger the Asynchronous Internal Tool Call ---
   MCPService.callInternalTool( 
-      'live-search',       
+      'deep-search',       
       { 
         query,
         reasoningModelName: actualModelIdentifier, 
@@ -317,8 +319,8 @@ exports.handleDeepSearchRequest = async (req, res) => {
       chatId
     }
   ).catch(mcpError => {
-      console.error(`[Live Search Ctrl] Failed to trigger MCP tool 'live-search' for chat ${chatId}:`, mcpError);
-      Message.create({ chat_id: chatId, role: 'system', content: `Error: Failed to start the Live Search process. ${mcpError.message}` }).catch(console.error);
+      console.error(`[Deep Search Ctrl] Failed to trigger MCP tool 'deep-search' for chat ${chatId}:`, mcpError);
+      Message.create({ chat_id: chatId, role: 'system', content: `Error: Failed to start the Deep Search process. ${mcpError.message}` }).catch(console.error);
   });
 
 };
@@ -331,7 +333,7 @@ exports.handleDeepSearchRequest = async (req, res) => {
  */
 exports.runToolInChat = async (req, res) => {
     const { chatId } = req.params;
-    const { toolName, args } = req.body; 
+    const { toolName, args } = req.body; // args should contain the user query, e.g., { query: "..." }
     const userId = req.user?.id;
 
     // --- Basic Validation ---
@@ -347,9 +349,9 @@ exports.runToolInChat = async (req, res) => {
     if (!args || typeof args !== 'object') {
         return res.status(400).json({ success: false, message: 'Tool arguments are required.' });
     }
-    // Specific validation for live-search query
-    if (toolName === 'live-search' && (!args.query || typeof args.query !== 'string')) {
-         return res.status(400).json({ success: false, message: 'Query argument is required for live-search tool.' });
+    // Specific validation for deep-search query
+    if (toolName === 'deep-search' && (!args.query || typeof args.query !== 'string')) {
+         return res.status(400).json({ success: false, message: 'Query argument is required for deep-search tool.' });
     }
 
     const numericChatId = parseInt(chatId, 10);
@@ -365,12 +367,14 @@ exports.runToolInChat = async (req, res) => {
         }
 
         // --- Save User's Query/Trigger as a Message ---
+        // Construct a user message content based on the tool and query
         let userMessageContent = `Using tool: ${toolName}`;
         if (args.query) {
-            userMessageContent = args.query; 
+            userMessageContent = args.query; // Use the query directly as the user message
         } else if (args.fileIds && args.fileIds.length > 0) {
              userMessageContent = `Initiated ${toolName} with ${args.fileIds.length} file(s).`;
         }
+        // Add more specific message content generation if needed for other tools
 
         const userMessageId = await Message.create({
             chat_id: numericChatId,
@@ -380,6 +384,7 @@ exports.runToolInChat = async (req, res) => {
         const initialUserMessage = await Message.findById(userMessageId); 
 
         // --- Respond Immediately ---
+        // Indicate that the tool process has started in the background
         res.status(202).json({
             success: true,
             message: `Tool '${toolName}' started successfully in chat ${numericChatId}.`,
@@ -387,34 +392,55 @@ exports.runToolInChat = async (req, res) => {
         });
 
         // --- Trigger Asynchronous Tool Call ---
+        // Prepare context and arguments for the tool
         const toolContext = { userId, chatId: numericChatId };
         let toolArgs = { ...args }; 
 
-        if (toolName === 'live-search') {
+        if (toolName === 'deep-search') {
             const configRow = await db.getAsync(
                 'SELECT config FROM user_tool_configs WHERE user_id = ? AND tool_name = ?',
-                [userId, 'live-search']
+                [userId, 'deep-search']
             );
-            // For the simplified live search, configuration is optional
-            if (configRow && configRow.config) {
-                const toolConfig = JSON.parse(configRow.config);
-                
-                if (toolConfig.max_results !== undefined) {
-                    toolArgs.max_results = toolConfig.max_results;
-                }
+            if (!configRow || !configRow.config) throw new Error('Deep Search configuration not found.');
+            const toolConfig = JSON.parse(configRow.config);
+            let reasoningModelIdentifier = toolConfig.reasoningModelName; 
+            // Removed the explicit check for reasoningModelIdentifier here.
+            // The deep-search tool itself will handle the fallback if it's not provided.
+
+            if (reasoningModelIdentifier && /^\d+$/.test(reasoningModelIdentifier)) { 
+                 const modelRecord = await db.getAsync('SELECT name, external_model_id FROM models WHERE id = ?', [parseInt(reasoningModelIdentifier, 10)]);
+                 if (!modelRecord) throw new Error(`Configured reasoning model ID ${reasoningModelIdentifier} not found.`);
+                 reasoningModelIdentifier = modelRecord.external_model_id || modelRecord.name;
             }
+            toolArgs.reasoningModelName = reasoningModelIdentifier; 
+
+            if (toolConfig.search_providers) {
+                toolArgs.search_providers = toolConfig.search_providers;
+            }
+            if (toolConfig.max_iterations !== undefined) { 
+                toolArgs.max_iterations = toolConfig.max_iterations;
+            }
+            // fileIds are usually passed directly in req.body.args if needed for a specific run,
+            // but if they were part of a saved config, they could be merged too:
+            // if (toolConfig.fileIds) {
+            //    toolArgs.fileIds = toolConfig.fileIds;
+            // }
         }
 
 
         MCPService.callInternalTool(toolName, toolArgs, toolContext)
             .then(result => {
+                // Tool finished, result already saved as message by the tool itself
+                // Optionally send a final "Tool finished" system message?
+                // Message.create({ chatId: numericChatId, role: 'system', content: `Tool '${toolName}' finished.` }).catch(console.error);
             })
             .catch(toolError => {
                 console.error(`[Agent Ctrl] Background execution of internal tool '${toolName}' for chat ${numericChatId} failed:`, toolError);
                 let systemMessageContent;
                 if (toolError instanceof UserCancelledError) {
-                    systemMessageContent = toolError.message; 
-                                                            
+                    // Use a more direct message for user cancellations
+                    systemMessageContent = toolError.message; // e.g., "Deep Search cancelled by user."
+                                                            // Or a slightly friendlier version: `Tool '${toolName}' was cancelled as requested.`
                 } else {
                     systemMessageContent = `Error running tool '${toolName}': ${toolError.message}`;
                 }

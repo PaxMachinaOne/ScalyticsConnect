@@ -40,7 +40,7 @@ sequenceDiagram
         API-->>-Client: HTTP Response
     end
 
-    alt Tool Message Creation (e.g., Live Search Result)
+    alt Tool Message Creation (e.g., Deep Search Result)
         Client->>+API: POST /api/chats/:id/run-tool (tool args)
         API->>+Controller: handleRunTool(req, res)
         Controller->>Controller: Executes Tool Logic (e.g., deepSearchTool.js)
@@ -83,7 +83,7 @@ Standard user messages sent from the UI typically use the following endpoint:
 
 ### b) Via Internal Tool Execution
 
-Backend processes or MCP tools that generate results intended for the chat (like Live Search) create messages directly using the `Message` model:
+Backend processes or MCP tools that generate results intended for the chat (like Deep Search) create messages directly using the `Message` model:
 
 *   **Method:** `Message.create(userId, chatId, content, [messageType], [metadata])`
 *   **Context:** This is typically called from within a service or controller handling the tool's execution (e.g., within `deepSearchTool.js` or the controller that invokes it).
@@ -109,7 +109,7 @@ When developing an MCP tool that needs to post results or updates to the chat:
 *   **Use `Message.create()`:** The tool's backend logic (likely running within a Node.js service invoked by the MCP framework) should use the `Message.create()` model method to save its output as a message associated with the correct `chatId` and `userId`.
 *   **Emit `chat:message_created`:** Ensure the controller or service managing the tool's execution flow emits the `chat:message_created` event on the internal `eventBus` after the message is successfully saved to the database. This is essential for the UI to update in real-time.
 *   **Consider Message Types:** Use the optional `messageType` parameter in `Message.create()` (e.g., `'tool_update'`, `'tool_final_result'`) to differentiate tool messages from regular user/assistant messages if needed for specific UI rendering.
-*   **Streaming:** For tools that generate output incrementally (like Live Search), consider using the dedicated tool streaming mechanism (`tool_stream_started`, `tool_stream_chunk`, etc.) managed by `streamingManager.js` on the frontend, rather than creating many small messages. Final results, however, should still typically be saved via `Message.create()`.
+*   **Streaming:** For tools that generate output incrementally (like Deep Search), consider using the dedicated tool streaming mechanism (`tool_stream_started`, `tool_stream_chunk`, etc.) managed by `streamingManager.js` on the frontend, rather than creating many small messages. Final results, however, should still typically be saved via `Message.create()`.
 
 ## 6. Key Events
 

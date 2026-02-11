@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Supported model families configuration
  * Only these model families will be allowed in search and download
  */
 
 export const SUPPORTED_FAMILIES = [
+  { id: 'gpt', name: 'GPT', description: 'OpenAI GPT models (requires 2x H100 80GB or 8x L4 24GB)' },
   { id: 'llama', name: 'Llama', description: 'Meta\'s Large Language Model' },
   { id: 'mistral', name: 'Mistral / Mixtral', description: 'Mistral AI\'s language models (includes Mixtral)' },
   { id: 'deepseek', name: 'DeepSeek', description: 'DeepSeek language models' },

@@ -1,5 +1,7 @@
 #!/bin/bash
-# Setup script for Hugging Face model management using the SaaS Python environment
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
+# Setup script for Hugging Face model management using the deployment Python environment
 
 # Make the download script executable
 chmod +x download_hf_model.py
@@ -34,7 +36,7 @@ if [ -n "$ENV_FILE" ]; then
     source "$ENV_FILE"
 fi
 
-# Find the SaaS Python virtual environment
+# Find the deployment Python virtual environment
 find_saas_venv() {
     # First check environment variable
     if [ -n "$PYTHON_VENV_DIR" ] && [ -d "$PYTHON_VENV_DIR" ]; then
@@ -62,7 +64,7 @@ find_saas_venv() {
         fi
     done
     
-    echo "SaaS Python virtual environment not found" >&2
+    echo "deployment Python virtual environment not found" >&2
     return 1
 }
 
@@ -103,12 +105,12 @@ PIPCONF
 # Find the venv
 VENV_DIR=$(find_saas_venv)
 if [ -z "$VENV_DIR" ]; then
-    echo "ERROR: Could not find the SaaS Python virtual environment."
-    echo "The environment should be set up by the saas/modules/python.sh script."
+    echo "ERROR: Could not find the deployment Python virtual environment."
+    echo "The environment should be set up by the deploy/modules/python.sh script."
     exit 1
 fi
 
-echo "Found SaaS Python virtual environment at: $VENV_DIR"
+echo "Found deployment Python virtual environment at: $VENV_DIR"
 
 # Check if Python activation script exists
 if [ ! -f "$VENV_DIR/bin/activate" ]; then
@@ -131,7 +133,7 @@ fi
 configure_pip_environment "$VENV_DIR"
 
 # Install required packages using the venv pip
-echo "Installing required Python packages to SaaS virtual environment..."
+echo "Installing required Python packages to deployment virtual environment..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
     python -m pip install --no-user --isolated --no-cache-dir --disable-pip-version-check -r "$SCRIPT_DIR/requirements.txt"
 else
@@ -157,15 +159,15 @@ fi
 # Create activation helper script in scripts directory
 cat > "$SCRIPT_DIR/activate_hf_env.sh" << EOL
 #!/bin/bash
-# Activate the SaaS Python virtual environment for Hugging Face
+# Activate the deployment Python virtual environment for Hugging Face
 source "$VENV_DIR/bin/activate"
-echo "SaaS Python virtual environment activated for Hugging Face. Run 'deactivate' to exit."
+echo "deployment Python virtual environment activated for Hugging Face. Run 'deactivate' to exit."
 EOL
 chmod +x "$SCRIPT_DIR/activate_hf_env.sh"
 
 echo
 echo "Setup complete! You can now use the Hugging Face model management features."
-echo "The scripts will now use the SaaS Python environment at: $VENV_DIR"
+echo "The scripts will now use the deployment Python environment at: $VENV_DIR"
 echo
 echo "To manually activate this environment, run:"
 echo "source $SCRIPT_DIR/activate_hf_env.sh"

@@ -1,11 +1,13 @@
 #!/bin/bash
-# Activate the SaaS Python virtual environment for Hugging Face
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
+# Activate the deployment Python virtual environment for Hugging Face
 
 # Script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 APP_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# Find the SaaS Python virtual environment
+# Find the deployment Python virtual environment
 find_saas_venv() {
     # First check environment variable
     if [ -n "$PYTHON_VENV_DIR" ] && [ -d "$PYTHON_VENV_DIR" ]; then
@@ -34,7 +36,7 @@ find_saas_venv() {
         fi
     done
     
-    echo "SaaS Python virtual environment not found" >&2
+    echo "deployment Python virtual environment not found" >&2
     return 1
 }
 
@@ -79,7 +81,7 @@ PIPCONF
 # Find the venv
 VENV_DIR=$(find_saas_venv)
 if [ -z "$VENV_DIR" ]; then
-    echo "ERROR: Could not find the SaaS Python virtual environment."
+    echo "ERROR: Could not find the deployment Python virtual environment."
     echo "Run setup_huggingface.sh first to create the environment."
     return 1
 fi
@@ -97,7 +99,7 @@ configure_pip_environment "$VENV_DIR"
 # Activate the virtual environment
 source "$VENV_DIR/bin/activate"
 
-echo "SaaS Python virtual environment activated for Hugging Face."
+echo "deployment Python virtual environment activated for Hugging Face."
 echo "Environment location: $VENV_DIR"
 echo "Use 'deactivate' to exit the environment"
 echo "All pip commands will use the isolated configuration"

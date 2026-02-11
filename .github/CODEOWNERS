@@ -1,0 +1,13 @@
+# Default ownership
+* @scalytics
+
+# Backend
+/src/ @scalytics
+/scripts/ @scalytics
+
+# Frontend
+/frontend/ @scalytics
+
+# Deployment and docs
+/deploy/ @scalytics
+/docs/ @scalytics

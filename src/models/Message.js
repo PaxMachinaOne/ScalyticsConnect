@@ -124,6 +124,12 @@ class Message {
         fields.push('isLoading = ?');
         values.push(data.isLoading ? 1 : 0); 
       }
+
+      // Handle mcp_metadata updates
+      if (data.mcp_metadata !== undefined) {
+        fields.push('mcp_metadata = ?');
+        values.push(data.mcp_metadata ? JSON.stringify(data.mcp_metadata) : null);
+      }
       
       // No fields to update
       if (fields.length === 0) {

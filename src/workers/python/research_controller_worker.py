@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 """
 Research Controller Worker
 Orchestrates the iterative deep research process.
@@ -92,7 +94,7 @@ class ResearchControllerWorker:
 
             doc_to_store = {
                 "textContent": item_data["content"],
-                "chatId": f"live_search_{request_id}",
+                "chatId": f"deep_search_{request_id}", 
                 "source": json.dumps(source_info) 
             }
             docs_for_librarian.append(doc_to_store)

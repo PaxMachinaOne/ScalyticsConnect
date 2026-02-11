@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # Advanced PM2 Reset Script
 # Fixes common PM2 errors including "spawn bash ENOENT" and "invalid PID" errors
 
@@ -45,11 +47,11 @@ if [ ! -f "$CURR_DIR/ecosystem.config.js" ]; then
   echo -e "${RED}ecosystem.config.js not found. Creating from template...${NC}"
   
   # Check if we have a pm2.sh module to create the config
-  if [ -f "$CURR_DIR/saas/modules/pm2.sh" ]; then
+  if [ -f "$CURR_DIR/deploy/modules/pm2.sh" ]; then
     echo -e "${YELLOW}Using pm2.sh module to create ecosystem.config.js${NC}"
-    source "$CURR_DIR/saas/modules/pm2.sh"
-    source "$CURR_DIR/saas/modules/utils.sh" 2>/dev/null || true
-    source "$CURR_DIR/saas/modules/env.sh" 2>/dev/null || true
+    source "$CURR_DIR/deploy/modules/pm2.sh"
+    source "$CURR_DIR/deploy/modules/utils.sh" 2>/dev/null || true
+    source "$CURR_DIR/deploy/modules/env.sh" 2>/dev/null || true
     
     # Create the ecosystem config
     create_ecosystem_config "$CURR_DIR" "connect" "3000" "$CURR_DIR/venv"

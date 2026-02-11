@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const path = require('path');
 const fs = require('fs').promises;
 const { db } = require('../models/db');
@@ -40,10 +42,11 @@ exports.createChatCompletion = async (options) => {
   const placeholderAssistantMessageId = streamingContext?.messageId;
 
   // --- Internal Tool Command Check ---
-  if (userMessage && userMessage.toLowerCase().startsWith('/livesearch ')) {
+  // Example: Check for "/deepsearch" command
+  if (userMessage && userMessage.toLowerCase().startsWith('/deepsearch ')) {
     const MCPService = require('./agents/MCPService'); 
-    const toolName = 'live-search';
-    const query = userMessage.substring('/livesearch '.length).trim();
+    const toolName = 'deep-search';
+    const query = userMessage.substring('/deepsearch '.length).trim();
 
     if (placeholderAssistantMessageId && streamingContext && streamingContext.chatId) {
       try {
@@ -88,7 +91,7 @@ exports.createChatCompletion = async (options) => {
           reasoningModelName: reasoningModelIdentifier,
           search_providers: toolConfig.search_providers || [],
           max_iterations: toolConfig.max_iterations !== undefined ? toolConfig.max_iterations : 10,
-          fileIds: files || [] 
+          fileIds: files || [] // Pass file IDs if any
       };
       const toolContext = { userId, chatId: streamingContext?.chatId };
 
@@ -135,12 +138,19 @@ exports.createChatCompletion = async (options) => {
 
   try {
     // --- External Model Handling OR Image Prompt Handling ---
+    // If it's an image prompt, we always want to use the external request handler
+    // because it contains the logic to switch to the user's configured image generation model.
+    // If it's a text prompt with an external model, also use this handler.
     if (isImagePrompt || model.external_provider_id) {
-      if (model.external_provider_id && privateMode && !process.env.ALLOW_EXTERNAL_IN_PRIVATE) { 
+      if (model.external_provider_id && privateMode && !process.env.ALLOW_EXTERNAL_IN_PRIVATE) { // Only check private mode for external text models
         await Message.update(placeholderAssistantMessageId, { content: 'External APIs cannot be used in private mode', isLoading: false });
         throw new Error('External APIs cannot be used in private mode.');
       }
 
+      // Note: handleExternalApiRequest needs to be adapted to potentially run async
+      // and update the placeholder message upon completion/error, similar to local models.
+      // This might require passing the placeholder ID into it.
+      // Process files first to get combined message for external providers
       const fileContentsForExternal = await processFilesForContext(files, userId);
       const combinedUserMessageForExternal = fileContentsForExternal ? `${fileContentsForExternal}\n\n${userMessage}` : userMessage;
 
@@ -157,6 +167,8 @@ exports.createChatCompletion = async (options) => {
           previousMessages: isImagePrompt ? [] : previousMessages, 
           userId,
           files: filesForProvider,
+          // For image generation, we might not use streaming in the same way,
+          // as the image is usually returned as a whole.
           streamingContext: isImagePrompt ? null : streamingContext, 
           onToken: isImagePrompt ? null : onToken 
       });
@@ -188,6 +200,7 @@ exports.createChatCompletion = async (options) => {
     }
 
     // --- Local Model Handling (Text-only, no changes needed for image generation here) ---
+    // Process files for context (assuming files are IDs) - Moved helper function definition below
     const fileContents = await processFilesForContext(files, userId);
     let combinedUserMessage = fileContents ? `${fileContents}\n\n${userMessage}` : userMessage;
 
@@ -210,9 +223,11 @@ exports.createChatCompletion = async (options) => {
     }
     // --- End Feedback Integration ---
 
+    // Call the InferenceRouter (which handles formatting and worker pool)
     const streamProvider = require('./providers/stream'); 
 
     function getDefaultStopTokens(model, isJsonGeneration = false) {
+      // For JSON generation, use more aggressive stop tokens to prevent repetitive loops
       if (isJsonGeneration) {
         return ['<end_of_turn>', '<start_of_turn>', '\n\nUser:', '\n\nAssistant:', '</s>', '<|endoftext|>', '\n\n\n'];
       }
@@ -246,9 +261,11 @@ exports.createChatCompletion = async (options) => {
     // Define base parameters, adding default stop tokens
     const baseParameters = {
       temperature: 0.7,
+      // max_tokens is now determined by the inference router based on available context
       stop: getDefaultStopTokens(model) 
     };
 
+    // Allow overriding base parameters if provided in options (though not currently used)
     const parameters = { ...baseParameters, ...(options.parameters || {}) };
 
     // --- Determine Effective System Prompt (User Prompt + Optional Enforced Scala Prompt) ---
@@ -321,6 +338,9 @@ exports.createChatCompletion = async (options) => {
 
     // Call the Inference Router which handles context management, summarization, formatting, and provider routing
     const inferenceRouter = require('./inferenceRouter'); 
+    // We are NOT awaiting routeInferenceRequest here. The controller initiated this async.
+    // The router needs to handle updating the DB message internally upon completion/error.
+    // We pass the placeholder ID via streamingContext.
     const responsePromise = inferenceRouter.routeInferenceRequest({
       modelId: model.id,
       messages: messagesForRouter, 
@@ -345,16 +365,53 @@ exports.createChatCompletion = async (options) => {
   }
 };
 
+/**
+ * Replaces the entire message history for a chat.
+ * @param {number} chatId - The ID of the chat to update.
+ * @param {Array<object>} newMessages - The new array of message objects.
+ */
+exports.replaceChatHistory = async (chatId, newMessages) => {
+  try {
+    await Message.deleteByChatId(chatId);
+    let currentSortOrder = 0;
+    for (const msg of newMessages) {
+      await Message.create({
+        chat_id: chatId,
+        user_id: msg.user_id || null,
+        role: msg.role,
+        content: msg.content,
+        tokens: msg.tokens || 0,
+        mcp_metadata: msg.mcp_metadata || null,
+        mcp_permissions: msg.mcp_permissions || null,
+        isLoading: false,
+        sort_order: currentSortOrder++,
+      });
+    }
+    await Chat.update(chatId, { updated_at: new Date().toISOString() });
+    console.log(`[ChatService] Replaced history for chat ${chatId}.`);
+  } catch (error) {
+    console.error(`[ChatService] Error replacing chat history for chat ${chatId}:`, error);
+    throw error;
+  }
+};
+
+// Helper function to process files and prepare them for AI context
 async function processFilesForContext(fileIds, userId) {
   try {
     if (!fileIds || fileIds.length === 0) return '';
 
+    // Import needed service here as it's now internal to this module
+    // Correct the path: it should be relative to this file (src/services)
     const fileProcessingService = require('./fileProcessingService');
+
+    // Process files in parallel for efficiency
     const fileResults = await Promise.all(
       fileIds.map(async (fileId) => {
         try {
+          // Use the fileProcessingService to get file content
           const fileData = await fileProcessingService.processFileForModel(fileId, userId);
 
+          // Format file content for inclusion in AI prompt
           return `--- File: ${fileData.filename} (${fileData.type}) ---\n${fileData.contents}\n`;
         } catch (error) {
           console.error(`Error processing file ${fileId}:`, error);
@@ -363,6 +420,7 @@ async function processFilesForContext(fileIds, userId) {
       })
     );
 
+    // Combine all file contents with separators
     return fileResults.join('\n');
   } catch (error) {
     console.error('Error processing files for context:', error);

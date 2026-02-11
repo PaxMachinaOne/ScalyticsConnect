@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * API routes configuration
  */
@@ -33,11 +35,10 @@ function setupRoutes(app, middleware) {
   const scalyticsApiRoutes = require('../routes/scalyticsApiRoutes');
   const adminFilteringRoutes = require('../routes/adminFilteringRoutes'); 
   const filterDataRoutes = require('../routes/filterDataRoutes');
-  const internalApiController = require('../controllers/internalApiController'); 
 
   // --- Mount Standard API Routes ---
   app.use('/api/auth', authRoutes);
-  app.use('/api/chat', chatRoutes); 
+  app.use('/api/chat', chatRoutes);
   app.get('/api/chats/usage/monthly', middleware.protect, chatController.getMonthlyTokenUsage);
   app.use('/api/models', modelRoutes);
   app.use('/api/admin/filters', adminFilteringRoutes);
@@ -56,9 +57,6 @@ function setupRoutes(app, middleware) {
   app.use('/api/system', systemMaintenanceRoutes);
   app.use('/api/docs', middleware.protect, documentationRoutes);
   app.use('/api/mcp', mcpRoutes);
-
-  // --- Internal API Routes (should be restricted, e.g., by firewall or specific middleware if not localhost only) ---
-  app.post('/api/internal/v1/local_completion', internalApiController.handleInternalLocalCompletion);
 
   app.use('/v1', scalyticsApiRoutes);
 

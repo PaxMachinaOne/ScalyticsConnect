@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 
 # Script to download Hugging Face models directly using curl
 # This bypasses Python's SSL issues entirely by using the system's curl command

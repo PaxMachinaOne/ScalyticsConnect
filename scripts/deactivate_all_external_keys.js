@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Script to deactivate all external API keys (both user and global)
  * To be run when troubleshooting privacy mode issues or as part of privacy mode setup

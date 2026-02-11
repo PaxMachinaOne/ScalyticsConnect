@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
@@ -13,7 +15,7 @@ if (!fs.existsSync(dataDir)) {
 }
 
 // Get DB_PATH from .env if it exists, otherwise use default
-let DB_PATH = path.join(dataDir, 'community.db');
+let DB_PATH = path.join(dataDir, 'mcp.db');
 try {
   const envPath = path.join(__dirname, '../.env');
   if (fs.existsSync(envPath)) {
@@ -126,7 +128,6 @@ async function applySchemaUpdates() {
 // Function to check database schema
 async function checkSchema() { // Made async
   console.log('🔍 Performing comprehensive database check...');
-  await ensureGroupsTablesExist(); // Ensure groups tables are checked/created
 
   // Use promise-based approach for better async control
   // Wrap the entire logic in a promise to handle db.close correctly
@@ -254,51 +255,6 @@ async function executeSchema(sqlStatements) {
         };
 
         executeNext(); // Start executing statements
-      });
-    });
-  });
-}
-
-// Function to ensure groups tables exist
-async function ensureGroupsTablesExist() {
-  return new Promise((resolve, reject) => {
-    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='groups'", (err, row) => {
-      if (err) return reject(err);
-      if (row) return resolve(); // Tables exist
-
-      console.log('⚠️ Groups tables not found, creating them...');
-      const groupsSchema = `
-        CREATE TABLE IF NOT EXISTS groups (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE NOT NULL,
-          description TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS user_groups (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          group_id INTEGER NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-          FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
-          UNIQUE(user_id, group_id)
-        );
-        CREATE TABLE IF NOT EXISTS group_admin_permissions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          group_id INTEGER NOT NULL,
-          permission_id INTEGER NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
-          FOREIGN KEY (permission_id) REFERENCES admin_permissions (id) ON DELETE CASCADE,
-          UNIQUE(group_id, permission_id)
-        );
-        INSERT OR IGNORE INTO groups (name, description) VALUES ('User', 'Default user group');
-      `;
-      db.exec(groupsSchema, (execErr) => {
-        if (execErr) return reject(execErr);
-        console.log('✅ Groups tables created successfully.');
-        resolve();
       });
     });
   });

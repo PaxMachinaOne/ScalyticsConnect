@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
+import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
+import ModelLoadingContext from '../../contexts/ModelLoadingContext';
 import socketService from '../../services/socketService';
 import { websocketManager } from '../../services/websocketManager';
 import ChatBubble from './ChatBubble';
@@ -24,7 +27,8 @@ const ChatContent = (props) => {
     isModelAvailable, 
     isModelActive,
     isToolStreamingThisChat = false,
-    isImageGenerationAvailable 
+    isImageGenerationAvailable,
+    reasoningSteps
   } = props;
 
   const [message, setMessage] = useState('');
@@ -42,6 +46,7 @@ const ChatContent = (props) => {
   const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false);
   const [publicToolsLoading, setPublicToolsLoading] = useState(true);
   const [isImagePromptMode, setIsImagePromptMode] = useState(false);
+  const { loadingModel } = useContext(ModelLoadingContext);
 
   useEffect(() => {
     if (!isToolStreamingThisChat && isStoppingDeepSearch) {
@@ -55,7 +60,7 @@ const ChatContent = (props) => {
       try {
         const response = await apiService.get('/mcp/public-tools/status');
         if (response.success && response.data) {
-          setIsDeepSearchEnabled(!!response.data['live-search']);
+          setIsDeepSearchEnabled(!!response.data['deep-search']);
         } else {
           setIsDeepSearchEnabled(false);
         }
@@ -166,20 +171,20 @@ const ChatContent = (props) => {
       return;
     }
 
-    if (activeInputTool === 'live-search') {
-      if (!isDeepSearchEnabled) { setInputError('Live Search is currently disabled.'); return; }
-      if (!trimmedMessage) { setInputError('Please enter a query for Live Search.'); return; }
+    if (activeInputTool === 'deep-search') {
+      if (!isDeepSearchEnabled) { setInputError('Deep Search is currently disabled.'); return; }
+      if (!trimmedMessage) { setInputError('Please enter a query for Deep Search.'); return; }
       setInputError('');
       try {
         const currentFileIds = uploadedFiles.map(file => file.id);
         const toolArgs = { query: trimmedMessage, ...(currentFileIds.length > 0 && { fileIds: currentFileIds }) };
-        await apiService.post(`/chat/${chatId}/run-tool`, { toolName: 'live-search', args: toolArgs });
+        await apiService.post(`/chat/${chatId}/run-tool`, { toolName: 'deep-search', args: toolArgs });
         setMessage(''); setUploadedFiles([]); 
         if (textareaRef.current) textareaRef.current.style.height = 'auto'; 
       } catch (err) {
-        setInputError(`Failed to start Live Search: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        setInputError(`Failed to start Deep Search: ${err.response?.data?.message || err.message || 'Unknown error'}`);
       }
-    } else { // Chat mode (text or image)
+    } else {
       const canSendImagePrompt = isImagePromptMode && isImageGenerationAvailable && trimmedMessage;
       const canSendTextPrompt = !isImagePromptMode && (trimmedMessage || uploadedFiles.length > 0);
 
@@ -269,11 +274,11 @@ const ChatContent = (props) => {
 
   const toggleDeepSearchMode = () => {
     if (isImagePromptMode) { 
-      toast.info("Disable image generation mode to use Live Search.", { position: "bottom-right" });
+      toast.info("Disable image generation mode to use Deep Search.", { position: "bottom-right" });
       return;
     }
     if (!isDeepSearchEnabled && activeInputTool === 'chat') {
-      toast.warn("Live Search is currently disabled by the administrator.", { position: "bottom-right" });
+      toast.warn("Deep Search is currently disabled by the administrator.", { position: "bottom-right" });
       return;
     }
     setActiveInputTool(prev => prev === 'deep-search' ? 'chat' : 'deep-search');
@@ -286,7 +291,7 @@ const ChatContent = (props) => {
       return;
     }
     if (activeInputTool === 'deep-search') {
-      toast.info("Disable Live Search mode to use Image Generation.", { position: "bottom-right" });
+      toast.info("Disable Deep Search mode to use Image Generation.", { position: "bottom-right" });
       return;
     }
     setIsImagePromptMode(prev => !prev);
@@ -326,9 +331,9 @@ const ChatContent = (props) => {
                 );
             }
             return messagesToDisplay.map((msg) => (
-              <ChatBubble key={msg.id} message={msg} isLoading={!!msg.isLoading} streamingContent={streamingMessages[msg.id] || null} handleFeedbackUpdate={handleFeedbackUpdate} onSuggestionClick={handleSuggestionClicked} />
+              <ChatBubble key={msg.id} message={msg} isLoading={!!msg.isLoading} streamingContent={streamingMessages[msg.id] || null} handleFeedbackUpdate={handleFeedbackUpdate} onSuggestionClick={handleSuggestionClicked} reasoningSteps={reasoningSteps} />
             ));
-          }, [chat?.messages, userSettings?.display_summarization_notice, streamingMessages, handleFeedbackUpdate, handleSuggestionClicked, sending])}
+          }, [chat?.messages, userSettings?.display_summarization_notice, streamingMessages, handleFeedbackUpdate, handleSuggestionClicked, sending, reasoningSteps])}
         </div>
       </div>
       <ChatScrollButton show={showScrollButton} onClick={scrollToBottom} />
@@ -354,7 +359,7 @@ const ChatContent = (props) => {
             {inputError && <div className="text-red-500 dark:text-red-400 text-xs mb-2">{inputError}</div>}
             
             {(activeInputTool === 'deep-search' && isDeepSearchEnabled) && !isImagePromptMode && (
-              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-0.5 rounded-full shadow">Live Search Active</div>
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-0.5 rounded-full shadow">Deep Search Active</div>
             )}
              {isImagePromptMode && isImageGenerationAvailable && (
               <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full shadow">Image Generation Active</div>
@@ -380,17 +385,17 @@ const ChatContent = (props) => {
                 className={`block w-full resize-none border-0 bg-transparent py-1.5 px-1 text-sm md:text-base text-gray-900 dark:text-dark-text-secondary placeholder-gray-500 dark:placeholder-dark-text-secondary focus:outline-none focus:ring-0 min-h-[24px] ${!isModelActive || (activeInputTool === 'deep-search' && !isDeepSearchEnabled && !isImagePromptMode) ? 'cursor-not-allowed' : ''}`}
                 rows="1" readOnly={!isModelActive || (activeInputTool === 'deep-search' && !isDeepSearchEnabled && !isImagePromptMode)}
                 style={{ maxHeight: "240px", overflowY: message && textareaRef.current && textareaRef.current.scrollHeight > 240 ? "auto" : "hidden", lineHeight: "24px" }}
-                disabled={(sending && activeInputTool === 'chat' && !isImagePromptMode) || (activeInputTool === 'deep-search' && (!isDeepSearchEnabled || isToolStreamingThisChat))}
+                disabled={loadingModel || (sending && activeInputTool === 'chat' && !isImagePromptMode) || (activeInputTool === 'deep-search' && (!isDeepSearchEnabled || isToolStreamingThisChat))}
                 placeholder={
+                  loadingModel ? "A new model is being loaded, please wait..." :
                   !isModelActive ? "Model is inactive" :
-                  activeInputTool === 'deep-search' && !isImagePromptMode ? (isDeepSearchEnabled ? "Enter Live Search query..." : "Live Search disabled") :
+                  activeInputTool === 'deep-search' && !isImagePromptMode ? (isDeepSearchEnabled ? "Enter Deep Search query..." : "Deep Search disabled") :
                   isImagePromptMode ? (isImageGenerationAvailable ? "Describe the image you want to generate..." : "Image Generation not available/configured") :
                   "Message Scalytics Connect..."
                 }
               />
               <div className="flex items-center justify-between space-x-1 mt-1.5 h-9">
                 <div className="flex items-center space-x-1">
-                  {/* Image Generation Button - Rendered if isImageGenerationAvailable is true, disabled/toast if conflicting mode */}
                   <button
                     type="button"
                     onClick={toggleImagePromptMode}
@@ -404,7 +409,7 @@ const ChatContent = (props) => {
                     }`}
                     title={
                       !isImageGenerationAvailable ? "Image Generation tool not available or not configured" :
-                      activeInputTool === 'deep-search' ? "Disable Live Search to use Image Generation" :
+                      activeInputTool === 'deep-search' ? "Disable Deep Search to use Image Generation" :
                       isImagePromptMode ? "Switch to Text Prompt Mode" : 
                       "Switch to Image Generation Mode"
                     }
@@ -415,8 +420,8 @@ const ChatContent = (props) => {
                   </button>
                   <button type="button" onClick={toggleDeepSearchMode} disabled={sending || publicToolsLoading || isImagePromptMode}
                     className={`p-1.5 rounded-full focus:outline-none transition-colors ${activeInputTool === 'deep-search' && isDeepSearchEnabled && !isImagePromptMode ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-700' : (sending || !isDeepSearchEnabled || publicToolsLoading || isImagePromptMode) ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    title={publicToolsLoading ? "Loading tools..." : isImagePromptMode ? "Live Search disabled in image mode" : (!isDeepSearchEnabled ? "Live Search disabled by admin" : (activeInputTool === 'deep-search' ? "Switch to Standard Chat" : "Activate Live Search"))}>
-                    <svg fill="currentColor" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M38.251 9.482c-40.067 11.274-39.759 66.555.429 77.023 3.157.822 7.446 1.495 9.53 1.495H52V77.2c0-11.691-.582-13.2-5.095-13.2-2.414 0-2.735-.417-3.076-4l-.382-4H52v-8H36v-4c0-3.376.322-4 2.066-4C42.505 40 44 38.228 44 32.965V28h4.566c3.772 0 7.455-1.017 9.276-2.561.188-.16.896-1.9 1.573-3.869l1.23-3.578 4.73 3.133C73.436 26.464 80 37.398 80 45.485c0 3.16 6.71 9.433 7.603 7.108 1.947-5.076-2.032-20.27-7.305-27.892C71.647 12.199 52.817 5.383 38.251 9.482m-1.382 8.423c-5.683 2.223-10.863 6.088-14.432 10.767l-2.698 3.537 4.13 4.131L28 40.471v-3.036C28 33.655 29.583 32 33.2 32c2.645 0 2.8-.245 2.8-4.429C36 21.339 37.693 20 45.571 20 51.333 20 52 19.793 52 18c0-2.661-8.436-2.714-15.131-.095m-20.46 24.47c-1.154 3.01.235 14.032 2.381 18.883 3.638 8.224 13.362 16.084 22.46 18.154 4.286.975 4.177-6.578-.12-8.358C37.959 69.74 36 66.353 36 62.183c0-3.78-18.546-22.531-19.591-19.808M60 60.027v19.214l4.555-3.732c2.505-2.053 4.704-3.57 4.885-3.371.182.199 2.013 4.253 4.069 9.01l3.737 8.647 3.627-1.505c1.995-.828 3.939-1.693 4.32-1.922.381-.228-1.081-4.275-3.25-8.991C79.774 72.66 78 68.621 78 68.4c0-.22 2.354-.4 5.23-.4h5.23l-9.48-9.572c-5.214-5.265-11.618-11.382-14.23-13.593L60 40.814v19.213" fillRule="evenodd"></path> </g></svg>
+                    title={publicToolsLoading ? "Loading tools..." : isImagePromptMode ? "Deep Search disabled in image mode" : (!isDeepSearchEnabled ? "Deep Search disabled by admin" : (activeInputTool === 'deep-search' ? "Switch to Standard Chat" : "Activate Deep Search"))}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </button>
                   <button type="button" onClick={triggerFileInput} disabled={sending || !isModelActive || isImagePromptMode}
                     className={`p-1.5 rounded-full ${(sending || !isModelActive || isImagePromptMode) ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'} focus:outline-none transition-colors`}
@@ -433,7 +438,7 @@ const ChatContent = (props) => {
                      (activeInputTool === 'deep-search' && isToolStreamingThisChat) ? (
                       <button type="button" onClick={() => { if (chatId && websocketManager.isConnected) { setIsStoppingDeepSearch(true); websocketManager.send('stop_deep_search', { requestId: chatId }); }}} disabled={isStoppingDeepSearch}
                         className={`p-1.5 rounded-full focus:outline-none transition-colors ${isStoppingDeepSearch ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' : 'text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400'}`}
-                        title={isStoppingDeepSearch ? "Stopping Live Search..." : "Stop Live Search"}>
+                        title={isStoppingDeepSearch ? "Stopping Deep Search..." : "Stop Deep Search"}>
                         {isStoppingDeepSearch ? <svg className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                           : <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><rect x="8" y="8" width="8" height="8" fill="currentColor"/></svg>}
                       </button>
@@ -443,7 +448,7 @@ const ChatContent = (props) => {
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><rect x="8" y="8" width="8" height="8" fill="currentColor"/></svg>
                       </button>
                     ) : ( 
-                      <button type="button" disabled={true} className="p-1.5 rounded-full text-gray-300 dark:text-gray-400 cursor-not-allowed" title={activeInputTool === 'deep-search' ? "Live Search Running..." : "Generating..."}>
+                      <button type="button" disabled={true} className="p-1.5 rounded-full text-gray-300 dark:text-gray-400 cursor-not-allowed" title={activeInputTool === 'deep-search' ? "Deep Search Running..." : "Generating..."}>
                         <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                       </button>
                     )
@@ -459,7 +464,7 @@ const ChatContent = (props) => {
                                 (activeInputTool === 'chat' && !isImagePromptMode && !message.trim() && uploadedFiles.length === 0) ||
                                 (activeInputTool === 'chat' && isImagePromptMode && (!isImageGenerationAvailable || !message.trim()))
                                 ) ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50' : 'text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400'} focus:outline-none transition-colors`}
-                      title={!isModelActive ? "Model is inactive" : (activeInputTool === 'deep-search' ? (isDeepSearchEnabled ? "Run Live Search" : "Live Search disabled by admin") : (isImagePromptMode ? (isImageGenerationAvailable ? "Generate Image" : "Image Generation tool not available or not configured") : "Send message"))}>
+                      title={!isModelActive ? "Model is inactive" : (activeInputTool === 'deep-search' ? (isDeepSearchEnabled ? "Run Deep Search" : "Deep Search disabled by admin") : (isImagePromptMode ? (isImageGenerationAvailable ? "Generate Image" : "Image Generation tool not available or not configured") : "Send message"))}>
                       <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M13 5.41V21a1 1 0 0 1-2 0V5.41l-5.3 5.3a1 1 0 1 1-1.4-1.42l7-7a1 1 0 0 1 1.4 0l7 7a1 1 0 1 1-1.4 1.42L13 5.4z"/></svg>
                     </button>
                   )}

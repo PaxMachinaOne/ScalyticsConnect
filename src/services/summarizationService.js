@@ -1,118 +1,142 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
+/**
+ * Summarization Service
+ *
+ * Handles the logic for summarizing long chat histories to fit within
+ * a model's context window.
+ */
+
+// Polyfill for fetch
+let fetchApi;
+if (typeof global.fetch === 'function') {
+  fetchApi = global.fetch.bind(global);
+} else {
+  try {
+    fetchApi = require('node-fetch');
+  } catch (err) {
+    console.error('Fetch API is unavailable. Please upgrade Node.js to >=18 or install node-fetch@2.');
+    throw err;
+  }
+}
+
+const vllmService = require('./vllmService');
 const Model = require('../models/Model');
-const { routeInferenceRequest } = require('./inferenceRouter'); 
-const { db } = require('../models/db'); 
-const apiKeyService = require('./apiKeyService');
+const { formatPromptForModel } = require('../models/prompting');
+const { handleExternalSummarizationRequest } = require('./providers/handler');
 
-
-const MAX_SUMMARY_TOKENS = 512; 
-const MESSAGES_TO_KEEP_AFTER_SUMMARY = 4; 
-
-const temperaturePresets = {
-  strict: 0.1,
-  balanced: 0.4,
-  detailed: 0.7,
-};
+const SUMMARIZATION_PROMPT =
+  "Concisely summarize the key points, decisions, and unanswered questions from the following conversation excerpt, focusing on information relevant for continuing the chat. Output only the summary text:\n\n";
+const TURNS_TO_KEEP_AFTER_SUMMARY = 3;
 
 /**
- * Summarizes a chat history when it exceeds a token threshold.
- *
- * @param {Array<Object>} messages - The original message history.
- * @param {number|null} preferredModelId - The model ID selected in user settings (or null).
- * @param {number} currentChatModelId - The ID of the model being used for the main chat.
- * @param {string} temperaturePreset - The user's selected temperature preset ('strict', 'balanced', 'detailed').
- * @param {number} userId - The ID of the user requesting the chat.
- * @returns {Promise<Array<Object>>} - A new message history array, potentially containing a summary.
- * @throws {Error} If summarization fails critically.
+ * Summarizes a chat history if it's too long.
+ * @param {Array<object>} originalMessages - The original message history.
+ * @param {object} userSettings - User-specific settings for summarization.
+ * @param {number} currentModelId - The ID of the model for the current chat.
+ * @param {number} userId - The ID of the user requesting the summarization.
+ * @returns {Promise<{newHistory: Array<object>, summaryText: string|null}>}
  */
-async function summarizeHistory(messages, preferredModelId, currentChatModelId, temperaturePreset, userId) {
-  console.log(`[Summarization Service] Attempting to summarize history for chat. Preferred Model: ${preferredModelId}, Current Model: ${currentChatModelId}`);
-
-  let summarizationModelId = preferredModelId;
-  let summarizationModel = null;
-
-  if (summarizationModelId) {
-    try {
-      summarizationModel = await Model.findById(summarizationModelId);
-      if (!summarizationModel || !summarizationModel.is_active || summarizationModel.external_provider_id) {
-        console.warn(`[Summarization Service] Preferred summarization model ${summarizationModelId} is inactive, external, or not found. Falling back to chat model.`);
-        summarizationModelId = currentChatModelId;
-        summarizationModel = await Model.findById(summarizationModelId);
-      }
-    } catch (err) {
-      console.error(`[Summarization Service] Error fetching preferred model ${summarizationModelId}. Falling back.`, err);
-      summarizationModelId = currentChatModelId;
-      summarizationModel = await Model.findById(summarizationModelId);
-    }
-  } else {
-    summarizationModelId = currentChatModelId;
-    summarizationModel = await Model.findById(summarizationModelId);
-  }
-
-  if (!summarizationModel || !summarizationModel.is_active) {
-    console.error(`[Summarization Service] Failed to find an active model (tried ${preferredModelId} and ${currentChatModelId}). Cannot summarize.`);
-    return messages;
-  }
-
-  console.log(`[Summarization Service] Using model ${summarizationModel.name} (ID: ${summarizationModelId}) for summarization.`);
-
-  const conversationMessagesToSummarize = messages
-    .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-    .map(msg => ({ role: msg.role, content: msg.content })); 
-
-  const systemInstruction = "You are an expert summarization AI. Your task is to provide a concise summary of the following conversation history. Focus on extracting key information, decisions, and main topics. Output only the summary text itself, without any conversational preamble or commentary.";
-  
-  const userPromptForSummary = "CONCISE SUMMARY OF THE ABOVE CONVERSATION HISTORY:";
-
-  const summarizationMessages = [
-    { role: 'system', content: systemInstruction },
-    ...conversationMessagesToSummarize, 
-    { role: 'user', content: userPromptForSummary } 
-  ];
-
-  const temperature = temperaturePresets[temperaturePreset] || temperaturePresets.balanced; 
-
+async function summarizeHistory(originalMessages, userSettings, currentModelId, userId) {
   try {
-    const result = await routeInferenceRequest({
-      modelId: summarizationModelId,
-      messages: summarizationMessages, 
-      parameters: {
-        temperature: temperature,
-        max_tokens: MAX_SUMMARY_TOKENS,
-        stop: ["\nUser:", "\nAssistant:"]
-      },
-      userId: userId,
-      onToken: null, 
-      autoTruncate: true 
-    });
+    const summarizationModel = await Model.findById(currentModelId);
 
-    if (!result || !result.message || result.message.trim() === '') {
-      throw new Error('Summarization model returned an empty response.');
+    if (!summarizationModel) {
+      console.error(`[SummarizationService] Model ${currentModelId} not found.`);
+      return { newHistory: originalMessages, summaryText: null };
     }
 
-    const summaryContent = result.message.trim();
-    console.log(`[Summarization Service] Summary generated successfully (${summaryContent.length} chars).`);
+    let temperature = 0.4;
+    switch (userSettings.summarization_temperature_preset) {
+      case 'strict':
+        temperature = 0.1;
+        break;
+      case 'balanced':
+        temperature = 0.4;
+        break;
+      case 'detailed':
+        temperature = 0.7;
+        break;
+    }
 
-    const newHistory = [];
+    const lastCheckpointIndex = originalMessages
+      .map(m => m.role === 'system' && m.content?.startsWith('Summary of earlier conversation:'))
+      .lastIndexOf(true);
+    const relevant = lastCheckpointIndex >= 0 ? originalMessages.slice(lastCheckpointIndex + 1) : originalMessages;
 
-    const systemMessages = messages.filter(msg => msg.role === 'system');
-    newHistory.push(...systemMessages);
+    const chatMsgs = relevant.filter(m => m.role !== 'system');
+    const keepCount = TURNS_TO_KEEP_AFTER_SUMMARY * 2;
 
+    if (chatMsgs.length <= keepCount) {
+      return { newHistory: originalMessages, summaryText: null };
+    }
+
+    const toSummarize = chatMsgs.slice(0, -keepCount);
+    const toKeep = chatMsgs.slice(-keepCount);
+
+    const excerpt = toSummarize.map(m => `${m.role}: ${m.content}`).join('\n');
+    const prompt = SUMMARIZATION_PROMPT + excerpt;
+    
+    let summaryText;
+
+    if (summarizationModel.external_provider_id) {
+      // Handle external model summarization
+      summaryText = await handleExternalSummarizationRequest({
+        model: summarizationModel,
+        prompt: prompt,
+        userId: userId,
+      });
+    } else {
+      // Handle local model summarization
+      const formatted = await formatPromptForModel(summarizationModel.id, [{ role: 'user', content: prompt }]);
+      const params = {
+        temperature,
+        max_tokens: Math.min(512, summarizationModel.context_window / 4),
+        stop: ['\nUser:', '\nAssistant:', '<|endoftext|>'],
+      };
+
+      const baseUrl = vllmService.getVllmApiUrl(summarizationModel.id);
+      if (!baseUrl) {
+        console.error(`[SummarizationService] Could not get API endpoint for local model ${summarizationModel.id}. Is it active?`);
+        return { newHistory: originalMessages, summaryText: null };
+      }
+      const url = `${baseUrl}/v1/chat/completions`;
+      const res = await fetchApi(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: String(summarizationModel.id),
+          messages: [{ role: 'user', content: formatted }],
+          ...params,
+          stream: false,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error(`[SummarizationService] vLLM error ${res.status}: ${await res.text()}`);
+        return { newHistory: originalMessages, summaryText: null };
+      }
+
+      const data = await res.json();
+      summaryText = data.choices?.[0]?.message?.content;
+    }
+
+    if (!summaryText) {
+      return { newHistory: originalMessages, summaryText: null };
+    }
+
+    const preservedSystem = originalMessages.filter(m => m.role === 'system' && !m.content?.startsWith('Summary of earlier'));
+    const newHistory = [...preservedSystem];
     newHistory.push({
-      role: 'system', 
-      content: `Summary of earlier conversation:\n${summaryContent}`,
-      tokens: Math.ceil(summaryContent.length / 4) 
+      role: 'system',
+      content: `Summary of earlier conversation:\n${summaryText.trim()}`,
     });
+    newHistory.push(...toKeep);
 
-    const lastMessages = messages
-        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-        .slice(-MESSAGES_TO_KEEP_AFTER_SUMMARY);
-    newHistory.push(...lastMessages);
-
-    return newHistory;
-
-  } catch (error) {
-    console.error(`[Summarization Service] Failed to generate summary using model ${summarizationModelId}:`, error);
-    return messages;
+    return { newHistory, summaryText: summaryText.trim() };
+  } catch (err) {
+    console.error('[SummarizationService] Error:', err);
+    return { newHistory: originalMessages, summaryText: null };
   }
 }
 

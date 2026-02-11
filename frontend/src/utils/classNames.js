@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Conditionally join classNames together
  * @param {...(string|boolean|undefined|null)} classes - Classes to join

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Admin Password Reset Script
  * 
@@ -23,7 +25,7 @@ const forceReset = args.includes('--force');
 const createIfMissing = args.includes('-f');   // Create admin if not found
 
 // Database file path
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../data/community.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../data/mcp.db');
 
 // Create readline interface for user input
 const rl = readline.createInterface({

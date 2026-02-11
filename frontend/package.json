@@ -1,39 +1,43 @@
 {
   "name": "Scalytics Connect",
-  "version": "1.8.0",
+  "version": "3.5.2",
   "private": true,
   "dependencies": {
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.0.18",
-    "@tailwindcss/forms": "^0.5.6",
+    "@tailwindcss/forms": "^0.5.11",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.5.1",
-    "chart.js": "^4.4.0",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
     "highlight.js": "^11.9.0",
     "lodash.debounce": "^4.0.8",
-    "mermaid": "^11.6.0",
+    "mermaid": "^11.10.0",
     "react": "^18.2.0",
-    "react-chartjs-2": "^5.2.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",
-    "react-hot-toast": "^2.5.2",
+    "react-hot-toast": "^2.6.0",
     "react-markdown": "^9.1.0",
     "react-router-dom": "^6.16.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "react-toastify": "^11.0.5",
-    "react-tooltip": "^5.28.1",
+    "react-tooltip": "^5.30.0",
     "react-use-websocket": "^4.13.0",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "tailwindcss": "^3.3.3",
+    "tailwindcss": "^3.4.19",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deps:check": "npm outdated --depth=0 || true",
+    "deps:audit": "npm audit --omit=dev || true"
   },
   "eslintConfig": {
     "extends": [
@@ -54,6 +58,6 @@
     ]
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.10"
+    "@tailwindcss/typography": "^0.5.19"
   }
 }

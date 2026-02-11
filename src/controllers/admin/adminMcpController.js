@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../../models/db');
 const { getSystemSetting } = require('../../config/systemConfig'); // Import system config
 const Model = require('../../models/Model'); // Import Model for check
@@ -20,12 +22,12 @@ exports.updateLocalToolStatus = async (req, res) => {
    if (toolName === 'scalytics_search' && isActive) {
      const preferredEmbeddingModelId = getSystemSetting('preferred_local_embedding_model_id', null);
      if (!preferredEmbeddingModelId) {
-       return res.status(400).json({ success: false, message: 'Cannot enable Live Search: No preferred local embedding model is configured.' });
+       return res.status(400).json({ success: false, message: 'Cannot enable Deep Search: No preferred local embedding model is configured.' });
      }
      try {
        const embeddingModel = await Model.findById(parseInt(preferredEmbeddingModelId, 10));
        if (!embeddingModel || !embeddingModel.is_active || !embeddingModel.is_embedding_model) {
-         return res.status(400).json({ success: false, message: `Cannot enable Live Search: Configured embedding model (ID: ${preferredEmbeddingModelId}) is inactive, not found, or not an embedding model.` });
+         return res.status(400).json({ success: false, message: `Cannot enable Deep Search: Configured embedding model (ID: ${preferredEmbeddingModelId}) is inactive, not found, or not an embedding model.` });
        }
      } catch (modelError) {
        console.error(`Error verifying embedding model ${preferredEmbeddingModelId}:`, modelError);

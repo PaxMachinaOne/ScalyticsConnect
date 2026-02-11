@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const mcpServerController = require('../controllers/mcpServerController');
 const { protect, admin } = require('../middleware/authMiddleware'); // Use admin middleware

@@ -1,8 +1,91 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Database initialization and utilities
  */
 const path = require('path');
 const fs = require('fs');
+
+/**
+ * Runs pending database migrations.
+ * @param {object} db - The database instance.
+ * @returns {Promise<void>}
+ */
+async function runMigrations(db) {
+  
+  const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
+
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS migrations (
+        name TEXT PRIMARY KEY,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // 2. Get applied migration names
+  let appliedMigrationNames = new Set();
+  try {
+    const appliedMigrationsRows = await db.allAsync('SELECT name FROM migrations');
+    appliedMigrationNames = new Set(appliedMigrationsRows.map(row => row.name));
+    
+  } catch (err) {
+    console.error("Error fetching applied migrations:", err);
+    if (!err.message.includes('no such table: migrations')) {
+      throw err;
+    }
+  }
+
+
+  // 3. Get all available migration files
+  let allMigrationFiles = [];
+  try {
+    allMigrationFiles = fs.readdirSync(MIGRATIONS_DIR)
+      .filter(file => file.endsWith('.js') && /^\d{3}[A-Z]?_/.test(file)) 
+      .sort((a, b) => {
+        const prefixA = a.match(/^\d{3}[A-Z]?/)[0];
+        const prefixB = b.match(/^\d{3}[A-Z]?/)[0];
+        
+        if (prefixA < prefixB) return -1;
+        if (prefixA > prefixB) return 1;
+        return 0;
+      }); 
+  } catch (readDirErr) {
+     console.error(`Error reading migrations directory: ${MIGRATIONS_DIR}`, readDirErr);
+     throw new Error('Could not read migrations directory.');
+  }
+
+
+  // 4. Determine pending migrations
+  const pendingMigrations = allMigrationFiles.filter(file => !appliedMigrationNames.has(file));
+
+  if (pendingMigrations.length === 0) {
+    
+    return;
+  }
+
+  
+
+  for (const migrationFile of pendingMigrations) {
+    
+    const migrationPath = path.join(MIGRATIONS_DIR, migrationFile);
+    try {
+      const migration = require(migrationPath);
+
+      if (migration && typeof migration.up === 'function') {
+        await migration.up();
+        await db.runAsync('INSERT INTO migrations (name) VALUES (?)', [migrationFile]);
+      } else {
+        console.warn(`Skipping ${migrationFile}: 'up' function not found.`);
+      }
+    } catch (error) {
+      console.error(`❌ FAILED to apply migration ${migrationFile}:`, error);
+      throw new Error(`Migration ${migrationFile} failed. Database might be in an inconsistent state.`);
+    }
+  }
+
+  
+}
+
 
 /**
  * Initialize database and migrations
@@ -12,6 +95,7 @@ async function initializeServer() {
   const { initializeDatabase, db } = require('../models/db');
 
   await initializeDatabase();
+  await runMigrations(db);
 
   try {
     const { initializeProviderConfigs } = require('../utils/providerConfig');

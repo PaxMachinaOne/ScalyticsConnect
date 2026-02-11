@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # Fix permissions for maintenance-related directories
 # Sets proper ownership and permissions for backups and models directories
 # This script should be run as root or with sudo

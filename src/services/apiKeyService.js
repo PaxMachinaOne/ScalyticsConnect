@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios'); // Import axios for making HTTP requests
 const { db } = require('../models/db');
 const { encryptionHelpers } = require('../utils/encryptionUtils'); // Import from new util file

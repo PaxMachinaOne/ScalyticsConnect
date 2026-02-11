@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const Model = require('../../models/Model'); 
 const apiKeyService = require('../apiKeyService'); 
 const { getSystemSetting } = require('../../config/systemConfig'); 
@@ -131,7 +133,7 @@ async function generateEmbeddings(chunks, userId) {
 
     // Call the Python FastAPI service for local embedding generation
     try {
-        const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+        const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
         if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
             console.error(`[EmbeddingService] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
             throw new Error("Python embedding service URL is not configured correctly.");
@@ -174,7 +176,7 @@ async function generateEmbeddings(chunks, userId) {
     // try {
     //     // const embeddings = await embeddingWorkerService.generateEmbeddings(chunks); // OLD CODE
     //     // Replace above with:
-    //     // const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+    //     // const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     //     // const embedApiUrl = `${pythonServiceBaseUrl}/vector/embed_texts`; // Assuming this endpoint will exist
     //     // const response = await axios.post(embedApiUrl, { texts: chunks, model_id: selectedModel.id_or_path || selectedModel.id });
     //     // const embeddings = response.data.embeddings;

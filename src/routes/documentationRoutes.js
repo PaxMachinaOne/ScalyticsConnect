@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const { getDocumentationList, getDocumentation } = require('../controllers/documentationController');
 const { protect } = require('../middleware/authMiddleware');

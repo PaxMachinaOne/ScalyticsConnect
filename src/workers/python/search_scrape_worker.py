@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 """
 Search Scrape Worker (Field Scout)
 Handles direct interactions with web search engines and webpage/document scraping.
@@ -31,7 +33,7 @@ import traceback
 
 # --- Environment Setup ---
 project_root_ssw = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')) 
-DB_PATH_SSW = os.path.join(project_root_ssw, 'data', 'community.db')
+DB_PATH_SSW = os.path.join(project_root_ssw, 'data', 'mcp.db')
 WHOIS_CACHE_SSW = {} 
 WHOIS_CACHE_EXPIRY_SECONDS_SSW = 3600 * 24
 

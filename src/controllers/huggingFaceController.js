@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const huggingFaceService = require('../services/huggingFaceService');
 const axios = require('axios');
 const { spawn } = require('child_process');
@@ -48,10 +50,7 @@ exports.searchModels = async (req, res) => {
         );
 
         const results = await Promise.all(modelInfoPromises);
-        models = results.filter(model => model !== null).map(model => ({
-            ...model,
-            pipeline_tag: 'feature-extraction'
-        }));
+        models = results.filter(model => model !== null); 
 
         // Apply sorting to the curated list *after* fetching details
         if (options.sort === 'downloads' || options.sort === 'likes' || options.sort === 'lastModified') {

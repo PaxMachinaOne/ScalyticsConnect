@@ -230,6 +230,15 @@ class Model {
       const selectWithProvider = `SELECT DISTINCT ${modelColumns}, p.name as provider_name, p.id as provider_id`;
       const selectLocalOnly = `SELECT DISTINCT ${modelColumns}, NULL as provider_name, NULL as provider_id`;
 
+      const groupAccessModelsQuery = `
+        ${selectWithProvider}, 'group' as access_source
+        FROM models m
+        LEFT JOIN api_providers p ON m.external_provider_id = p.id
+        JOIN group_model_access gma ON m.id = gma.model_id
+        JOIN user_groups ug ON gma.group_id = ug.group_id
+        WHERE ug.user_id = ? AND gma.can_access = 1 AND m.is_active = 1
+      `;
+
       const publicModelsQuery = `
         ${selectLocalOnly}, 'public' as access_source
         FROM models m
@@ -274,12 +283,12 @@ class Model {
       }
 
       // Note: The order of columns must be identical in all parts of the UNION.
-      let queryParts = [publicModelsQuery, userApiKeysQuery];
+      let queryParts = [groupAccessModelsQuery, publicModelsQuery, userApiKeysQuery];
       if (adminLocalModelsQuery) queryParts.push(adminLocalModelsQuery);
       if (systemApiKeysQuery) queryParts.push(systemApiKeysQuery);
 
       let query = queryParts.join(' UNION ');
-      const queryParams = [userId, ...systemKeyParams];
+      const queryParams = [userId, userId, ...systemKeyParams]; 
 
       const finalQuery = `SELECT * FROM (${query}) AS combined_models ORDER BY name ASC`;
 
@@ -319,7 +328,22 @@ class Model {
       const processedModels = [];
       for (const model of finalModels) {
         const isAdmin = user && user.is_admin;
-        let hasExplicitGroupPermission = true;
+        let hasExplicitGroupPermission = false;
+
+        // 1. Determine if user has explicit group permission for this model
+        if (model.access_source === 'group') {
+          hasExplicitGroupPermission = true;
+        } else if (!isAdmin) { 
+          if (model.external_provider_id || model.access_source !== 'public') {
+            const groupCheck = await db.getAsync(
+              `SELECT 1 FROM group_model_access gma 
+               JOIN user_groups ug ON gma.group_id = ug.group_id 
+               WHERE ug.user_id = ? AND gma.model_id = ? AND gma.can_access = 1 LIMIT 1`,
+              [userId, model.id]
+            );
+            hasExplicitGroupPermission = !!groupCheck;
+          }
+        }
 
         // 2. Set informational flags about key sources (for external models)
         model.has_global_key = false;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const Joi = require('joi');
 const { db } = require('../models/db');
 const Model = require('../models/Model');
@@ -18,7 +20,6 @@ const chatCompletionSchema = Joi.object({
   })).required(),
   stream: Joi.boolean().optional().default(false),
   model: Joi.string().optional(),
-  // Add other OpenAI params
   temperature: Joi.number().optional(),
   max_tokens: Joi.number().integer().optional(),
   top_p: Joi.number().optional(),
@@ -45,10 +46,8 @@ exports.handleChatCompletion = async (req, res) => {
     // --- 1. Identify the Model ---
     const modelIdentifier = value.model;
     if (modelIdentifier) {
-      // Try finding by ID first, then by external_model_id as a fallback for string-based IDs
       model = await db.getAsync(`SELECT * FROM models WHERE (id = ? OR external_model_id = ?) AND is_active = 1`, [modelIdentifier, modelIdentifier]);
     } else {
-      // If no model is specified, use the currently active vLLM model as the primary
       const primaryModelId = vllmService.activeModelId;
       if (primaryModelId) {
         model = await db.getAsync(`SELECT * FROM models WHERE id = ? AND is_active = 1 AND is_embedding_model = 0`, [primaryModelId]);
@@ -62,17 +61,13 @@ exports.handleChatCompletion = async (req, res) => {
 
     // --- 2. Route Based on Model Type (Internal vs. External) ---
 
-    // EXTERNAL MODEL LOGIC
     if (model.external_provider_id) {
-      // This part can be expanded later if needed, for now we focus on local vLLM
       return res.status(501).json({ success: false, error: { message: 'External provider models are not yet supported via this endpoint.', type: 'api_error' } });
     }
 
-    // INTERNAL (vLLM) MODEL LOGIC
     const inputTokens = approximateTokenCount(messages.map(m => m.content).join(' '));
 
     if (stream) {
-      // --- Streaming Response ---
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -86,6 +81,8 @@ exports.handleChatCompletion = async (req, res) => {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`);
       };
 
+      res.write('event: processing\ndata: {"status": "working"}\n\n');
+
       try {
         await inferenceRouter.routeInferenceRequest({
           modelId: model.id,
@@ -93,7 +90,8 @@ exports.handleChatCompletion = async (req, res) => {
           parameters: restParams,
           onToken: handleToken,
           userId: userId,
-          disableDefaultSystemPrompt: true, // API should be raw
+          disableDefaultSystemPrompt: true, 
+          signal: req.signal, 
         });
         
         const outputTokens = approximateTokenCount(fullResponseContent);
@@ -118,6 +116,7 @@ exports.handleChatCompletion = async (req, res) => {
           parameters: restParams,
           userId: userId,
           disableDefaultSystemPrompt: true,
+          signal: req.signal, 
         });
 
         const filteredMessage = await applyFilters(result.message, userId);

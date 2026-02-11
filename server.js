@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 // ──────────────────────────────────────────────────────────────────────────────
 // Shim for all `node:`-prefixed core modules (events, buffer, etc.)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -59,7 +61,11 @@ try {
 
   const app = express();
   const server = http.createServer(app);
-  const PORT = process.env.PORT || 3001;
+  const PORT = process.env.PORT || 3000;
+
+  // Set long timeouts to prevent premature socket closure for long-running SSE streams
+  server.timeout = 600000; // 10 minutes
+  server.headersTimeout = 600000; // 10 minutes
 
   const { initializeSocket } = require('./src/config/socket');
   const wsServer = initializeSocket(server);

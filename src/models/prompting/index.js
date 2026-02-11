@@ -250,11 +250,7 @@ async function validateContextForModel(modelId, messages) {
     }
 
     // 2. Get the model's context window size
-    let contextSize = model.n_ctx || 4096; // Default to 4096 if not specified
-    if (vllmService.activeModelId === modelId && vllmService.activeModelContextSize) {
-      contextSize = vllmService.activeModelContextSize;
-      console.log(`[Context Validator] Using live context size from vLLM service: ${contextSize}`);
-    }
+    const contextSize = model.context_window || 4096;
 
     // 3. Determine the format type for potential formatting/filtering
     const formatType = determineFormatType(model);
@@ -327,11 +323,7 @@ async function truncateHistoryForModel(modelId, messages) {
     }
 
     // 2. Get the model's context window size
-    let contextSize = model.n_ctx || 4096;
-    if (vllmService.activeModelId === modelId && vllmService.activeModelContextSize) {
-      contextSize = vllmService.activeModelContextSize;
-      console.log(`[History Truncator] Using live context size from vLLM service: ${contextSize}`);
-    }
+    const contextSize = model.context_window || 4096;
 
     // 3. Determine the format type for potential formatting/filtering
     const formatType = determineFormatType(model);

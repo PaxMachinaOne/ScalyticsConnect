@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog } from '@headlessui/react';
 import PropTypes from 'prop-types';
 import ModelDropdown from '../common/ModelDropdown';
 import modelService from '../../services/modelService';
+import privacyService from '../../services/privacyService';
 import apiService from '../../services/apiService';
 
 const ToolConfigModal = ({ isOpen, onClose, tool }) => {
@@ -14,7 +17,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleConfigChange = (key, value) => {
-    if ((tool?.name === 'live-search' && key === 'reasoningModelName' && error) ||
+    if ((tool?.name === 'deep-search' && key === 'reasoningModelName' && error) ||
         (tool?.name === 'image_gen' && key === 'selected_model_id' && error)) {
       setError('');
     }
@@ -32,7 +35,8 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
 
     try {
       let modelsForDropdown = [];
-      const [servicesResponse, userAccessibleAndActiveModelsResponse] = await Promise.all([
+      const [privacyData, servicesResponse, userAccessibleAndActiveModelsResponse] = await Promise.all([
+        privacyService.getPrivacyStatus(),
         apiService.get('/apikeys/services-with-keys'),
         modelService.getActiveModels()
       ]);
@@ -43,7 +47,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
         console.warn('[ToolConfigModal] Could not fetch services with keys or data format incorrect.');
       }
       
-      const privacyModeEnabled = false;
+      const privacyModeEnabled = privacyData?.data?.globalPrivacyMode === true || privacyData?.globalPrivacyMode === true;
 
       let baseModels = Array.isArray(userAccessibleAndActiveModelsResponse) ? userAccessibleAndActiveModelsResponse :
                       (userAccessibleAndActiveModelsResponse?.data && Array.isArray(userAccessibleAndActiveModelsResponse.data)) ? userAccessibleAndActiveModelsResponse.data : [];
@@ -70,7 +74,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
             console.warn("[ToolConfigModal] No image models available for 'image_gen' after name filtering. Check external model naming conventions or if only local image models are available/accessible.");
         }
 
-      } else if (tool.name === 'live-search') { 
+      } else if (tool.name === 'deep-search') { 
         let generalPurposeLLMs = baseModels.filter(
           model => !(model.can_generate_images === true || model.can_generate_images === 1) &&
                    !(model.is_embedding_model === true || model.is_embedding_model === 1)
@@ -109,7 +113,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
         initialConfig = defaults;
       }
       
-      if (tool.name === 'live-search' && initialConfig.reasoningModelName && modelsForDropdown.length > 0) {
+      if (tool.name === 'deep-search' && initialConfig.reasoningModelName && modelsForDropdown.length > 0) {
         const modelExists = modelsForDropdown.some(
           m => m.id.toString() === initialConfig.reasoningModelName.toString() && !m.is_disabled
         );
@@ -142,7 +146,9 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
     const configToSave = { ...configValues };
     let validationError = '';
 
-    if (tool.name === 'image_gen' && (!configToSave.selected_model_id || String(configToSave.selected_model_id).trim() === '')) {
+    if (tool.name === 'deep-search' && (!configToSave.reasoningModelName || String(configToSave.reasoningModelName).trim() === '')) {
+      validationError = 'Please select a Reasoning Model for Deep Search.';
+    } else if (tool.name === 'image_gen' && (!configToSave.selected_model_id || String(configToSave.selected_model_id).trim() === '')) {
       validationError = 'Please select a model for Image Generation.';
     }
 
@@ -212,26 +218,21 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
      }
 
      return configurableFields.map(([key, prop]) => {
-       if (key === 'max_results' && tool.name === 'live-search') {
-         const min = prop.minimum || 1; 
-         const max = prop.maximum || 10; 
-         const currentVal = configValues[key] !== undefined ? configValues[key] : prop.default;
-         const handleResultsChange = (e) => {
-            let val = parseInt(e.target.value, 10);
-            val = isNaN(val) ? prop.default : Math.max(min, Math.min(max, val));
-            handleConfigChange(key, val);
-         };
+       if (key === 'reasoningModelName' && tool.name === 'deep-search') {
          return (
-            <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded">
-                <label htmlFor={`config-${key}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{prop.description || "Max Results"}</label>
-                <input id={`config-${key}`} type="number" min={min} max={max} value={currentVal} onChange={handleResultsChange}
-                     className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" disabled={loading} />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Maximum search results to process (Min: {min}, Max: {max}).</p>
-            </div>
+           <ModelDropdown
+             key={key}
+             label={prop.description || "Reasoning Model"}
+             selectedModelId={configValues[key] || ''}
+             onModelChange={(value) => handleConfigChange(key, value)}
+             availableModels={availableModels} 
+             disabled={loading}
+             tooltip={prop.description || "Select the model for reasoning steps."}
+           />
          );
        }
 
-       if (key === 'search_providers' && tool.name === 'live-search') {
+       if (key === 'search_providers' && tool.name === 'deep-search') {
          const currentProviders = Array.isArray(configValues[key]) ? configValues[key] : (prop.default || []);
          const schemaProviders = prop.items?.enum || [];
          const providerSchemaToServiceName = {
@@ -259,13 +260,13 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-700" disabled={loading} />
                    <span className="text-sm text-gray-700 dark:text-gray-300">{getProviderDisplayName(pKey)}</span>
                  </label>
-               )) : <p className="text-xs text-gray-500 dark:text-gray-400">No API keys for web search. Live Search uses DuckDuckGo.</p>}
+               )) : <p className="text-xs text-gray-500 dark:text-gray-400">No API keys for web search. Deep Search uses DuckDuckGo.</p>}
              </div>
            </div>
          );
        }
 
-       if (key === 'max_iterations' && tool.name === 'live-search') {
+       if (key === 'max_iterations' && tool.name === 'deep-search') {
          const min = prop.minimum || 1; const max = prop.maximum || 30; 
          const currentVal = configValues[key] !== undefined ? configValues[key] : prop.default;
          const handleIterChange = (e) => {
@@ -282,7 +283,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
             </div>
          );
        }
-       if (tool.name !== 'live-search' && tool.name !== 'image_gen') {
+       if (tool.name !== 'deep-search' && tool.name !== 'image_gen') {
          return (
            <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded">
              <label htmlFor={`config-${key}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{prop.description || key} (Type: {prop.type})</label>
@@ -304,7 +305,7 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
           <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-dark-primary p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 dark:text-dark-text-secondary">
-                  Configure {tool?.name === 'live-search' ? 'Scalytics Live Search' : (tool?.name === 'image_gen' ? 'Image Generation' : tool?.name?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Tool')}
+                  Configure {tool?.name === 'deep-search' ? 'Scalytics Deep Search' : (tool?.name === 'image_gen' ? 'Image Generation' : tool?.name?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Tool')}
                  </Dialog.Title>
                    {loading && <div className="mt-4 text-center text-gray-700 dark:text-gray-300">Loading configuration...</div>}
                    {error && <div className="mt-4 text-red-500 dark:text-red-400 text-sm">{error}</div>}
