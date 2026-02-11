@@ -60,10 +60,10 @@ Replace `sk-scalytics-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` with your actual key.
 ### Example Request (Non-Streaming)
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 curl https://YOUR_INSTANCE_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyTestClient/1.0" \
   -d '{
     "messages": [
@@ -77,11 +77,11 @@ curl https://YOUR_INSTANCE_URL/v1/chat/completions \
 ### Example Request (Streaming)
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 # Use -N to disable buffering and see stream chunks immediately
 curl -N https://YOUR_INSTANCE_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -H "Accept: text/event-stream" \
   -A "MyTestClient/1.0" \
   -d '{
@@ -166,11 +166,11 @@ Use the `GET /v1/models` endpoint to discover available models. The `name` field
 ### Example Request (Streaming SSE)
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 # Use -N to disable buffering and see stream chunks immediately
 curl -N https://YOUR_INSTANCE_URL/v1/deepsearch \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -H "Accept: text/event-stream" \
   -A "MyDeepSearchClient/1.0" \
   -d '{
@@ -261,10 +261,10 @@ To generate an image and save it to a file (e.g., `output-image.png`):
 
 **Using `jq` (recommended for robust JSON parsing):**
 ```bash
-# Replace YOUR_INSTANCE_URL, YOUR_API_KEY, and your_model_id
+# Replace YOUR_INSTANCE_URL, SCALYTICS_API_KEY, and your_model_id
 curl -X POST https://YOUR_INSTANCE_URL/v1/images/generations \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyImageClient/1.0" \
   -d '{
     "model": "your_model_id",
@@ -277,10 +277,10 @@ curl -X POST https://YOUR_INSTANCE_URL/v1/images/generations \
 
 **Alternative using `grep`, `sed`, `cut` (if `jq` is not available):**
 ```bash
-# Replace YOUR_INSTANCE_URL, YOUR_API_KEY, and your_model_id
+# Replace YOUR_INSTANCE_URL, SCALYTICS_API_KEY, and your_model_id
 curl -X POST https://YOUR_INSTANCE_URL/v1/images/generations \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyImageClient/1.0" \
   -d '{
     "model": "your_model_id",
@@ -363,10 +363,10 @@ Generates vector embeddings for a list of input text strings using the configure
 #### Example Request
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 curl https://YOUR_INSTANCE_URL/v1/vector/embeddings \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyVectorClient/1.0" \
   -d '{
     "texts": ["This is the first document.", "This is the second document for embedding."],
@@ -407,10 +407,10 @@ Adds a list of documents to the vector store, associating them with a specific `
 #### Example Request
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 curl https://YOUR_INSTANCE_URL/v1/vector/documents \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyVectorClient/1.0" \
   -d '{
     "group_id": "user_123_collection_alpha",
@@ -456,10 +456,10 @@ Searches the vector store for documents relevant to a given `query_text`. The se
 #### Example Request
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 curl https://YOUR_INSTANCE_URL/v1/vector/search \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyVectorClient/1.0" \
   -d '{
     "query_text": "information about tropical fruits",
@@ -501,10 +501,10 @@ Deletes all vector documents associated with a specific `group_id` from the vect
 #### Example Request
 
 ```bash
-# Replace YOUR_INSTANCE_URL and YOUR_API_KEY
+# Replace YOUR_INSTANCE_URL and SCALYTICS_API_KEY
 curl https://YOUR_INSTANCE_URL/v1/vector/groups/delete \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer $SCALYTICS_API_KEY" \
   -A "MyVectorClient/1.0" \
   -d '{
     "group_id": "user_123_collection_alpha_to_delete"

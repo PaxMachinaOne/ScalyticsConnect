@@ -1,0 +1,46 @@
+name: Feature Request
+description: Propose a new capability or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Please focus on problem and impact.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What user or operational problem are you trying to solve?
+      placeholder: Describe the pain point.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: What should change?
+      placeholder: Describe your proposed approach.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternatives you considered.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who benefits and how?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend
+        - Frontend
+        - Python services
+        - Deployment
+        - Documentation
+        - Other

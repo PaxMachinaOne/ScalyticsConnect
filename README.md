@@ -84,6 +84,14 @@ Start here: `docs/index.md`
 - OpenAPI spec: `docs/openapi.json`
 - Static API docs: `docs/api-docs.html`
 
+## Contributing and Governance
+
+- Contribution guide: `CONTRIBUTING.md`
+- Code of conduct: `CODE_OF_CONDUCT.md`
+- Security reporting: `SECURITY.md`
+- Maintainer policy: `MAINTAINERS.md`
+- Changelog: `CHANGELOG.md`
+
 ## API and Docs
 
 - OpenAPI spec: `docs/openapi.json`
