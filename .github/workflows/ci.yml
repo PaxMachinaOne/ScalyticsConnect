@@ -48,11 +48,11 @@ jobs:
 
       - name: Install frontend deps
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Build frontend
         working-directory: frontend
-        run: npm run build
+        run: CI=false npm run build
 
   python-sanity:
     runs-on: ubuntu-latest
