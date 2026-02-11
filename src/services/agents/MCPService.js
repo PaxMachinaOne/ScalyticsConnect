@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { getSystemSetting } = require('../../config/systemConfig');
 const { db } = require('../../models/db');
 const eventBus = require('../../utils/eventBus');
@@ -512,6 +514,7 @@ async function callInternalTool(toolName, args, context) {
                             mcp_metadata: JSON.stringify({ 
                                 tool_id: toolName, 
                                 tool_execution_id: toolExecutionId,
+                                task_id: chunk.payload.task_id,
                                 sources: chunk.payload.sources || [] 
                             })
                         });

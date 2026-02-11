@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Direct file downloader for Hugging Face models
  * Uses curl for direct file downloads with progress tracking

@@ -72,9 +72,8 @@ const ModelEditForm = ({
   formData,
   isExternalModel,
   providers,
-  handleInputChange,
-  handleModelTypeChange,
-  handleSubmit,
+  onInputChange,
+  onSave,
   resetForm,
   saving,
   onActivateAndSave,
@@ -84,7 +83,7 @@ const ModelEditForm = ({
   const { recommendations } = useHardwareInfo();
 
   // Memoize the parsed configuration to avoid re-parsing on every render
-  const { fullConfig, effectivePrecision, currentTensorParallelSize } = useMemo(() => {
+  const { fullConfig, effectivePrecision, currentTensorParallelSize, currentGpuMemoryUtilization } = useMemo(() => {
     let parsedConfig = {};
     let onDiskConfig = {};
 
@@ -99,7 +98,7 @@ const ModelEditForm = ({
     }
 
     // 2. Determine Tensor Parallel Size
-    // Precedence: Live form state > Saved DB value (top-level formData) > Config JSON > On-disk state > Default
+    // Precedence: Live form state > Saved DB value (from config JSON) > On-disk state > Default
     const tpSize = formData.tensor_parallel_size || parsedConfig.tensor_parallel_size || onDiskConfig.tensor_parallel_size || 1;
 
     // 3. Determine Model Precision
@@ -126,13 +125,18 @@ const ModelEditForm = ({
     if (!precision || precision === 'auto') {
       precision = onDiskConfig.torch_dtype;
     }
+    
+    // 4. Determine GPU Memory Utilization
+    // Precedence: Live form state > Saved DB value (from config JSON) > Default ('auto')
+    const gpuMemoryUtilization = formData.gpu_memory_utilization || parsedConfig.gpu_memory_utilization || 'auto';
 
     return {
       fullConfig: onDiskConfig,
       effectivePrecision: (precision || 'auto').toLowerCase(),
-      currentTensorParallelSize: Number(tpSize)
+      currentTensorParallelSize: Number(tpSize),
+      currentGpuMemoryUtilization: gpuMemoryUtilization
     };
-  }, [formData.config, formData.model_precision, formData.tensor_parallel_size]);
+  }, [formData.config, formData.model_precision, formData.tensor_parallel_size, formData.gpu_memory_utilization]);
 
   // Get context window and precision - prioritize form selections over stored values
   const selectedContext = formData.context_window || formData.auto_detected_context || 4096;
@@ -144,7 +148,7 @@ const ModelEditForm = ({
         {formData.id ? 'Edit Model' : 'Add New Model'}
       </h3>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="space-y-6">
         <div className="text-sm p-2 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
           <span className="font-medium text-blue-700 dark:text-dark-text-primary">
             {isExternalModel ? 'External API Model' : 'Local Model'}
@@ -161,7 +165,7 @@ const ModelEditForm = ({
               name="name"
               id="name"
               value={formData.name}
-              onChange={handleInputChange}
+              onChange={onInputChange}
               className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
               required
               readOnly 
@@ -177,7 +181,7 @@ const ModelEditForm = ({
               name="description"
               rows={2}
               value={formData.description}
-              onChange={handleInputChange}
+              onChange={onInputChange}
               className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
             />
           </div>
@@ -191,7 +195,7 @@ const ModelEditForm = ({
                   name="enable_scala_prompt" 
                   type="checkbox"
                   checked={formData.enable_scala_prompt || false} 
-                  onChange={handleInputChange} 
+                  onChange={onInputChange} 
                   className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:checked:bg-blue-500 rounded"
                 />
               </div>
@@ -219,7 +223,7 @@ const ModelEditForm = ({
                   id="external_provider_id"
                   name="external_provider_id"
                   value={formData.external_provider_id}
-                  onChange={handleInputChange}
+                  onChange={onInputChange}
                   className="mt-1 block w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   required={isExternalModel}
                 >
@@ -250,7 +254,7 @@ const ModelEditForm = ({
                   name="external_model_id"
                   id="external_model_id"
                   value={formData.external_model_id}
-                  onChange={handleInputChange}
+                  onChange={onInputChange}
                   placeholder="e.g., gpt-4, claude-3-opus-20240229"
                   className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   required={isExternalModel}
@@ -269,7 +273,7 @@ const ModelEditForm = ({
                   name="model_path"
                   id="model_path"
                   value={formData.model_path}
-                  onChange={handleInputChange}
+                  onChange={onInputChange}
                   placeholder="./models/your-model-folder"
                   className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
                   required={!isExternalModel}
@@ -289,7 +293,7 @@ const ModelEditForm = ({
                     name="context_window"
                     id="context_window"
                     value={formData.context_window || ''}
-                    onChange={handleInputChange}
+                    onChange={onInputChange}
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   >
                     <option value="">Auto-detected ({formData.auto_detected_context || 'Unknown'})</option>
@@ -320,7 +324,7 @@ const ModelEditForm = ({
                     name="model_precision"
                     id="model_precision"
                     value={effectivePrecision}
-                    onChange={handleInputChange}
+                    onChange={onInputChange}
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   >
                     <option value="auto">Auto (Use On-Disk: {fullConfig.torch_dtype || 'Unknown'})</option>
@@ -416,7 +420,7 @@ const ModelEditForm = ({
                       return (
                         <div
                           key={gpuCount}
-                          onClick={() => isClickable && handleInputChange({ target: { name: 'tensor_parallel_size', value: gpuCount } })}
+                          onClick={() => isClickable && onInputChange({ target: { name: 'tensor_parallel_size', value: gpuCount } })}
                           className={`relative rounded-lg border-2 p-4 transition-all duration-200 ${
                             !isClickable
                               ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
@@ -472,6 +476,33 @@ const ModelEditForm = ({
                       );
                     })}
                   </div>
+                  
+                  {/* GPU Memory Utilization Dropdown */}
+                    <div className="mt-4">
+                      <label htmlFor="gpu_memory_utilization" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        GPU Memory Utilization
+                      </label>
+                      <select
+                        name="gpu_memory_utilization"
+                        id="gpu_memory_utilization"
+                        value={currentGpuMemoryUtilization}
+                        onChange={onInputChange}
+                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                      >
+                        <option value="auto">Auto (System Recommended)</option>
+                        <option value="0.95">95% (Max Performance)</option>
+                        <option value="0.9">90% (High Performance)</option>
+                        <option value="0.85">85% (Balanced)</option>
+                        <option value="0.8">80% (Balanced)</option>
+                        <option value="0.75">75% (Conservative)</option>
+                        <option value="0.7">70% (Safe)</option>
+                        <option value="0.6">60% (Multi-tasking)</option>
+                        <option value="0.5">50% (Very Cautious)</option>
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Controls how much VRAM vLLM reserves. 'Auto' uses model-specific defaults. Lower if other apps need VRAM.
+                      </p>
+                    </div>
 
                   {/* Hardware info */}
                   <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -575,9 +606,8 @@ ModelEditForm.propTypes = {
   formData: PropTypes.object.isRequired,
   isExternalModel: PropTypes.bool.isRequired,
   providers: PropTypes.array.isRequired,
-  handleInputChange: PropTypes.func.isRequired,
-  handleModelTypeChange: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired, 
+  onInputChange: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired, 
   resetForm: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
   onActivateAndSave: PropTypes.func, 

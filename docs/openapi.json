@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Scalytics Connect API",
-    "version": "1.0.0",
-    "description": "API documentation for Scalytics Connect, including the OpenAI-compatible Scalytics API."
+    "title": "Scalytics Copilot API",
+    "version": "4.0.1",
+    "description": "API documentation for Scalytics Copilot, including the OpenAI-compatible Scalytics API."
   },
   "servers": [
     {
@@ -662,7 +662,7 @@
     },
     "/v1/deepsearch": {
       "post": {
-        "summary": "Initiates a Live Search task and streams results via Server-Sent Events (SSE).",
+        "summary": "Initiates a Deep Search task and streams results via Server-Sent Events (SSE).",
         "tags": [
           "Scalytics API"
         ],
@@ -709,7 +709,7 @@
             "description": "Internal Server Error"
           },
           "503": {
-            "description": "Service Unavailable (e.g., Python backend for Live Search is not ready)"
+            "description": "Service Unavailable (e.g., Python backend for Deep Search is not ready)"
           }
         }
       }

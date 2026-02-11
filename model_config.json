@@ -1,0 +1,9 @@
+{
+  "batch_size": 512,
+  "n_ctx": 8192,
+  "n_threads": 4,
+  "top_k": 40,
+  "verbose": false,
+  "seed": 42,
+  "custom_prompt_format": "[INST] {prompt} [/INST]"
+}

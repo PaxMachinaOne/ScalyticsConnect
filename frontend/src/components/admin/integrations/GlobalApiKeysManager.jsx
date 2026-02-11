@@ -1,16 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useMemo } from 'react';
 import apiService from '../../../services/apiService';
 import ModernAlert from '../../common/ModernAlert';
+import { privacyService } from '../../../services/admin';
 
 const GlobalApiKeysManager = () => {
   const [providers, setProviders] = useState([]);
   const [globalApiKeys, setGlobalApiKeys] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState('');
   const [apiKey, setApiKey] = useState('');
-  const [cxId, setCxId] = useState('');
+  const [cxId, setCxId] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [privacyModeEnabled, setPrivacyModeEnabled] = useState(false);
 
   const currentProviderObj = useMemo(() => {
     return providers.find(p => String(p.id) === String(selectedProvider));
@@ -21,9 +25,10 @@ const GlobalApiKeysManager = () => {
       try {
         setLoading(true);
         
-        const [providersResponse, globalKeysResponse] = await Promise.all([
+        const [providersResponse, globalKeysResponse, privacyResponse] = await Promise.all([
           apiService.get('/admin/providers'),
           apiService.get('/apikeys/admin/global'),
+          privacyService.getPrivacySettings()
         ]);
         
         const filteredProviders = (providersResponse.data || []).filter(provider => 
@@ -33,6 +38,11 @@ const GlobalApiKeysManager = () => {
         setProviders(filteredProviders);
         setGlobalApiKeys(globalKeysResponse.data || []);
         
+        if (privacyResponse && privacyResponse.data && privacyResponse.data.data) {
+          setPrivacyModeEnabled(privacyResponse.data.data.globalPrivacyMode);
+        } else if (privacyResponse && privacyResponse.data) {
+          setPrivacyModeEnabled(privacyResponse.data.globalPrivacyMode);
+        }
       } catch (error) {
         setAlert({
           show: true,
@@ -227,6 +237,26 @@ const GlobalApiKeysManager = () => {
     <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary mb-6">Global API Keys</h2>
       
+      {/* Privacy mode alert */}
+      {privacyModeEnabled && (
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-dark-text-primary">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-dark-text-primary">Global Privacy Mode Active</h3>
+              <div className="mt-2 text-sm text-blue-700 dark:text-dark-text-primary">
+                <p>Privacy mode is currently enabled for the entire system. All global API keys have been automatically deactivated.</p>
+                <p className="mt-1">To use external API models, please disable privacy mode in the Admin → Privacy settings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {alert.show && (
         <ModernAlert
           message={alert.message}
@@ -383,13 +413,19 @@ const GlobalApiKeysManager = () => {
                         ) : (
                           <button
                             className={`
-                              text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
+                              ${privacyModeEnabled 
+                                ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                                : 'text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
                               }
                             `}
-                            title={ "Activate this API key" }
-                            onClick={() => handleActivateKey(key.id)}
+                            title={privacyModeEnabled 
+                              ? "Cannot activate while Privacy Mode is enabled" 
+                              : "Activate this API key"
+                            }
+                            disabled={privacyModeEnabled}
+                            onClick={privacyModeEnabled ? undefined : () => handleActivateKey(key.id)}
                           >
-                            Activate
+                            {privacyModeEnabled ? "Locked" : "Activate"}
                           </button>
                         )}
                         <button

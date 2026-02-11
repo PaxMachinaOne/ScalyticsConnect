@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Global WebSocket Manager to maintain a persistent connection
  * This ensures we keep a single WebSocket connection throughout the application lifecycle

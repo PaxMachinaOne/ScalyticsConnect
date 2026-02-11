@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
@@ -21,9 +23,6 @@ const ChatList = ({
   const [isInvitationsOpen, setIsInvitationsOpen] = useState(true); 
   const [isMyChatsOpen, setIsMyChatsOpen] = useState(true); 
   const [isSharedOpen, setIsSharedOpen] = useState(true); 
-  const [editingChatId, setEditingChatId] = useState(null);
-  const [editingTitle, setEditingTitle] = useState('');
-  const titleInputRef = React.useRef(null);
 
   // Function to update local chat state (now targets ownedChats)
   const updateChatTitle = useCallback((chatId, newTitle) => {
@@ -90,13 +89,6 @@ const ChatList = ({
   useEffect(() => {
     fetchAllChatData();
   }, [refreshTrigger, fetchAllChatData]);
-
-  useEffect(() => {
-    if (editingChatId && titleInputRef.current) {
-      titleInputRef.current.focus();
-      titleInputRef.current.select();
-    }
-  }, [editingChatId]);
 
   useEffect(() => {
     const unsubscribeTitleUpdated = eventBus.subscribe('chat:titleUpdated', (data) => {
@@ -185,58 +177,8 @@ const ChatList = ({
   };
 
   const handleChatClick = (chatId) => {
-    if (editingChatId === chatId) return; 
     if (onChatSelected) {
       onChatSelected(chatId);
-    }
-  };
-
-  const handleStartEditing = (e, chat) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditingChatId(chat.id);
-    setEditingTitle(chat.title || 'New Chat');
-  };
-
-  const handleCancelEditing = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setEditingChatId(null);
-    setEditingTitle('');
-  };
-
-  const handleSaveEditing = async (e, chatId) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (!editingTitle.trim()) {
-      alert("Chat title cannot be empty.");
-      return;
-    }
-    try {
-      await chatService.updateChatTitle(chatId, editingTitle);
-      updateChatTitle(chatId, editingTitle); 
-      eventBus.publish('chat:titleUpdated', { chatId, newTitle: editingTitle });
-      setEditingChatId(null);
-      setEditingTitle('');
-    } catch (err) {
-      console.error('Error updating chat title:', err);
-      alert('Failed to update chat title.');
-    }
-  };
-  
-  const handleTitleInputChange = (e) => {
-    setEditingTitle(e.target.value);
-  };
-
-  const handleTitleInputKeyPress = (e, chatId) => {
-    if (e.key === 'Enter') {
-      handleSaveEditing(null, chatId);
-    } else if (e.key === 'Escape') {
-      handleCancelEditing(null);
     }
   };
 
@@ -342,24 +284,6 @@ const ChatList = ({
              <div className="mt-1 space-y-1">
               {ownedChats && ownedChats.length > 0 ? (
                 ownedChats.map((chat) => {
-                  if (editingChatId === chat.id) {
-                    return (
-                      <div key={`editing-${chat.id}`} className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-md">
-                        <input
-                          ref={titleInputRef}
-                          type="text"
-                          value={editingTitle}
-                          onChange={handleTitleInputChange}
-                          onKeyDown={(e) => handleTitleInputKeyPress(e, editingChatId)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-dark-text-primary"
-                        />
-                        <div className="mt-2 flex justify-end space-x-2">
-                          <button onClick={(e) => handleCancelEditing(e)} className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">Cancel</button>
-                          <button onClick={(e) => handleSaveEditing(e, editingChatId)} className="px-2 py-1 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded">Save</button>
-                        </div>
-                      </div>
-                    );
-                  }
                   return (
                     <Link
                       key={`owned-${chat.id}`}
@@ -388,15 +312,6 @@ const ChatList = ({
                         </span>
                       </div>
                       <div className="ml-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => handleStartEditing(e, chat)}
-                          className="text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 focus:outline-none p-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900/20 mr-1"
-                          title="Rename Chat"
-                        >
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                           </svg>
-                        </button>
                         <button
                           onClick={(e) => handleDeleteChat(e, chat.id)}
                           className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 focus:outline-none p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/20"

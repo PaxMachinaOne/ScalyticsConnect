@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 // src/routes/shareRoutes.js
 const express = require('express');
 const router = express.Router();

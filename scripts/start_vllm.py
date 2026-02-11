@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 """
 start_vllm.py - Start vLLM API server with proper configuration
 
@@ -51,7 +53,6 @@ def build_vllm_command(args):
         "--host", args.host,
         "--port", str(args.port),
         "--tensor-parallel-size", str(args.tensor_parallel_size),
-        "--disable-log-stats",
         "--disable-log-requests"
     ]
     
@@ -83,13 +84,10 @@ def build_vllm_command(args):
     if args.disable_custom_all_reduce:
         cmd.append("--disable-custom-all-reduce")
         
-    # Add vLLM 0.9.1+ optimizations
     if args.enforce_eager:
         cmd.append("--enforce-eager")
-    # V2 is default, so only add if explicitly false (though vLLM doesn't support disabling it via flag)
-    # This is more for future-proofing if they add a --no-use-v2-block-manager
     if args.use_v2_block_manager is False:
-        pass # No-op, as there's no flag to disable it.
+        pass 
 
     if args.max_num_seqs:
         cmd.extend(["--max-num-seqs", str(args.max_num_seqs)])

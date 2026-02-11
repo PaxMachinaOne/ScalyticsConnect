@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Create symbolic links for model test directories
  * Ensures model directories are accessible to the server

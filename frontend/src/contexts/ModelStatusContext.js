@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import adminService from '../services/adminService';
-import socketService from '../services/socketService';
+import eventBus from '../utils/eventBus'; // Import the global event bus
 
 const ModelStatusContext = createContext(null);
 
@@ -27,33 +29,25 @@ export const ModelStatusProvider = ({ children }) => {
   useEffect(() => {
     fetchPoolStatus();
 
-    const handleActiveModelChange = (data) => {
+    const handlePoolUpdate = (data) => {
+        console.log('[ModelStatusContext] Received pool:status_update event:', data);
         setPoolStatus(prevStatus => ({
             ...prevStatus,
-            activeModelId: data.modelId,
+            ...data,
         }));
     };
 
-    const handleWorkerStatusChange = (data) => {
-        setPoolStatus(prevStatus => ({
-            ...prevStatus,
-            workers: data.workers,
-        }));
-    };
-
-    socketService.on('active-model-changed', handleActiveModelChange);
-    socketService.on('worker-status-changed', handleWorkerStatusChange);
+    const unsubscribePoolUpdate = eventBus.subscribe('pool:status_update', handlePoolUpdate);
+    const unsubscribeActivationComplete = eventBus.subscribe('activation:complete', fetchPoolStatus);
 
     const intervalId = setInterval(fetchPoolStatus, 15000); 
 
     return () => {
       clearInterval(intervalId);
-      const unsubscribeActiveModel = socketService.on('active-model-changed', handleActiveModelChange);
-      const unsubscribeWorkerStatus = socketService.on('worker-status-changed', handleWorkerStatusChange);
-      unsubscribeActiveModel();
-      unsubscribeWorkerStatus();
+      unsubscribePoolUpdate();
+      unsubscribeActivationComplete();
     }; 
-  }, [fetchPoolStatus]); 
+  }, [fetchPoolStatus]);
 
   const value = {
     poolStatus,

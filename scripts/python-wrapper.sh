@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # Python wrapper script that ensures virtual environment is activated
 # before running any Python commands
 

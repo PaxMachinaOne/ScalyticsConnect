@@ -31,6 +31,7 @@ const ModelsList = ({
   onEditEmbeddingModel,
   listActivationProgress = {},
   onCloseListProgress,
+  poolStatus,
 }) => {
   const safeModels = Array.isArray(models) ? models : [];
   const safeProviders = Array.isArray(providers) ? providers : [];
@@ -69,36 +70,44 @@ const ModelsList = ({
           ) : (
             safeModels.map((model) => {
             if (!model || typeof model.id === 'undefined') {
+              console.error("Rendering error: Invalid model object encountered", model);
               return <tr key={`error-${Math.random()}`}><td colSpan="7">Error rendering model row</td></tr>;
             }
 
             const isExternal = !!model.external_provider_id;
             const provider = safeProviders.find(p => p.id === model.external_provider_id) || {};
-            const isEmbedding = model.is_embedding_model === 1 || model.is_embedding_model === true || model.pipeline_tag === 'feature-extraction';
+            const isEmbedding = model.is_embedding_model === 1 || model.is_embedding_model === true;
             const isPreferredEmbedding = !!model.is_preferred_embedding;
             const isConfiguredActive = model.is_active === true || model.is_active === 1;
-            const isActivatingLLM = activatingModelId === model.id;
+            
+            // Final, simplified real-time status logic
+            const liveProcess = poolStatus?.workers ? Object.values(poolStatus.workers).find(p => Number(p.modelId) === Number(model.id)) : null;
+            
+            const isActivating = activatingModelId === model.id || (liveProcess && liveProcess.status === 'starting');
+            
             const workerErrorTooltip = activationErrors?.[model.id] || null;
 
             let statusText = 'Inactive';
             let statusColor = 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
 
-            if (isActivatingLLM) {
+            if (isActivating) {
                 statusText = 'Activating';
                 statusColor = 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300';
-            } else if (isConfiguredActive) {
-                statusText = 'Active';
-                statusColor = isEmbedding ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
             } else if (activationErrors?.[model.id]) {
                 statusText = 'Error';
                 statusColor = 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300';
+            } else if (isConfiguredActive) {
+                statusText = 'Active';
+                statusColor = isEmbedding 
+                    ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                    : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
             }
 
             
             const showLLMDeactivateButton = isConfiguredActive && !isEmbedding;
             const showActivateEmbeddingButton = isEmbedding && !isConfiguredActive;
             const showDeactivateEmbeddingButton = isEmbedding && isConfiguredActive;
-            const disableDelete = !isExternal && ((!isEmbedding && isConfiguredActive) || isPreferredEmbedding || isActivatingLLM);
+            const disableDelete = !isExternal && ((!isEmbedding && isConfiguredActive) || isPreferredEmbedding || isActivating);
 
             return (
               <tr key={model.id} className="hover:bg-gray-50 dark:hover:bg-dark-secondary">
@@ -130,7 +139,7 @@ const ModelsList = ({
                     ) : ( 
                       <>
                         <span className={`font-medium ${
-                          isActivatingLLM ? 'text-yellow-600 dark:text-yellow-400' : 
+                          isActivating ? 'text-yellow-600 dark:text-yellow-400' : 
                           isConfiguredActive ? 'text-green-600 dark:text-green-400' : 
                           'text-gray-500 dark:text-gray-400'
                         }`}>Local LLM</span>
@@ -175,7 +184,7 @@ const ModelsList = ({
                  </td>
                 {/* Context Column */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {isEmbedding ? '-' : (typeof model.effective_context_window === 'number' ? formatContextWindow(model.effective_context_window) + ' tokens' : 'N/A')}
+                  {isEmbedding ? '-' : (typeof model.context_window === 'number' ? formatContextWindow(model.context_window) + ' tokens' : 'N/A')}
                 </td>
                 {/* Status Column */}
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -191,7 +200,7 @@ const ModelsList = ({
                     </button>
                     {!isExternal && (
                       <button
-                        onClick={() => onEditModel(model)}
+                        onClick={() => isEmbedding ? onEditEmbeddingModel(model) : onEditModel(model)}
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         data-tooltip-id={`edit-tt-${model.id}`}
                         data-tooltip-content={isEmbedding ? "Edit Embedding Model Details" : "Edit Model Config"}
@@ -202,8 +211,8 @@ const ModelsList = ({
                     )}
                     {/* Activate/Deactivate Buttons (Only for non-embedding models) */}
                     {!isEmbedding && showLLMDeactivateButton && (
-                      <button onClick={() => onToggleActive(model.id, model.name, true, isExternal)} disabled={isActivatingLLM} className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 ${isActivatingLLM ? 'opacity-50 cursor-not-allowed' : ''}`} data-tooltip-id={`deactivate-tt-${model.id}`} data-tooltip-content={isActivatingLLM ? "Stopping..." : "Deactivate Model"}>
-                        {isActivatingLLM ? (
+                      <button onClick={() => onToggleActive(model.id, model.name, true, isExternal)} disabled={isActivating} className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 ${isActivating ? 'opacity-50 cursor-not-allowed' : ''}`} data-tooltip-id={`deactivate-tt-${model.id}`} data-tooltip-content={isActivating ? "Stopping..." : "Deactivate Model"}>
+                        {isActivating ? (
                           <svg className="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -215,8 +224,8 @@ const ModelsList = ({
                       </button>
                     )}
                     {!isEmbedding && !showLLMDeactivateButton && (
-                      <button onClick={() => onToggleActive(model.id, model.name, false, isExternal)} disabled={isActivatingLLM} className={`text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600 ${isActivatingLLM ? 'opacity-50 cursor-not-allowed' : ''}`} data-tooltip-id={`activate-tt-${model.id}`} data-tooltip-content={isActivatingLLM ? "Activating..." : "Activate Model"}>
-                        {isActivatingLLM ? (
+                      <button onClick={() => onToggleActive(model.id, model.name, false, isExternal)} disabled={isActivating} className={`text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600 ${isActivating ? 'opacity-50 cursor-not-allowed' : ''}`} data-tooltip-id={`activate-tt-${model.id}`} data-tooltip-content={isActivating ? "Activating..." : "Activate Model"}>
+                        {isActivating ? (
                           <svg className="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -231,8 +240,8 @@ const ModelsList = ({
                      {showActivateEmbeddingButton && (
                        <button
                          onClick={() => onSetPreferredEmbeddingModel(model.id)} 
-                         disabled={isActivatingLLM}
-                         className={`text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600 ${isActivatingLLM ? 'opacity-50 cursor-not-allowed' : ''}`}
+                         disabled={isActivating}
+                         className={`text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600 ${isActivating ? 'opacity-50 cursor-not-allowed' : ''}`}
                          data-tooltip-id={`activate-embed-tt-${model.id}`}
                          data-tooltip-content="Activate"
                        >
@@ -245,8 +254,8 @@ const ModelsList = ({
                      {showDeactivateEmbeddingButton && (
                        <button
                          onClick={() => onSetPreferredEmbeddingModel(null)} 
-                         disabled={isActivatingLLM}
-                         className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 ${isActivatingLLM ? 'opacity-50 cursor-not-allowed' : ''}`}
+                         disabled={isActivating}
+                         className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 ${isActivating ? 'opacity-50 cursor-not-allowed' : ''}`}
                          data-tooltip-id={`deactivate-embed-tt-${model.id}`}
                          data-tooltip-content="Deactivate"
                        >
@@ -258,7 +267,7 @@ const ModelsList = ({
                      {/* Delete button logic: Disable if LLM active OR is preferred embedding */}
                      {!isExternal && (
                        (disableDelete) ? ( 
-                         <span data-tooltip-id={`delete-tt-${model.id}`} data-tooltip-content={isPreferredEmbedding ? "Deactivate model before deleting" : ((!isEmbedding && isConfiguredActive) ? "Deactivate model before deleting" : (isActivatingLLM ? "Cannot delete while processing" : "Delete Model"))} className="inline-block">
+                         <span data-tooltip-id={`delete-tt-${model.id}`} data-tooltip-content={isPreferredEmbedding ? "Deactivate model before deleting" : ((!isEmbedding && isConfiguredActive) ? "Deactivate model before deleting" : (isActivating ? "Cannot delete while processing" : "Delete Model"))} className="inline-block">
                            <button disabled className="text-gray-500 opacity-50 cursor-not-allowed dark:text-gray-300">
                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                            </button>

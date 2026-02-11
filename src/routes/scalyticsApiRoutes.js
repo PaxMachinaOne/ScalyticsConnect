@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const router = express.Router();
 
@@ -8,7 +10,7 @@ const { rateLimiterMiddleware } = require('../middleware/rateLimitMiddleware');
 
 // Import Controller
 const scalyticsApiController = require('../controllers/scalyticsApiController');
-const liveSearchApiController = require('../controllers/liveSearchApiController');
+const deepSearchApiController = require('../controllers/deepSearchApiController');
 const vectorApiController = require('../controllers/vectorApiController'); 
 const { protect } = require('../middleware/authMiddleware'); 
 
@@ -108,7 +110,7 @@ const { protect } = require('../middleware/authMiddleware');
  *                type: boolean
  *                description: If set, reports token usage stats in a final stream chunk before the stream termination.
  *            description: Options for streaming responses.
- *     LiveSearchApiRequest:
+ *     DeepSearchApiRequest:
  *       type: object
  *       required:
  *         - query
@@ -448,9 +450,9 @@ router.post(
 
 /**
  * @swagger
- * /v1/livesearch:
+ * /v1/deepsearch:
  *   post:
- *     summary: Initiates a Live Search task and streams results via Server-Sent Events (SSE).
+ *     summary: Initiates a Deep Search task and streams results via Server-Sent Events (SSE).
  *     tags: [Scalytics API]
  *     security:
  *       - BearerAuth: []
@@ -459,7 +461,7 @@ router.post(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LiveSearchApiRequest'
+ *             $ref: '#/components/schemas/DeepSearchApiRequest'
  *     responses:
  *       '200':
  *         description: OK. Returns a Server-Sent Events (SSE) stream. The stream will contain events like 'progress', 'markdown_chunk', 'complete', 'error', 'cancelled'.
@@ -487,14 +489,14 @@ router.post(
  *       '500':
  *         description: Internal Server Error
  *       '503':
- *         description: Service Unavailable (e.g., Python backend for Live Search is not ready)
+ *         description: Service Unavailable (e.g., Python backend for Deep Search is not ready)
  */
 router.post(
-  '/livesearch',
-  globalFeatureToggle,
+  '/deepsearch',
+  globalFeatureToggle,    
   authScalyticsApi,       
   rateLimiterMiddleware,  
-  liveSearchApiController.initiateLiveSearchStream
+  deepSearchApiController.initiateDeepSearchStream
 );
 
 /**
@@ -625,21 +627,27 @@ router.post(
 
 /**
  * @swagger
- * /v1/vector/documents/delete-all:
+ * /v1/vector/groups/delete:
  *   post:
- *     summary: Deletes all vector documents.
+ *     summary: Deletes all vector documents associated with a specific group ID.
  *     tags: [Scalytics API, Vector Service]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/DeleteVectorGroupApiRequest'
  *     responses:
  *       '200':
- *         description: OK. All documents processed for deletion (check success field).
+ *         description: OK. Documents for the group processed for deletion (check success field).
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/GeneralApiResponse'
  *       '400':
- *         description: Bad Request
+ *         description: Bad Request (e.g., invalid group_id)
  *       '401':
  *         description: Unauthorized (invalid API key)
  *       '403':
@@ -652,11 +660,11 @@ router.post(
  *         description: Service Unavailable (e.g., Python backend for vector operations is not ready)
  */
 router.post(
-  '/vector/documents/delete-all',
+  '/vector/groups/delete', // Using POST to align with Python backend, though DELETE /v1/vector/group/{groupId} might be more RESTful
   globalFeatureToggle,
   authScalyticsApi,
   rateLimiterMiddleware,
-  vectorApiController.deleteAllVectorsHandler
+  vectorApiController.deleteVectorGroupHandler // Assuming this handler exists
 );
 
 /**

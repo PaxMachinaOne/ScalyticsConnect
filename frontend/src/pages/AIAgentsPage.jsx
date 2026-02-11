@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom'; 
 import { useAuth } from '../contexts/AuthContext';
@@ -152,12 +154,12 @@ const AIAgentsPage = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayableTools.map((tool) => {
               let displayName = tool.displayName || tool.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-              if (tool.name === 'live-search') {
-                displayName = 'Scalytics Live Search';
+              if (tool.name === 'deep-search') {
+                displayName = 'Scalytics Deep Search';
               }
               
-              let IconComponent = CogIcon;
-              if (tool.name === 'live-search') {
+              let IconComponent = CogIcon; 
+              if (tool.name === 'deep-search') {
                 IconComponent = ScalyticsSeekIcon;
               } else if (tool.name === 'image_gen') {
                 IconComponent = ImageIcon; 

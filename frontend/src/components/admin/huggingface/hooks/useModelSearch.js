@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import { useState, useEffect, useCallback, useRef } from 'react';
 import debounce from 'lodash.debounce';
 import adminService from '../../../../services/adminService';
@@ -36,7 +38,6 @@ const extractSearchResults = (response, selectedFamily) => {
 
   // Map the results
   const mappedResults = resultsToProcess.map(model => ({
-      ...model,
       modelId: model.id || model.modelId,
       description: model.description || '',
       stars: model.likes || model.stars || 0,
@@ -44,7 +45,8 @@ const extractSearchResults = (response, selectedFamily) => {
       tags: model.tags || [],
       lastModified: model.lastModified || null,
       createdAt: model.createdAt || model.created_at || null,
-      pipeline_tag: model.pipeline_tag,
+      pipeline_tag: model.pipeline_tag, 
+      ...model 
     }));
 
     // Add date information during mapping (if needed, HF API often provides it directly now)

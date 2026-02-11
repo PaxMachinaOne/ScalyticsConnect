@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # Emergency Permission Fix Script for MCPServer/Connect
 # This script fixes common permission issues that can cause authentication failures
 # Usage: sudo bash fix_app_permissions.sh [APP_ROOT] [APP_USER] [APP_GROUP]
@@ -7,7 +9,7 @@
 APP_ROOT="${1:-/var/www/connect}"
 APP_USER="${2:-sconnect}"
 APP_GROUP="${3:-www-data}"
-DB_FILE="${APP_ROOT}/data/community.db"
+DB_FILE="${APP_ROOT}/data/mcp.db"
 
 # Display banner
 echo ""

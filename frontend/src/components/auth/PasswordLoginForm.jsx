@@ -1,17 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React from 'react';
 
 /**
- * Component for the password login form
+ * Password login form component that handles username/password input and submission
  * @param {Object} props - Component props
- * @param {Object} props.formData - Form data state
- * @param {Function} props.handleChange - Function to handle input changes
- * @param {Function} props.handleSubmit - Function to handle form submission
+ * @param {Object} props.formData - Form data containing username and password
+ * @param {Function} props.handleChange - Handler for input changes
+ * @param {Function} props.handleSubmit - Handler for form submission
  * @param {boolean} props.loading - Whether the form is currently being submitted
+ * @param {boolean} props.hasOAuthProvider - Whether there is an active OAuth provider
  */
-const PasswordLoginForm = ({ formData, handleChange, handleSubmit, loading }) => {
+const PasswordLoginForm = ({ formData, handleChange, handleSubmit, loading, hasOAuthProvider }) => {
   return (
-    <form
-      className="mt-8 space-y-6"
+    <form 
+      className={`${hasOAuthProvider ? 'mt-6' : 'mt-8'} space-y-6`} 
       onSubmit={handleSubmit}
     >
       <div className="rounded-md shadow-sm -space-y-px">

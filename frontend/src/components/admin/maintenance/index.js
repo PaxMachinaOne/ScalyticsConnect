@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import MaintenancePanel from './MaintenancePanel';
 import MaintenanceAlert from './MaintenanceAlert';
 import MaintenanceSectionHeader from './MaintenanceSectionHeader';

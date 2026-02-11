@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
 const { getSystemSetting } = require('../config/systemConfig');
 const { APIError } = require('../utils/errorUtils'); // Assuming errorUtils is in ../utils/
@@ -13,7 +15,7 @@ exports.embedTextsHandler = async (req, res, next) => {
   }
 
   try {
-    const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+    const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
       console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
       return next(new APIError("Python vector service URL is not configured correctly.", 503));
@@ -51,8 +53,11 @@ exports.embedTextsHandler = async (req, res, next) => {
  * Handles requests to add documents to the Python vector service.
  */
 exports.addDocumentsHandler = async (req, res, next) => {
-  const { documents } = req.body;
+  const { documents, group_id } = req.body;
 
+  if (!group_id || typeof group_id !== 'string') {
+    return next(new APIError('Invalid input: "group_id" must be a non-empty string.', 400));
+  }
   if (!Array.isArray(documents) || documents.length === 0) {
     return next(new APIError('Invalid input: "documents" must be a non-empty array.', 400));
   }
@@ -68,7 +73,7 @@ exports.addDocumentsHandler = async (req, res, next) => {
   }
 
   try {
-    const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+    const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
       console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
       return next(new APIError("Python vector service URL is not configured correctly.", 503));
@@ -76,10 +81,11 @@ exports.addDocumentsHandler = async (req, res, next) => {
 
     const addDocsApiUrl = `${pythonServiceBaseUrl}/vector/documents`;
     
-    console.log(`[VectorAPIController] Requesting to add ${documents.length} documents via ${addDocsApiUrl}.`);
+    console.log(`[VectorAPIController] Requesting to add ${documents.length} documents to group ${group_id} via ${addDocsApiUrl}.`);
 
     const apiResponse = await axios.post(addDocsApiUrl, { 
-      documents: documents // These should match Python's GenericDocumentItem structure
+      documents: documents, // These should match Python's GenericDocumentItem structure
+      group_id: group_id
     });
 
     // Python service returns GeneralVectorResponse: { success: bool, message: str, details: Optional[Dict] }
@@ -102,17 +108,20 @@ exports.addDocumentsHandler = async (req, res, next) => {
  * Handles requests to search vector documents using the Python vector service.
  */
 exports.searchVectorsHandler = async (req, res, next) => {
-  const { query_text, top_k } = req.body;
+  const { query_text, group_id, top_k } = req.body;
 
   if (!query_text || typeof query_text !== 'string') {
     return next(new APIError('Invalid input: "query_text" must be a non-empty string.', 400));
+  }
+  if (group_id && typeof group_id !== 'string') {
+    return next(new APIError('Invalid input: "group_id", if provided, must be a string.', 400));
   }
   if (top_k && (typeof top_k !== 'number' || !Number.isInteger(top_k) || top_k < 1 || top_k > 100)) {
     return next(new APIError('Invalid input: "top_k", if provided, must be an integer between 1 and 100.', 400));
   }
 
   try {
-    const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+    const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
       console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
       return next(new APIError("Python vector service URL is not configured correctly.", 503));
@@ -121,6 +130,7 @@ exports.searchVectorsHandler = async (req, res, next) => {
     const searchApiUrl = `${pythonServiceBaseUrl}/vector/search`;
     
     const payload = { query_text };
+    if (group_id) payload.group_id = group_id;
     if (top_k) payload.top_k = top_k;
 
     console.log(`[VectorAPIController] Requesting vector search via ${searchApiUrl} with query "${query_text}".`);
@@ -146,33 +156,42 @@ exports.searchVectorsHandler = async (req, res, next) => {
 };
 
 /**
- * Handles requests to delete all vector documents using the Python vector service.
+ * Handles requests to delete vector documents by group_id using the Python vector service.
  */
-exports.deleteAllVectorsHandler = async (req, res, next) => {
+exports.deleteVectorGroupHandler = async (req, res, next) => {
+  const { group_id } = req.body;
+
+  if (!group_id || typeof group_id !== 'string') {
+    return next(new APIError('Invalid input: "group_id" must be a non-empty string.', 400));
+  }
+
   try {
-    const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+    const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
       console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
       return next(new APIError("Python vector service URL is not configured correctly.", 503));
     }
 
-    const deleteAllApiUrl = `${pythonServiceBaseUrl}/vector/delete_all`;
+    const deleteGroupApiUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
     
-    console.log(`[VectorAPIController] Requesting to delete all vector documents via ${deleteAllApiUrl}.`);
+    console.log(`[VectorAPIController] Requesting to delete vector documents for group ${group_id} via ${deleteGroupApiUrl}.`);
 
-    const apiResponse = await axios.post(deleteAllApiUrl);
+    const apiResponse = await axios.post(deleteGroupApiUrl, { 
+      group_id: group_id
+    });
 
+    // Python service returns GeneralVectorResponse: { success: bool, message: str, details: Optional[Dict] }
     if (typeof apiResponse.data?.success !== 'boolean' || typeof apiResponse.data?.message !== 'string') {
-      console.error("[VectorAPIController] Invalid response structure from Python delete_all service:", apiResponse.data);
-      return next(new APIError("Invalid response format from Python delete_all service.", 500));
+      console.error("[VectorAPIController] Invalid response structure from Python delete_by_group service:", apiResponse.data);
+      return next(new APIError("Invalid response format from Python delete_by_group service.", 500));
     }
     
     res.status(apiResponse.data.success ? 200 : 400).json(apiResponse.data);
 
   } catch (error) {
     const statusCode = error.response?.status || 500;
-    const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to delete all vectors via Python service.';
-    console.error(`[VectorAPIController] Error calling Python delete_all service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
+    const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to delete vector group via Python service.';
+    console.error(`[VectorAPIController] Error calling Python delete_by_group service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
     return next(new APIError(message, statusCode));
   }
 };

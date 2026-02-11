@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Download controller for managing and tracking downloads via REST API
  * Provides fallback endpoints when WebSockets aren't available

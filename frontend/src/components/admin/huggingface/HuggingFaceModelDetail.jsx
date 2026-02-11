@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ModelDownloadProgress from '../../../components/ModelDownloadProgress';
@@ -27,10 +29,7 @@ const HuggingFaceModelDetail = ({
     autoInstallDeps: true
   });
   const [showGateModal, setShowGateModal] = useState(false);
-  const isEmbeddingModel = model.pipeline_tag === 'feature-extraction';
-  
-  // Conditionally execute the hook's logic
-  const { recommendations, loading: hardwareLoading } = useHardwareInfo(!isEmbeddingModel);
+  const { recommendations, loading: hardwareLoading } = useHardwareInfo();
 
   // Extract model size from model ID/name for VRAM calculations
   const getModelSize = (modelId) => {
@@ -56,36 +55,29 @@ const HuggingFaceModelDetail = ({
 
   useEffect(() => {
     if (model) {
-      if (isEmbeddingModel) {
-        setConfig(prev => ({
-          ...prev,
-          name: model.name || model.modelId.split('/').pop(),
-          description: model.description || `HuggingFace embedding model: ${model.modelId}`,
-        }));
-      } else {
-        const modelSize = getModelSize(model.modelId);
-        const vramReqs = getVRAMRequirements(modelSize);
-        const availableVRAM = recommendations ? parseFloat(recommendations.effectiveVramLimitGb) : 0;
-        
-        let defaultQuantization = 'awq';
-        if (availableVRAM >= vramReqs.fp16) {
-          defaultQuantization = 'fp16';
-        } else if (availableVRAM >= vramReqs.int8) {
-          defaultQuantization = 'int8';
-        }
-
-        setConfig(prev => ({
-          ...prev,
-          name: model.name || model.modelId.split('/').pop(),
-          description: model.description || `HuggingFace model: ${model.modelId}`,
-          quantization_method: defaultQuantization
-        }));
+      const modelSize = getModelSize(model.modelId);
+      const vramReqs = getVRAMRequirements(modelSize);
+      const availableVRAM = recommendations ? parseFloat(recommendations.effectiveVramLimitGb) : 0;
+      
+      // Smart default precision based on hardware
+      let defaultQuantization = 'awq'; // Safest default
+      if (availableVRAM >= vramReqs.fp16) {
+        defaultQuantization = 'fp16';
+      } else if (availableVRAM >= vramReqs.int8) {
+        defaultQuantization = 'int8';
       }
+
+      setConfig(prev => ({
+        ...prev,
+        name: model.name || model.modelId.split('/').pop(),
+        description: model.description || `HuggingFace model: ${model.modelId}`,
+        quantization_method: defaultQuantization
+      }));
       if (model.gated) {
         setShowGateModal(true);
       }
     }
-  }, [model, recommendations, isEmbeddingModel]);
+  }, [model, recommendations]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -96,7 +88,18 @@ const HuggingFaceModelDetail = ({
   };
 
   const handleDownload = () => {
-    onDownload(model.modelId, { ...config, is_embedding_model: isEmbeddingModel });
+    onDownload(model.modelId, config);
+  };
+
+  const handleDownloadComplete = (result) => {
+    // Call the original onComplete callback if provided
+    if (onComplete) {
+      onComplete(result);
+    }
+    // Refresh the models list to show the newly activated model
+    if (onRefreshModels) {
+      onRefreshModels();
+    }
   };
 
   if (!model) return null;
@@ -135,12 +138,7 @@ const HuggingFaceModelDetail = ({
       <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden">
         <div className="px-4 py-5 sm:px-6 bg-gray-50 dark:bg-dark-secondary border-b border-gray-200 dark:border-dark-border">
         <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">{model.modelId}</h3>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-          {isEmbeddingModel
-            ? "Configure and download this embedding model for local use."
-            : "Configure and download this model for local use with vLLM."
-          }
-        </p>
+        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Configure and download this model for local use with vLLM.</p>
       </div>
       <div className="px-4 py-4 sm:px-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div><p className="text-xs font-medium text-gray-500 dark:text-gray-400">Downloads</p><p className="text-sm text-gray-900 dark:text-gray-200">{model.downloads?.toLocaleString()}</p></div>
@@ -169,7 +167,7 @@ const HuggingFaceModelDetail = ({
               required
             />
           </div>
-          {!isEmbeddingModel && (
+          {!model.is_embedding_model && (
           <div className="sm:col-span-3">
             <label htmlFor="quantization_method" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Download Precision
@@ -270,7 +268,7 @@ const HuggingFaceModelDetail = ({
               id="autoInstallDeps" name="autoInstallDeps" type="checkbox" checked={config.autoInstallDeps} onChange={handleInputChange}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
             />
-            <label htmlFor="autoInstallDeps" className="ml-2 block text-sm text-gray-300">
+            <label htmlFor="autoInstallDeps" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
               Auto-install dependencies
             </label>
           </div>
@@ -281,7 +279,7 @@ const HuggingFaceModelDetail = ({
         {downloadId || isLoading ? (
           <ModelDownloadProgress
             downloadId={downloadId}
-            onComplete={onComplete} onError={onError} onDismiss={onDismiss}
+            onComplete={handleDownloadComplete} onError={onError} onDismiss={onDismiss}
           />
         ) : (
           <button
@@ -290,7 +288,7 @@ const HuggingFaceModelDetail = ({
             disabled={model.gated}
             className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${model.gated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-medium`}
           >
-            {isEmbeddingModel ? 'Download Embedding Model' : 'Download & Install (Torch/vLLM)'}
+            Download & Install (Torch/vLLM)
           </button>
         )}
       </div>

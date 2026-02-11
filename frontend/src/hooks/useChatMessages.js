@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import { useState, useCallback, useRef, useEffect } from 'react';
 import chatService from '../services/chatService';
 import { websocketManager } from '../services/websocketManager';
@@ -110,11 +112,21 @@ const useChatMessages = (chatId, chat, setChat, onChatUpdated) => {
             setCurrentToolExecutionId(stream.toolExecutionId);
             scrollToBottom();
           }, 0);
+        } else if (type === 'pre_flight_answer_received' && stream.toolExecutionId === streamId) {
+            setChat(prev => {
+                const newPreflightMessage = {
+                    id: `preflight-${stream.toolExecutionId}-${Date.now()}`,
+                    role: 'assistant',
+                    content: stream.preFlightAnswer,
+                    tool_id: stream.toolName,
+                    is_preflight: true,
+                    isLoading: false,
+                    created_at: new Date().toISOString(),
+                };
+                return { ...prev, messages: [...(prev?.messages || []), newPreflightMessage] };
+            });
+            scrollToBottom();
         } else if (type === 'chunk_received' && stream.toolExecutionId === streamId) {
-          // Log received keySummaries from stream object
-          if (stream.keySummaries && stream.keySummaries.length > 0) {
-            console.log('[useChatMessages] chunk_received - stream.keySummaries:', JSON.stringify(stream.keySummaries));
-          }
           if (stream.progressUpdates && stream.progressUpdates.length > 0) {
             const latestProgress = stream.progressUpdates[stream.progressUpdates.length - 1];
             setTimeout(() => {

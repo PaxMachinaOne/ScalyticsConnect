@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 # PM2 wrapper script to ensure correct environment setup
 # This fixes the "spawn bash ENOENT" and "invalid PID" errors
 

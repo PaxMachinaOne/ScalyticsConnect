@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import Logo from './Logo';
@@ -74,7 +76,7 @@ const Navbar = () => {
                 </div>
                 <div className="ml-2 flex items-center">
                   <span className="text-lg font-bold text-[#DD6B20]">Scalytics</span>
-                  <span className="ml-1 text-lg font-bold text-gray-800 dark:text-dark-text-secondary">Connect - Community Edition</span>
+                  <span className="ml-1 text-lg font-bold text-gray-800 dark:text-dark-text-secondary">Connect</span>
                 </div>
               </div>
             </div>

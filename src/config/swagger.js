@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const swaggerJsdoc = require('swagger-jsdoc');
 const packageJson = require('../../package.json'); // Read version from package.json
 

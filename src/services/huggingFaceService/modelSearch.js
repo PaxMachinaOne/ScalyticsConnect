@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Hugging Face model search functionality
  * Includes VRAM pre-filtering based on detected GPU limits.

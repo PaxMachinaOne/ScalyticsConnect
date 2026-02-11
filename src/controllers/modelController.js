@@ -1,56 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const path = require('path');
 const fs = require('fs').promises;
-const https = require('https'); // For fetching config.json from Hugging Face
+const https = require('https');
 const { db } = require('../models/db');
 const Model = require('../models/Model');
 const { writeModelConfigJson } = require('../utils/modelConfigUtils');
 const vllmService = require('../services/vllmService');
 const { triggerPythonServiceRestart, handleEmbeddingModelChange } = require('../utils/pythonServiceUtils');
 
-// Get all models
 exports.getModels = async (req, res) => {
   try {
     let models = await Model.getAll();
 
     if (req.shouldFilterModels && req.user && !req.user.is_admin) {
-      // Group-based filtering removed.
-      // Add alternative filtering logic here if needed in the future.
+      const accessibleModelIds = await db.allAsync(`
+        SELECT DISTINCT m.id
+        FROM models m
+        JOIN group_model_access gma ON m.id = gma.model_id
+        JOIN user_groups ug ON gma.group_id = ug.group_id
+        WHERE ug.user_id = ?
+        AND gma.can_access = 1
+      `, [req.user.id]);
+
+      const accessibleIds = new Set(accessibleModelIds.map(m => m.id));
+      models = models.filter(model => accessibleIds.has(model.id));
     }
 
     const processedModels = models.map(model => {
-      let effective_context_window = model.context_window; 
-      let n_ctx_from_config = null;
-
-      if (!model.external_provider_id && model.config && typeof model.config === 'string') {
-        try {
-          const parsedConfig = JSON.parse(model.config);
-          if (parsedConfig.n_ctx !== null && parsedConfig.n_ctx !== undefined) {
-            const parsedNCtxVal = parseInt(parsedConfig.n_ctx, 10);
-            if (!isNaN(parsedNCtxVal) && parsedNCtxVal > 0) {
-              effective_context_window = parsedNCtxVal;
-              n_ctx_from_config = parsedNCtxVal; 
-            }
-          }
-          // Here you would also extract n_gpu_layers, n_batch if needed for estimatedVramGb calculation
-          // For example:
-          // const n_gpu_layers_from_config = parsedConfig.n_gpu_layers;
-          // if (n_gpu_layers_from_config !== undefined) {
-          //    // Logic to calculate/update estimatedVramGb based on n_gpu_layers_from_config
-          // }
-
-        } catch (e) {
-          console.error(`Error parsing config for model ${model.id}: ${model.config}`, e);
-        }
-      } else if (model.n_ctx !== null && model.n_ctx !== undefined && String(model.n_ctx).trim() !== '') {
-        const parsedNCtx = parseInt(model.n_ctx, 10);
-        if (!isNaN(parsedNCtx) && parsedNCtx > 0) {
-            effective_context_window = parsedNCtx;
-        }
-      }
-      
-      // TODO: Re-evaluate where estimatedVramGb is calculated.
-
-      return { ...model, effective_context_window };
+      return { ...model };
     });
 
 
@@ -91,11 +69,21 @@ exports.getActiveModelsForUser = async (req, res) => {
         console.error('Using fallback query - either getActiveForUser is not a function or privacy mode is enabled');
         let baseQuery;
         if (isPrivacyModeEnabled) {
-          baseQuery = `SELECT * FROM models m WHERE m.is_active = 1 AND m.external_provider_id IS NULL AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
-          models = await db.allAsync(baseQuery);
+          if (req.user.is_admin) {
+            baseQuery = `SELECT * FROM models m WHERE m.is_active = 1 AND m.external_provider_id IS NULL AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
+            models = await db.allAsync(baseQuery);
+          } else {
+            baseQuery = `SELECT DISTINCT m.* FROM models m JOIN group_model_access gma ON m.id = gma.model_id JOIN user_groups ug ON gma.group_id = ug.group_id WHERE ug.user_id = ? AND gma.can_access = 1 AND m.is_active = 1 AND m.external_provider_id IS NULL AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
+            models = await db.allAsync(baseQuery, [req.user.id]);
+          }
         } else {
-          baseQuery = `SELECT * FROM models m WHERE m.is_active = 1 AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
-          models = await db.allAsync(baseQuery);
+          if (req.user.is_admin) {
+            baseQuery = `SELECT * FROM models m WHERE m.is_active = 1 AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
+            models = await db.allAsync(baseQuery);
+          } else {
+            baseQuery = `SELECT DISTINCT m.* FROM models m JOIN group_model_access gma ON m.id = gma.model_id JOIN user_groups ug ON gma.group_id = ug.group_id WHERE ug.user_id = ? AND gma.can_access = 1 AND m.is_active = 1 AND (m.is_embedding_model IS NULL OR m.is_embedding_model = 0) ORDER BY m.name ASC`;
+            models = await db.allAsync(baseQuery, [req.user.id]);
+          }
         }
         for (const model of models) {
           if (model.external_provider_id) {
@@ -111,22 +99,6 @@ exports.getActiveModelsForUser = async (req, res) => {
     }
 
     const processedModels = models.map(model => {
-      let effective_context_window = model.context_window; 
-
-      if (!model.external_provider_id && model.config && typeof model.config === 'string') {
-        try {
-          const parsedConfig = JSON.parse(model.config);
-          if (parsedConfig.n_ctx !== null && parsedConfig.n_ctx !== undefined) {
-            const parsedNCtxVal = parseInt(parsedConfig.n_ctx, 10);
-            if (!isNaN(parsedNCtxVal) && parsedNCtxVal > 0) {
-              effective_context_window = parsedNCtxVal;
-            }
-          }
-          // TODO: Add logic for estimatedVramGb if it's derived from config here too
-        } catch (e) {
-          console.error(`Error parsing config for model ${model.id} in getActiveModelsForUser: ${model.config}`, e);
-        }
-      }
       const newModelObject = {
         id: model.id,
         name: model.name,
@@ -159,7 +131,6 @@ exports.getActiveModelsForUser = async (req, res) => {
         ...(model.can_use !== undefined && { can_use: model.can_use }), 
         ...(model.is_preferred_embedding !== undefined && { is_preferred_embedding: model.is_preferred_embedding }),
         ...(model.access_source && { access_source: model.access_source }), 
-        effective_context_window: effective_context_window 
       };
       return newModelObject;
     });
@@ -207,7 +178,6 @@ async function getEmbeddingDimensionFromHuggingFace(repoId) {
       res.on('end', () => {
         try {
           const hfConfig = JSON.parse(rawData);
-          // Common keys for embedding dimension
           const dimension = hfConfig.hidden_size || hfConfig.d_model || hfConfig.hidden_dim || hfConfig.embedding_dim || hfConfig.dimension;
           if (dimension && typeof dimension === 'number' && dimension > 0) {
             console.log(`[HF Config Fetch] Found dimension ${dimension} for ${repoId}`);
@@ -234,8 +204,8 @@ exports.addModel = async (req, res) => {
         name, description, model_path, context_window, is_active,
         n_gpu_layers, n_batch, n_ctx, enable_scala_prompt, preferred_cache_type,
         model_family, prompt_format_type, huggingface_repo, tokenizer_repo_id, is_default,
-        is_embedding_model, // Ensure this is captured from req.body
-        config // Capture existing config string if provided
+        is_embedding_model,
+        config
     } = req.body;
 
     if (!name || !model_path) {
@@ -254,22 +224,18 @@ exports.addModel = async (req, res) => {
             console.warn(`[Add Model] Invalid existing config JSON provided for ${name}. Initializing new config. Error: ${e.message}`);
             modelConfig = {};
         }
-    } else if (config && typeof config === 'object') { // If it's already an object
+    } else if (config && typeof config === 'object') {
         modelConfig = config;
     }
-
-
-    // Populate modelConfig with n_ctx, n_gpu_layers, n_batch if provided
-    if (n_ctx !== undefined) modelConfig.n_ctx = n_ctx;
     if (n_gpu_layers !== undefined) modelConfig.n_gpu_layers = n_gpu_layers;
     if (n_batch !== undefined) modelConfig.n_batch = n_batch;
 
+    let embeddingDimension = null;
     if (is_embedding_model && huggingface_repo) {
         console.log(`[Add Model] Attempting to fetch dimension for embedding model ${name} from ${huggingface_repo}`);
-        const dimension = await getEmbeddingDimensionFromHuggingFace(huggingface_repo);
-        if (dimension) {
-            modelConfig.dimension = dimension;
-            console.log(`[Add Model] Successfully set dimension ${dimension} for ${name}`);
+        embeddingDimension = await getEmbeddingDimensionFromHuggingFace(huggingface_repo);
+        if (embeddingDimension) {
+            console.log(`[Add Model] Successfully set dimension ${embeddingDimension} for ${name}`);
         } else {
             console.warn(`[Add Model] Could not automatically determine embedding dimension for ${name} (${huggingface_repo}). Please set manually if needed.`);
         }
@@ -279,7 +245,7 @@ exports.addModel = async (req, res) => {
         name,
         description,
         model_path,
-        context_window: context_window || (modelConfig.n_ctx ? parseInt(modelConfig.n_ctx, 10) : 4096), // Use n_ctx from config if available
+        context_window: context_window || 4096,
         is_active,
         enable_scala_prompt,
         preferred_cache_type,
@@ -288,12 +254,11 @@ exports.addModel = async (req, res) => {
         huggingface_repo,
         tokenizer_repo_id,
         is_default,
-        is_embedding_model: !!is_embedding_model, // Ensure boolean
-        config: JSON.stringify(modelConfig) // Store the potentially updated config
-        // n_gpu_layers, n_batch, n_ctx are now part of the config JSON
+        is_embedding_model: !!is_embedding_model,
+        embedding_dimension: embeddingDimension,
+        config: JSON.stringify(modelConfig)
     };
     
-    // Remove undefined fields from modelData to avoid DB errors with strict columns
     Object.keys(modelData).forEach(key => modelData[key] === undefined && delete modelData[key]);
 
 
@@ -321,31 +286,38 @@ exports.updateModel = async (req, res) => {
     }
 
     const isLocalModel = !currentModel.external_provider_id;
-    const updateData = {}; // Fields to directly update on the Model object
+    const updateData = {};
     let newConfig = currentModel.config ? JSON.parse(currentModel.config) : {};
     let configChanged = false;
     let coreModelFieldsChanged = false;
 
-    // Define fields that go into the 'config' JSON blob for local models
-    const localConfigBlobFields = ['n_batch', 'n_ctx', 'dimension', 'tensor_parallel_size'];
-    // Define fields that are direct columns on the 'models' table
+    const localConfigBlobFields = ['n_batch', 'n_ctx', 'dimension', 'tensor_parallel_size', 'gpu_memory_utilization'];
     const directModelFields = [
         'description', 'enable_scala_prompt', 'preferred_cache_type', 
         'can_generate_images', 'is_embedding_model', 'huggingface_repo', 
         'model_family', 'prompt_format_type', 'tokenizer_repo_id', 'context_window', 'name', 'model_path',
         'model_type', 'model_format', 'quantization_method'
-        // 'is_active' is handled separately due to restart logic
     ];
 
-    // Process all fields from req.body
     for (const field in req.body) {
         if (Object.hasOwnProperty.call(req.body, field)) {
             let value = req.body[field];
 
             if (isLocalModel && localConfigBlobFields.includes(field)) {
-                const numericValue = (value === '' || value === null) ? null : parseInt(value, 10);
-                if (numericValue !== newConfig[field]) {
-                    newConfig[field] = numericValue;
+                let processedValue;
+                if (field === 'gpu_memory_utilization') {
+                    if (value === 'auto' || value === '' || value === null) {
+                        processedValue = 'auto';
+                    } else {
+                        processedValue = parseFloat(value);
+                        if (isNaN(processedValue)) continue;
+                    }
+                } else {
+                    processedValue = (value === '' || value === null) ? null : parseInt(value, 10);
+                }
+
+                if (processedValue !== newConfig[field]) {
+                    newConfig[field] = processedValue;
                     configChanged = true;
                 }
             } else if (directModelFields.includes(field)) {
@@ -356,10 +328,10 @@ exports.updateModel = async (req, res) => {
                     processedValue = (value === true || value === 'true' || value === 1 || value === '1');
                     currentValue = (currentValue === 1 || currentValue === true);
                 } else if (field === 'preferred_cache_type' && value === '') {
-                    processedValue = null; // Treat empty string as null for this field
+                    processedValue = null;
                 } else if (field === 'context_window' && value !== null && value !== undefined) {
                     processedValue = parseInt(value, 10);
-                     if (isNaN(processedValue)) processedValue = currentModel.context_window; // fallback
+                     if (isNaN(processedValue)) processedValue = currentModel.context_window;
                 }
 
 
@@ -371,18 +343,17 @@ exports.updateModel = async (req, res) => {
         }
     }
     
-    // If is_embedding_model flag or huggingface_repo changed for an embedding model, try to update dimension
-    const newIsEmbeddingModel = Object.hasOwnProperty.call(updateData, 'is_embedding_model') ? updateData.is_embedding_model : currentModel.is_embedding_model;
+    const newIsEmbeddingModel = Object.hasOwnProperty.call(updateData, 'is_embedding_model') ? updateData.is_embedding_model : (currentModel.is_embedding_model === 1);
     const newHuggingFaceRepo = Object.hasOwnProperty.call(updateData, 'huggingface_repo') ? updateData.huggingface_repo : currentModel.huggingface_repo;
 
     if (newIsEmbeddingModel && newHuggingFaceRepo && 
         (updateData.is_embedding_model !== undefined || updateData.huggingface_repo !== undefined)) {
         console.log(`[Update Model] Embedding status or repo changed for ${currentModel.name}. Re-fetching dimension from ${newHuggingFaceRepo}`);
         const dimension = await getEmbeddingDimensionFromHuggingFace(newHuggingFaceRepo);
-        if (dimension && newConfig.dimension !== dimension) {
-            newConfig.dimension = dimension;
-            configChanged = true;
-            console.log(`[Update Model] Updated dimension to ${dimension} for ${currentModel.name}`);
+        if (dimension && currentModel.embedding_dimension !== dimension) {
+            updateData.embedding_dimension = dimension;
+            coreModelFieldsChanged = true;
+            console.log(`[Update Model] Updated embedding_dimension to ${dimension} for ${currentModel.name}`);
         } else if (!dimension) {
             console.warn(`[Update Model] Could not automatically determine embedding dimension for ${currentModel.name} (${newHuggingFaceRepo}) on update.`);
         }
@@ -393,33 +364,28 @@ exports.updateModel = async (req, res) => {
         updateData.config = JSON.stringify(newConfig);
     }
 
-    // --- Restart Logic for Active Local Model Config Change ---
     let needsRestart = false;
     let pythonServiceNeedsRestart = false;
     const { is_active } = req.body;
 
-    // Check for changes that affect Python service for embedding models
-    if ( (updateData.is_embedding_model !== undefined && updateData.is_embedding_model !== (currentModel.is_embedding_model === 1)) || // is_embedding_model toggled
-         (currentModel.is_embedding_model && updateData.huggingface_repo && updateData.huggingface_repo !== currentModel.huggingface_repo) || // huggingface_repo changed for an embedding model
-         (currentModel.is_embedding_model && updateData.is_active !== undefined && updateData.is_active !== (currentModel.is_active === 1)) // is_active changed for an embedding model
+    if ( (updateData.is_embedding_model !== undefined && updateData.is_embedding_model !== (currentModel.is_embedding_model === 1)) ||
+         (currentModel.is_embedding_model && updateData.huggingface_repo && updateData.huggingface_repo !== currentModel.huggingface_repo) ||
+         (currentModel.is_embedding_model && updateData.is_active !== undefined && updateData.is_active !== (currentModel.is_active === 1))
        ) {
       pythonServiceNeedsRestart = true;
     }
 
 
-    // If core config fields (n_ctx, n_gpu_layers, n_batch) changed for the active local model
     if (isLocalModel && vllmService.activeModelId === modelIdBeingUpdated && configChanged && 
         (newConfig.n_ctx !== (currentModel.config ? JSON.parse(currentModel.config).n_ctx : undefined) ||
          newConfig.n_gpu_layers !== (currentModel.config ? JSON.parse(currentModel.config).n_gpu_layers : undefined) ||
          newConfig.n_batch !== (currentModel.config ? JSON.parse(currentModel.config).n_batch : undefined) )) {
         needsRestart = true;
     }
-     // If model_path changed for the active local model
     if (isLocalModel && vllmService.activeModelId === modelIdBeingUpdated && updateData.model_path && updateData.model_path !== currentModel.model_path) {
         needsRestart = true;
     }
     
-    // Handle explicit is_active changes for local models (triggers restart)
     if (isLocalModel && Object.hasOwnProperty.call(req.body, 'is_active')) {
         const requestedIsActiveState = (is_active === true || is_active === 1 || is_active === '1');
         if (requestedIsActiveState !== (currentModel.is_active === 1)) {
@@ -434,9 +400,6 @@ exports.updateModel = async (req, res) => {
       return res.status(200).json({ success: true, message: 'No configuration changes detected.', data: currentModel });
     }
 
-    // If the model is local, active, and needs restart, deactivate it first
-    // Also, ensure we only try to deactivate if the intent is to keep it active or make it active.
-    // If the update explicitly sets is_active to false, we don't need to restart it to activate it.
     const intendedFinalActiveState = updateData.is_active !== undefined ? (updateData.is_active === 1 || updateData.is_active === true) : (currentModel.is_active === 1);
 
     if (isLocalModel && needsRestart && vllmService.activeModelId === modelIdBeingUpdated && intendedFinalActiveState) {
@@ -450,12 +413,9 @@ exports.updateModel = async (req, res) => {
 
     const updated = await Model.update(modelIdBeingUpdated, updateData);
     if (!updated) {
-      // If updateData included is_active and it failed, the model might be in a weird state.
-      // However, if deactivation happened, it's already off.
       return res.status(500).json({ success: false, message: 'Model configuration not updated (database error after potential deactivation).' });
     }
 
-    // If it was a local model that needed restart and its final intended state is active
     if (isLocalModel && needsRestart && intendedFinalActiveState) {
         try {
             await vllmService.activateModel(modelIdBeingUpdated);
@@ -515,6 +475,7 @@ exports.deleteModel = async (req, res) => {
     }
 
     await db.runAsync('DELETE FROM user_model_access WHERE model_id = ?', [modelId]);
+    await db.runAsync('DELETE FROM group_model_access WHERE model_id = ?', [modelId]);
 
     const modelPath = model.model_path;
     let fileDeletedMessage = "No file path associated or model is external.";

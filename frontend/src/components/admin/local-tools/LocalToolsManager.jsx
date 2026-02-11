@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom'; 
 import apiService from '../../../services/apiService'; 
@@ -83,9 +85,9 @@ const LocalToolsManager = () => {
 
   const getToolDisplayName = (toolName) => {
     switch (toolName) {
-      case 'live-search':
-        return 'Scalytics Live Search';
-      case 'image_gen': 
+      case 'deep-search':
+        return 'Scalytics Deep Search';
+      case 'image_gen': // New case for Image Generation tool
         return 'Image Generation';
       default:
         return toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -94,9 +96,9 @@ const LocalToolsManager = () => {
 
   const getToolDescription = (toolName) => {
     switch (toolName) {
-      case 'live-search':
-        return 'Performs iterative web research using multiple search engines and LLM reasoning/synthesis to answer a query. Requires a preferred embedding model to be configured.';
-      case 'image_gen': 
+      case 'deep-search':
+        return 'Enables the Scalytics Deep Search feature, allowing users to perform deep searches using web sources and files. Requires a preferred embedding model to be configured.';
+      case 'image_gen': // New case for Image Generation tool
         return 'Allows users to generate images from text prompts using a configured AI model. Users select their preferred image model in AI Agents Settings.';
       default:
         return `Manages the ${getToolDisplayName(toolName)} tool.`;
@@ -134,7 +136,8 @@ const LocalToolsManager = () => {
             const borderColor = isEnabled ? 'border-green-200 dark:border-green-700' : 'border-red-200 dark:border-red-700';
             const hoverBorderColor = isEnabled ? 'hover:border-green-400 dark:hover:border-green-500' : 'hover:border-red-400 dark:hover:border-red-500';
 
-            const isSearchTool = toolName === 'live-search'; 
+            // Use 'deep-search' for consistency when checking the tool name for special logic
+            const isSearchTool = toolName === 'deep-search'; 
             const isSearchToolToggleDisabled = isSearchTool && (embeddingModelLoading || !hasEmbeddingModel || !!embeddingModelError);
             const showEmbeddingWarning = isSearchTool && !embeddingModelLoading && !hasEmbeddingModel && !embeddingModelError;
             const showEmbeddingError = isSearchTool && embeddingModelError;
@@ -147,13 +150,13 @@ const LocalToolsManager = () => {
                     enabled={isEnabled}
                     onChange={(enabled) => handleToggleChange(toolName, enabled)}
                     label={`Enable ${getToolDisplayName(toolName)}`}
-                    disabled={isSearchToolToggleDisabled && toolName === 'live-search'} 
+                    disabled={isSearchToolToggleDisabled && toolName === 'deep-search'} // Only disable for deep-search based on its specific conditions
                   />
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   {getToolDescription(toolName)}
                 </p>
-                 {showEmbeddingWarning && toolName === 'live-search' && (
+                 {showEmbeddingWarning && toolName === 'deep-search' && (
                     <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md text-xs text-yellow-700 dark:text-yellow-300 flex items-start space-x-2">
                        <InformationCircleIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
                        <span>
@@ -161,7 +164,7 @@ const LocalToolsManager = () => {
                        </span>
                     </div>
                  )}
-                 {showEmbeddingError && toolName === 'live-search' && (
+                 {showEmbeddingError && toolName === 'deep-search' && (
                     <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-xs text-red-700 dark:text-red-300 flex items-start space-x-2">
                        <InformationCircleIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
                        <span>

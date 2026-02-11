@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -59,6 +61,17 @@ exports.register = async (req, res) => {
          [userId, 'system']
        );
  
+       // Add user to the default 'User' group
+       const userGroup = await db.getAsync("SELECT id FROM groups WHERE name = 'User'");
+       if (userGroup) {
+         await db.runAsync(
+           'INSERT OR IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)',
+           [userId, userGroup.id]
+         );
+         console.log(`[Register] Added user ${userId} to group 'User' (ID: ${userGroup.id})`);
+       } else {
+         console.warn("[Register] Could not find default 'User' group to assign new user to.");
+       }
      }
  
      // Create and send token
@@ -183,7 +196,43 @@ exports.getProfile = async (req, res) => {
       [user.id]
     );
 
-    const effectivePermissions = [];
+    // Get user's group IDs
+    const groups = await db.allAsync('SELECT group_id FROM user_groups WHERE user_id = ?', [user.id]);
+    const groupIds = groups.map(g => g.group_id);
+
+    let effectivePermissionsSet = new Set(); // Use a Set to handle duplicates easily
+
+    if (groupIds.length > 0) {
+      const placeholders = groupIds.map(() => '?').join(',');
+
+      // 1. Get permissions from permission_templates (default_value = 1)
+      const templatePerms = await db.allAsync(
+        `SELECT DISTINCT pt.permission_key
+         FROM permission_templates pt
+         WHERE pt.group_id IN (${placeholders}) AND pt.default_value = 1`,
+        groupIds
+      );
+      templatePerms.forEach(p => effectivePermissionsSet.add(p.permission_key));
+      // console.log(`[getProfile] Found ${templatePerms.length} permissions from templates for groups [${groupIds.join(', ')}].`); // Removed log
+
+
+      // 2. Get permissions directly granted to the group via group_admin_permissions
+      // Assuming 'group_admin_permissions' links group_id to permission_id,
+      // and 'admin_permissions' links permission_id to permission_key.
+      const directPerms = await db.allAsync(
+        `SELECT DISTINCT ap.permission_key
+         FROM group_admin_permissions gap
+         JOIN admin_permissions ap ON gap.permission_id = ap.id
+         WHERE gap.group_id IN (${placeholders})`,
+        groupIds
+      );
+      directPerms.forEach(p => effectivePermissionsSet.add(p.permission_key));
+      // console.log(`[getProfile] Found ${directPerms.length} permissions directly granted to groups [${groupIds.join(', ')}].`); // Removed log
+
+    }
+
+    // Convert Set back to array
+    const effectivePermissions = Array.from(effectivePermissionsSet);
     // console.log(`[getProfile] User ${user.id} final effective permissions:`, effectivePermissions); // Removed log
 
     // Check for specific permission to generate API keys
@@ -584,7 +633,8 @@ exports.handleRegisterRedirect = async (req, res) => {
     // console.log(`[handleRegisterRedirect] Token validated for user: ${user.username}. Redirecting to set password page.`); // Removed debug log
 
     // Construct the frontend URL, defaulting to localhost:3001 if FRONTEND_URL is not set in the current .env
-    const setPasswordUrl = `/set-password?token=${encodeURIComponent(token)}`;
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const setPasswordUrl = `${baseUrl.replace(/\/$/, '')}/set-password?token=${encodeURIComponent(token)}`;
 
     // Redirect the user's browser
     res.redirect(setPasswordUrl);

@@ -1,101 +1,107 @@
-# Scalytics Community Edition
+# Scalytics Connect
 
-Welcome to the Scalytics Community Edition! This is the open-source version of the Scalytics platform, a powerful tool for AI-driven data analysis and insights.
+[![CI](https://github.com/scalytics/ScalyticsConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/scalytics/ScalyticsConnect/actions/workflows/ci.yml) [![Secrets Scan](https://github.com/scalytics/ScalyticsConnect/actions/workflows/secrets-scan.yml/badge.svg)](https://github.com/scalytics/ScalyticsConnect/actions/workflows/secrets-scan.yml)
 
-# Screenshots
+Scalytics Connect is a private AI operations platform for organizations that need governance, deployment control, and auditability for GenAI workloads.
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/dashboard.png" alt="Dashboard" width="300"/>
-      <br />
-      <sub><b>Dashboard</b></sub>
-    </td>
-    <td align="center">
-      <img src="img/chat.png" alt="Chat Interface" width="300"/>
-      <br />
-      <sub><b>Chat Interface</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="img/admin.png" alt="Admin Panel" width="300"/>
-      <br />
-      <sub><b>Admin Panel</b></sub>
-    </td>
-    <td align="center">
-      <img src="img/hardware.png" alt="Hardware Monitoring" width="300"/>
-      <br />
-      <sub><b>Hardware Monitoring</b></sub>
-    </td>
-  </tr>
-</table>
+Built by [Scalytics](https://www.scalytics.io), it is designed for teams that cannot rely on unmanaged black-box AI tooling.
 
-- GPU advised; works with M* architecture, too
-- 16 GB RAM recommended; more is always better
-- SSD hard disk, 1TB if 70B models are run
+## The Niche We Serve
 
-## Getting Started
+Most AI chat stacks optimize for speed-to-demo. Scalytics Connect optimizes for production control:
 
-To get started with the Scalytics Community Edition, follow these steps:
+- data locality and controlled model access
+- role-based permissions and policy enforcement
+- local + external model support in one platform
+- self-hosted deployment workflows (including GCP)
 
-1.  Clone the repository:
-    ```bash
-    git clone git@github.com:scalytics/Scalytics-Community-Edition.git
-    cd Scalytics-Community-Edition
-    ```
+## For Enterprise Teams
 
-2.  Set up your environment:
-    - Create a `.env` file by copying the example: `cp .env.example .env`
-    - Fill in the required environment variables in your new `.env` file.
+Use Scalytics Connect when you need:
 
-3.  Run the application:
-    ```bash
-    ./start-app.sh
-    ```
+- governed AI operations across departments
+- user/group/permission controls at model and provider level
+- API key and integration governance
+- operational visibility (usage, maintenance, admin controls)
+- deployment ownership for compliance and security requirements
 
-## Initial Setup
+## For Developers
 
-After the application starts:
+What you get in this repo:
 
-1. Reset the admin password in the shell:
-   ```bash
-   node scripts/reset_admin_password.js
-   ```
-2. Copy the password and log in.
-3. Download an embedding model and activate it over Models -> Local Models.
-4. Download an LLM, activate it over Models -> Local Models Edit -> Set config, Save & Activate.
+- Node/Express backend with modular routes/services
+- React frontend for chat + administration
+- Python services/workers for inference and deep research
+- vLLM-based local inference support
+- MCP tool and agent integration surface
+
+Key areas:
+
+- `src/routes/` API surface
+- `src/services/` orchestration, providers, model logic
+- `src/python_services/` deep-search/research services
+- `frontend/` web app
+- `deploy/` deployment scripts
+- `docs/` OpenAPI/docs assets
+
+## Core Capabilities
+
+- Multi-model routing (local and external providers)
+- Local model lifecycle management (discover, download, activate, optimize)
+- User/group/permission management
+- Provider/API key administration
+- Agent workflows + MCP tools
+- Deep-search/research pipeline
+
+## Quick Start (Local)
+
+Backend:
+
+```bash
+npm install
+npm run setup
+npm run dev
+```
+
+Frontend (separate process):
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Production/GCP deployment guidance: `deploy/README.md`
+
 
 ## Documentation
 
-For more detailed information, please refer to our official documentation in the `docs/` directory.
+Start here: `docs/index.md`
 
-## API Testing
+- User docs: `docs/user/`
+- Admin docs: `docs/admin/`
+- Developer docs: `docs/developer/`
+- OpenAPI spec: `docs/openapi.json`
+- Static API docs: `docs/api-docs.html`
 
-You can test the API using `curl`.
+## API and Docs
 
-### List Models
-
-```bash
-curl -X GET http://localhost:3001/v1/models -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-### Chat Completions (Non-Streaming)
-
-```bash
-curl -X POST http://localhost:3001/v1/chat/completions -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" -d '{"messages": [{"role": "user", "content": "Hello"}]}'
-```
-
-### Chat Completions (Streaming)
+- OpenAPI spec: `docs/openapi.json`
+- Build static API docs:
 
 ```bash
-curl -X POST http://localhost:3001/v1/chat/completions -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" -d '{"messages": [{"role": "user", "content": "Hello"}], "stream": true}'
+npm run build:api-docs
 ```
 
-## Contributing
+## Security Baseline
 
-We welcome contributions from the community! Please read our contributing guidelines before submitting a pull request.
+Before production use:
+
+- configure secrets only via environment variables
+- run services with least privilege
+- validate access policies for users, groups, models, and providers
+- review deployment hardening in `deploy/`
 
 ## License
 
-This project is licensed under the Apache 2.0 License.
+Apache License 2.0. See `LICENSE` and `NOTICE`.

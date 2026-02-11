@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useRef, memo, useMemo, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
@@ -10,7 +12,8 @@ import chatService from '../../services/chatService';
 import apiService from '../../services/apiService'; 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import KeySummaryDisplay from './KeySummaryDisplay'; // Added import
+import KeySummaryDisplay from './KeySummaryDisplay';
+import ReasoningLogDisplay from './ReasoningLogDisplay';
 
 const MermaidBlock = memo(({ diagramId, code, theme }) => {
   const [svgDiagram, setSvgDiagram] = useState(null);
@@ -108,7 +111,7 @@ MermaidBlock.propTypes = {
   theme: PropTypes.string.isRequired,
 };
 
-const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick }) => {
+const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, reasoningSteps }) => {
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -117,15 +120,31 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
     message?.user_feedback_rating === 1 ? 'up' : message?.user_feedback_rating === -1 ? 'down' : null
   );
   const [showFollowUpSuggestions, setShowFollowUpSuggestions] = useState(true);
+  const [showReasoning, setShowReasoning] = useState(false);
   const isMounted = useRef(true);
   const contentRef = useRef(null);
   const [downloadableUrl, setDownloadableUrl] = useState(null);
   const [suggestedFilename, setSuggestedFilename] = useState('download');
 
-  // Debug log for keySummaries
-  if (message && message.role === 'assistant') {
-    console.log('[ChatBubble] Assistant Message ID:', message.id, 'Received Key Summaries:', message.keySummaries, 'IsLoading:', isLoading, 'Has Streaming Content:', !!streamingContent);
-  }
+  // Fallback parsing for mcp_metadata if service-level parsing failed
+  const parsedMcpMetadata = useMemo(() => {
+    if (!message?.mcp_metadata) return null;
+    
+    if (typeof message.mcp_metadata === 'object') {
+      return message.mcp_metadata;
+    }
+    
+    if (typeof message.mcp_metadata === 'string') {
+      try {
+        const parsed = JSON.parse(message.mcp_metadata);
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+    
+    return null;
+  }, [message?.mcp_metadata]);
 
   useEffect(() => {
     setShowFollowUpSuggestions(true);
@@ -190,7 +209,6 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
   const finalProcessedContent = mainContent;
 
   useEffect(() => {
-    // Check for downloadable content when message content changes
     if (message?.content) {
       const markdownImageRegex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+|https?:\/\/[^\s)]+)\)/g;
       const linkRegex = /\[[^\]]+\]\((https?:\/\/[^\s)]+\.(?:pdf|zip|txt|csv|json|xml|md|py|js|html|css|doc|docx|xls|xlsx|ppt|pptx|mov|mp4|mp3|wav|ogg|tar|gz|7z))\)/gi;
@@ -199,12 +217,10 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
       let baseFilename = 'download';
       let extension = '';
 
-      // Function to generate a timestamp string
       const getTimestampString = () => {
         return message?.created_at ? new Date(message.created_at).getTime() : Date.now();
       };
 
-      // Check for markdown images first
       const imageMatch = markdownImageRegex.exec(message.content);
       if (imageMatch && imageMatch[1]) {
         foundUrl = imageMatch[1];
@@ -223,18 +239,17 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
             if (lastPart.includes('.')) {
               const extFromFile = lastPart.substring(lastPart.lastIndexOf('.')).toLowerCase();
               if (['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(extFromFile)) {
-                baseFilename = lastPart.substring(0, lastPart.lastIndexOf('.')); // Use filename without ext
+                baseFilename = lastPart.substring(0, lastPart.lastIndexOf('.')); 
                 extension = extFromFile;
               } else {
-                extension = extFromFile; // Use other extensions
+                extension = extFromFile;
               }
             } else {
-              extension = '.png'; // Default for URLs without clear extension
+              extension = '.png'; 
             }
           } catch (e) { extension = '.png'; }
         }
       } else {
-        // If no markdown image, check for direct links to downloadable files
         const linkMatch = linkRegex.exec(message.content);
         if (linkMatch && linkMatch[1]) {
           foundUrl = linkMatch[1];
@@ -247,8 +262,6 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
                 extension = fullFilenameFromUrl.substring(fullFilenameFromUrl.lastIndexOf('.'));
             } else {
                 baseFilename = fullFilenameFromUrl;
-                // Try to guess extension from mime type if it's a common one, else no extension
-                // This part is complex without fetching headers, so we'll rely on URL or add a generic one later if needed
             }
           } catch (e) {
             baseFilename = 'download_link';
@@ -257,7 +270,6 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
       }
 
       if (foundUrl) {
-        // Ensure filename is not too long and add timestamp
         const finalBase = (baseFilename.length > 50 ? baseFilename.substring(0, 50) : baseFilename) || 'download';
         const finalFilename = `${finalBase}-${getTimestampString()}${extension || ''}`;
         setDownloadableUrl(foundUrl);
@@ -289,7 +301,6 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
     fixed = fixed.replace(/<\/?think>/g, '');
     if (!fixed.includes('```')) return fixed;
 
-    // eslint-disable-next-line
     fixed = fixed.replace(/^(```(?:[a-zA-Z0-9_+-]+)?)([^\n`])/gm, '$1\n$2');   
     fixed = fixed.replace(/([^\n])(\n?```\s*)$/gm, '$1\n```');
     return fixed;
@@ -502,7 +513,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
 
   return (
     <div className={`group relative mb-6 last:mb-0 w-full max-w-3xl mx-auto`}>
-      {!isSystem && (
+      {!isSystem && !message.is_preflight && (
         <div className={`text-xs font-medium mb-1 ${isUser ? 'text-gray-700 dark:text-gray-300 text-left' : 'text-gray-500 dark:text-gray-400 text-left'}`}>
           {isUser ? 'You' : 'Assistant'}
         </div>
@@ -520,7 +531,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
               processedSystemContent = match[2].trim(); 
             }
             return processedSystemContent && processedSystemContent !== '0' ? (
-              <div className="inline-block px-3 py-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/30 text-yellow-800 dark:text-yellow-300 text-sm max-w-xl"> {/* System messages can have their own narrower max-width */}
+              <div className="inline-block px-3 py-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/30 text-yellow-800 dark:text-yellow-300 text-sm max-w-xl">
                 <div className="font-medium mb-1">{personaName}</div>
                 <div className="text-sm">
                   <ReactMarkdown className="prose dark:prose-invert max-w-none prose-sm" components={reactMarkdownComponents} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
@@ -535,11 +546,21 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
         <div className={`${
           isUser
             ? 'bg-blue-600 dark:bg-blue-700 text-white'
+            : message.is_preflight
+            ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
             : 'bg-white dark:bg-dark-primary text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-dark-border'
         } rounded-lg px-4 py-3 shadow-sm w-full relative`}>
-          {!isUser && message.keySummaries && message.keySummaries.length > 0 && (
-            <KeySummaryDisplay summaries={message.keySummaries} />
+          {message.is_preflight && (
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">[Initial Answer]</div>
           )}
+          
+          {!isUser && message.keySummaries && message.keySummaries.length > 0 && (
+            <KeySummaryDisplay 
+              summaries={message.keySummaries} 
+              isActive={isLoading || isCurrentlyStreaming}
+            />
+          )}
+          
           <div ref={contentRef} className={`max-w-none text-sm ${isUser ? 'text-white' : ''}`}>
             <ReactMarkdown
               className={!isUser ? "prose dark:prose-invert max-w-none prose-sm" : ""}
@@ -569,7 +590,19 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
                   <span className="text-gray-500 dark:text-gray-400 text-xs">Working...</span>
                 </div>
               )}
-              {!isLoading && <div className="flex-grow"></div>} 
+              {!isLoading && (
+                <div className="flex items-center space-x-2">
+                  {parsedMcpMetadata?.tool_id === 'deep-search' && parsedMcpMetadata?.tool_execution_id && (
+                    <button
+                      onClick={() => setShowReasoning(!showReasoning)}
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      {showReasoning ? 'Hide Reasoning' : 'Show Reasoning'}
+                    </button>
+                  )}
+                </div>
+              )}
+              {!isLoading && <div className="flex-grow"></div>}
 
               {!isLoading && finalProcessedContent && (
                 <div className="flex items-center space-x-1.5">
@@ -644,6 +677,16 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick })
               )}
             </div>
           )}
+
+          {/* Reasoning Log Display - positioned below button row */}
+          {showReasoning && parsedMcpMetadata?.tool_id === 'deep-search' && (parsedMcpMetadata?.task_id || parsedMcpMetadata?.tool_execution_id) && reasoningSteps && reasoningSteps.length > 0 && (
+            <ReasoningLogDisplay 
+              steps={reasoningSteps.filter(step => 
+                step.task_id === parsedMcpMetadata.task_id || 
+                step.task_id === parsedMcpMetadata.tool_execution_id
+              )} 
+            />
+          )}
         </div>
       )}
     </div>
@@ -658,14 +701,18 @@ ChatBubble.propTypes = {
     created_at: PropTypes.string,
     files: PropTypes.array,
     user_feedback_rating: PropTypes.oneOf([-1, 1, null]),
+    is_preflight: PropTypes.bool,
+    tool_id: PropTypes.string,
+    mcp_metadata: PropTypes.object,
     keySummaries: PropTypes.arrayOf(PropTypes.shape({
       message: PropTypes.string,
       timestamp: PropTypes.string,
-    })), // Added prop type
+    })),
   }).isRequired,
   isLoading: PropTypes.bool,
   streamingContent: PropTypes.string,
   onSuggestionClick: PropTypes.func,
+  reasoningSteps: PropTypes.array,
 };
 
 export default memo(ChatBubble);

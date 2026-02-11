@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import { systemService } from '../../../services/admin';
 import { tooltipStyles } from './utils';

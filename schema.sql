@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS api_providers (
     is_external BOOLEAN DEFAULT 1,
     is_manual BOOLEAN DEFAULT 0, 
     image_generation_endpoint_path TEXT DEFAULT NULL, 
-    category TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -65,11 +64,11 @@ CREATE TABLE IF NOT EXISTS models (
     enable_scala_prompt BOOLEAN DEFAULT 0, 
     preferred_cache_type TEXT DEFAULT NULL, 
     is_embedding_model BOOLEAN DEFAULT 0,
-    embedding_dimension INTEGER,
     can_generate_images BOOLEAN DEFAULT 0,    
     raw_capabilities_info TEXT DEFAULT NULL, 
     -- vLLM and multi-modal support
     model_type TEXT DEFAULT 'text_generation' NOT NULL, -- 'text_generation', 'image_generation', 'tts', 'stt'
+    assigned_gpu_id INTEGER DEFAULT 0,
     tensor_parallel_size INTEGER DEFAULT 1,
     model_format TEXT DEFAULT 'torch', -- 'torch'
     quantization_method TEXT, -- 'awq', 'gptq', '4-bit', '8-bit', 'none'
@@ -101,7 +100,6 @@ CREATE TABLE IF NOT EXISTS messages (
     tokens INTEGER DEFAULT 0,
     mcp_metadata TEXT,
     mcp_permissions TEXT,
-    isLoading BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
 );
@@ -231,6 +229,40 @@ CREATE TABLE IF NOT EXISTS user_model_access (
     UNIQUE(user_id, model_id)
 );
 
+-- Groups 
+CREATE TABLE IF NOT EXISTS groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User Groups 
+CREATE TABLE IF NOT EXISTS user_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+    UNIQUE(user_id, group_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_groups_user ON user_groups(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_groups_group ON user_groups(group_id);
+
+-- model_access_audit
+CREATE TABLE IF NOT EXISTS model_access_audit (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  model_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL,
+  granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  FOREIGN KEY (model_id) REFERENCES models (id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE
+);
 
 -- User Files Table
 CREATE TABLE IF NOT EXISTS user_files (
@@ -250,18 +282,7 @@ CREATE TABLE IF NOT EXISTS message_files (
   file_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
-    FOREIGN KEY (file_id) REFERENCES user_files (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS message_feedback (
-    message_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL,
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (message_id, user_id),
-    FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+  FOREIGN KEY (file_id) REFERENCES user_files (id) ON DELETE CASCADE
 );
 
 -- Create the basic permissions table
@@ -273,37 +294,6 @@ CREATE TABLE IF NOT EXISTS permissions (
   source TEXT, 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create groups table
-CREATE TABLE IF NOT EXISTS groups (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create user_groups table
-CREATE TABLE IF NOT EXISTS user_groups (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  group_id INTEGER NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
-  UNIQUE(user_id, group_id)
-);
-
--- Create group_admin_permissions table
-CREATE TABLE IF NOT EXISTS group_admin_permissions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  group_id INTEGER NOT NULL,
-  permission_id INTEGER NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
-  FOREIGN KEY (permission_id) REFERENCES admin_permissions (id) ON DELETE CASCADE,
-  UNIQUE(group_id, permission_id)
 );
 
 -- Create permission_templates table for group-based default permissions
@@ -408,6 +398,12 @@ CREATE VIEW IF NOT EXISTS anthropic_keys_view AS
 INSERT OR IGNORE INTO users (username, email, password, is_admin)
 VALUES ('admin', 'admin@mcp.local', 'PLACEHOLDER_TO_BE_REPLACED', 1);
 
+-- Insert default groups
+INSERT OR IGNORE INTO groups (name, description)
+VALUES 
+('Administrator', 'Full system administrators with all permissions'),
+('Power User', 'Users with elevated permissions but not full admin access'),
+('User', 'Standard users with basic permissions');
 
 -- Set admin password protection (only effective if table exists)
 -- This ensures passwords won't be reset during updates
@@ -429,9 +425,9 @@ VALUES
   ('scalytics_api_rate_limit_window_ms', '900000'), -- 15 minutes
   ('scalytics_api_rate_limit_max', '100');
 
--- Add Python Live Search Base URL
+-- Add Python Deep Search Base URL
 INSERT OR IGNORE INTO system_settings (key, value)
-VALUES ('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+VALUES ('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
 
 -- Add system setting for chat archival (default to false)
 INSERT OR IGNORE INTO system_settings (key, value)
@@ -456,14 +452,79 @@ VALUES
   ('manage_integrations', 'Manage Integrations', 'Allow users to manage authentication and service integrations (OAuth, API keys, etc.)'),
   ('view_integrations', 'View Integrations', 'Allow users to view integration configurations without being able to modify them');
 
--- Insert Scalytics API provider
-INSERT OR IGNORE INTO api_providers (name, is_external, is_manual, is_active, description, category)
-VALUES ('Scalytics API', 0, 1, 1, 'Internal API for Scalytics Connect', 'system');
+-- Add permission templates to Administrator group
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'access_admin', 
+  g.id, 
+  1,  -- Admins have admin by default
+  'Default admin permission'
+FROM groups g
+WHERE g.name = 'Administrator';
 
--- Insert xAI provider
-INSERT OR IGNORE INTO api_providers (name, is_external, is_manual, is_active, description, category, api_url, website)
-VALUES ('xAI', 1, 0, 1, 'xAI API', 'external', 'https://api.x.ai/v1', 'https://x.ai');
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'manage_users', 
+  g.id, 
+  1,  
+  'Default admin permission' 
+FROM groups g
+WHERE g.name = 'Administrator';
 
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'manage_groups', 
+  g.id, 
+  1,  
+  'Default admin permission'
+FROM groups g
+WHERE g.name = 'Administrator';
+
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'manage_models', 
+  g.id, 
+  1,  
+  'Default admin permission'
+FROM groups g
+WHERE g.name = 'Administrator';
+
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'use_all_models', 
+  g.id, 
+  1,  
+  'Default admin permission'
+FROM groups g
+WHERE g.name = 'Administrator';
+
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'manage_integrations', 
+  g.id, 
+  1,  
+  'Allows managing integrations with external services'
+FROM groups g
+WHERE g.name = 'Administrator';
+
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'view_integrations', 
+  g.id, 
+  1,  
+  'Allows viewing integration configurations'
+FROM groups g
+WHERE g.name = 'Administrator';
+
+-- Add permission templates to Power User group
+INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description)
+SELECT 
+  'view_integrations', 
+  g.id, 
+  1,  
+  'Allows viewing integration configurations'
+FROM groups g
+WHERE g.name = 'Power User';
 
 -- Insert some predefined integrations with empty credentials
 INSERT OR IGNORE INTO integrations 
@@ -475,6 +536,30 @@ VALUES
   ('Azure Active Directory', 'azure_ad', '', '', '{"redirectUri": "/auth/azure/callback", "tenantId": "organizations"}', 0),
   ('Okta OAuth', 'okta', '', '', '{"redirectUri": "/auth/okta/callback", "domain": ""}', 0);
 
+-- Group Model Access - Required for models to be accessible via group permissions
+CREATE TABLE IF NOT EXISTS group_model_access (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL,
+  model_id INTEGER NOT NULL,
+  can_access BOOLEAN DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+  FOREIGN KEY (model_id) REFERENCES models (id) ON DELETE CASCADE,
+  UNIQUE(group_id, model_id)
+);
+
+-- Model Group Permissions - For advanced model permission controls
+CREATE TABLE IF NOT EXISTS model_group_permissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  model_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (model_id) REFERENCES models (id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+  UNIQUE(model_id, group_id)
+);
 
 -- Permissions tables for fine-grained permission control
 CREATE TABLE IF NOT EXISTS admin_permissions (
@@ -498,9 +583,23 @@ CREATE TABLE IF NOT EXISTS user_admin_permissions (
   UNIQUE(user_id, permission_id)
 );
 
+CREATE TABLE IF NOT EXISTS group_admin_permissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL,
+  permission_id INTEGER NOT NULL,
+  granted_by INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+  FOREIGN KEY (permission_id) REFERENCES admin_permissions (id) ON DELETE CASCADE,
+  FOREIGN KEY (granted_by) REFERENCES users (id) ON DELETE CASCADE,
+  UNIQUE(group_id, permission_id)
+);
+
 -- Indexes for admin permissions tables
 CREATE INDEX IF NOT EXISTS idx_user_admin_permissions_user ON user_admin_permissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_admin_permissions_perm ON user_admin_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_group_admin_permissions_group ON group_admin_permissions(group_id);
+CREATE INDEX IF NOT EXISTS idx_group_admin_permissions_perm ON group_admin_permissions(permission_id);
 
 -- Insert basic admin permissions
 INSERT OR IGNORE INTO admin_permissions (permission_key, name, description)
@@ -520,6 +619,7 @@ VALUES
   ('huggingface:access', 'Hugging Face Access', 'Access Hugging Face models and services'),
   ('models:manage', 'Manage Models', 'Add, edit, and configure AI models'),
   ('model-access:manage', 'Manage Model Access', 'Control which users can access specific models'),
+  ('groups:manage', 'Manage Groups', 'Create, edit and manage user groups'),
   ('api-keys:generate', 'Generate Scalytics API Keys', 'Allow users to generate their own Scalytics API keys for external use'); -- Added new permission
 
 -- GitHub integration tables
@@ -561,21 +661,21 @@ CREATE TABLE IF NOT EXISTS mcp_local_tools_status (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- MCP Servers Table
-CREATE TABLE IF NOT EXISTS mcp_servers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    connection_type TEXT NOT NULL,
-    connection_details TEXT NOT NULL,
-    api_key_hash TEXT,
-    is_active BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Content Filtering Tables --
+CREATE TABLE IF NOT EXISTS filter_groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  is_enabled INTEGER DEFAULT 1 NOT NULL, 
+  exemption_permission_key TEXT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (exemption_permission_key) REFERENCES permissions(key) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Content Filtering Tables --
 CREATE TABLE IF NOT EXISTS filter_rules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filter_group_id INTEGER NOT NULL,
   rule_type TEXT NOT NULL, 
   pattern TEXT NOT NULL, 
   description TEXT,
@@ -583,18 +683,41 @@ CREATE TABLE IF NOT EXISTS filter_rules (
   is_active INTEGER DEFAULT 1 NOT NULL, 
   is_system_default INTEGER DEFAULT 0 NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (filter_group_id) REFERENCES filter_groups(id) ON DELETE CASCADE
 );
 
 -- Indexes for filtering tables
+CREATE INDEX IF NOT EXISTS idx_filter_rules_group_id ON filter_rules(filter_group_id);
 CREATE INDEX IF NOT EXISTS idx_filter_rules_is_active ON filter_rules(is_active);
 
 -- Triggers for filtering tables
+CREATE TRIGGER IF NOT EXISTS trigger_filter_groups_updated_at
+AFTER UPDATE ON filter_groups FOR EACH ROW
+BEGIN
+  UPDATE filter_groups SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+
 CREATE TRIGGER IF NOT EXISTS trigger_filter_rules_updated_at
 AFTER UPDATE ON filter_rules FOR EACH ROW
 BEGIN
   UPDATE filter_rules SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
+
+-- Insert standard filter bypass permissions
+INSERT OR IGNORE INTO permissions (key, name, description, source) VALUES
+  ('filter:bypass_finance', 'Bypass Finance Filters', 'Allows viewing unfiltered financial data (e.g., credit cards).', 'filtering'),
+  ('filter:bypass_health', 'Bypass Health Filters', 'Allows viewing unfiltered health data (e.g., patient IDs).', 'filtering'),
+  ('filter:bypass_private', 'Bypass Private Filters', 'Allows viewing unfiltered private data (e.g., names, addresses).', 'filtering'),
+  ('filter:bypass_credentials', 'Bypass Credentials Filters', 'Allows viewing unfiltered credentials (e.g., API keys, passwords).', 'filtering');
+
+-- Insert default filter groups linked to permissions
+-- Note: Description can be added/updated via UI if needed later
+INSERT OR IGNORE INTO filter_groups (name, description, is_enabled, exemption_permission_key) VALUES
+  ('Finance', 'Filters related to financial data (PCI DSS)', 1, 'filter:bypass_finance'),
+  ('Healthcare', 'Filters related to health data (HIPAA)', 1, 'filter:bypass_health'),
+  ('Private', 'Filters related to general private data (GDPR PII)', 1, 'filter:bypass_private'),
+  ('Credentials', 'Filters related to secrets and credentials', 1, 'filter:bypass_credentials');
 
 -- Insert default system setting for active filter languages
 INSERT OR IGNORE INTO system_settings (key, value) VALUES ('active_filter_languages', '["en"]');
@@ -610,7 +733,7 @@ CREATE TABLE IF NOT EXISTS domain_trust_profiles (
     https_bonus REAL DEFAULT 0.0,
     age_bonus REAL DEFAULT 0.0,
     outbound_link_quality_score REAL DEFAULT 0.0, 
-    content_quality_signals_score REAL DEFAULT 0.0,
+    content_quality_signals_score REAL DEFAULT 0.0, 
     user_feedback_score REAL DEFAULT 0.0, 
     controversy_signal REAL DEFAULT 0.0, 
 
@@ -622,6 +745,16 @@ CREATE TABLE IF NOT EXISTS domain_trust_profiles (
     outbound_links_to_low_trust_count INTEGER DEFAULT 0,
     total_outbound_links_scanned INTEGER DEFAULT 0,
     
+    -- Bot Trap Detection Columns
+    is_bot_trap BOOLEAN DEFAULT 0,
+    consecutive_timeouts INTEGER DEFAULT 0,
+    last_timeout_at TIMESTAMP NULL,
+    blacklist_until TIMESTAMP NULL,
+    is_temporary_blacklist BOOLEAN DEFAULT 0,
+    avg_response_time_ms INTEGER DEFAULT NULL,
+    blacklist_reason TEXT DEFAULT NULL,
+    auto_blacklisted_at TIMESTAMP NULL,
+
     -- Metadata for "Controversy/Cross-Checking"
     last_cross_check_date DATETIME,
     cross_check_discrepancy_factor REAL DEFAULT 0.0, 
@@ -632,20 +765,19 @@ CREATE TABLE IF NOT EXISTS domain_trust_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- URL Failure Log Table
+CREATE TABLE IF NOT EXISTS url_failure_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    domain TEXT NOT NULL,
+    failure_type TEXT NOT NULL,
+    response_time_ms INTEGER,
+    error_details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Migrations Tracking Table
 CREATE TABLE IF NOT EXISTS migrations (
     name TEXT PRIMARY KEY,
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- User Tool Configs Table
-CREATE TABLE IF NOT EXISTS user_tool_configs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    tool_name TEXT NOT NULL,
-    config TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    UNIQUE(user_id, tool_name)
 );

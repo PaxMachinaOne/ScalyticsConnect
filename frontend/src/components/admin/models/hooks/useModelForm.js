@@ -13,7 +13,6 @@ const INITIAL_FORM_DATA = {
   enable_scala_prompt: false,
   n_gpu_layers: '',
   n_batch: '',
-  n_ctx: '',
   preferred_cache_type: '',
 };
 
@@ -59,21 +58,28 @@ const useModelForm = (providers = []) => {
 
     let nGpuLayers = '';
     let nBatch = '';
-    let nCtx = '';
 
     if (!isExternal && model.config && typeof model.config === 'string') {
       try {
         const parsedConfig = JSON.parse(model.config);
         nGpuLayers = parsedConfig.n_gpu_layers ?? '';
         nBatch = parsedConfig.n_batch ?? '';
-        nCtx = parsedConfig.n_ctx ?? '';
       } catch (e) {
         console.error("Error parsing model config JSON:", e);
       }
     } else if (!isExternal) {
       nGpuLayers = model.n_gpu_layers ?? '';
       nBatch = model.n_batch ?? '';
-      nCtx = model.n_ctx ?? '';
+    }
+
+    let tensorParallelSize = model.tensor_parallel_size || null;
+    if (!isExternal && model.config && typeof model.config === 'string') {
+      try {
+        const parsedConfig = JSON.parse(model.config);
+        tensorParallelSize = parsedConfig.tensor_parallel_size || tensorParallelSize || 1;
+      } catch (e) {
+        console.error("Error parsing model config for tensor_parallel_size:", e);
+      }
     }
 
     setFormData({ 
@@ -88,13 +94,12 @@ const useModelForm = (providers = []) => {
       gpu_assignment: model.gpu_assignment || '', 
       n_gpu_layers: nGpuLayers,
       n_batch: nBatch,
-      n_ctx: nCtx,
       preferred_cache_type: model.preferred_cache_type || '',
       enable_scala_prompt: model.enable_scala_prompt === true || model.enable_scala_prompt === 1,
       can_generate_images: model.can_generate_images === true || model.can_generate_images === 1,
       // Add the missing fields that ModelEditForm needs
       config: model.config || '',
-      tensor_parallel_size: model.tensor_parallel_size || null,
+      tensor_parallel_size: tensorParallelSize,
       model_precision: model.model_precision || '',
       auto_detected_context: model.auto_detected_context || null
     });

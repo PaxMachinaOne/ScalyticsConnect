@@ -1,0 +1,31 @@
+name: Dependency Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Backend deps check
+        run: |
+          npm ci
+          npm run deps:check
+          npm run deps:audit
+
+      - name: Frontend deps check
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run deps:check
+          npm run deps:audit

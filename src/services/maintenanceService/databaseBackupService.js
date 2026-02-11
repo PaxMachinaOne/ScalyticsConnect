@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Database Backup Service
  * 
@@ -37,7 +39,7 @@ const getDbPath = () => {
     }
   } 
   else {
-    dbPath = path.resolve(process.cwd(), 'data', 'community.db');
+    dbPath = path.resolve(process.cwd(), 'data', 'mcp.db');
   }
 
   return dbPath;

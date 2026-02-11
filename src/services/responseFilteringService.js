@@ -1,14 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db');
 const { filteringWorkerService } = require('./filteringWorkerService'); 
 
 let filterCache = {
+  groups: {}, 
   rules: [], 
   lastUpdated: 0,
   cacheDuration: 5 * 60 * 1000, 
 };
 
 /**
- * Loads or reloads active regex rules from the database into the cache.
+ * Loads or reloads filter groups and active regex rules from the database into the cache.
  */
 async function loadFilters() {
   const now = Date.now();
@@ -17,17 +20,23 @@ async function loadFilters() {
   }
 
   try {
+    const groups = await db.allAsync('SELECT id, name, is_enabled, exemption_permission_key FROM filter_groups');
     const rules = await db.allAsync(`
-      SELECT id, rule_type, pattern, replacement
+      SELECT id, filter_group_id, rule_type, pattern, replacement
       FROM filter_rules
       WHERE is_active = 1
     `);
 
     const newCache = {
+      groups: {},
       rules: [],
       lastUpdated: now,
       cacheDuration: filterCache.cacheDuration,
     };
+
+    groups.forEach(group => {
+      newCache.groups[group.id] = group;
+    });
 
     rules.forEach(rule => {
       const ruleData = { ...rule };
@@ -58,59 +67,98 @@ async function applyFilters(text, userId) {
     return text; 
   }
 
+  let userPermissions = new Set();
+  if (userId) {
+    try {
+      const directPerms = await db.allAsync(`
+        SELECT p.permission_key -- Corrected column name
+        FROM admin_permissions p
+        JOIN user_admin_permissions uap ON p.id = uap.permission_id
+        WHERE uap.user_id = ?
+      `, [userId]);
+      directPerms.forEach(p => userPermissions.add(p.permission_key)); 
+
+      const groupPerms = await db.allAsync(`
+        SELECT p.permission_key -- Corrected column name
+        FROM admin_permissions p
+        JOIN group_admin_permissions gap ON p.id = gap.permission_id
+        JOIN user_groups ug ON gap.group_id = ug.group_id
+        WHERE ug.user_id = ?
+      `, [userId]);
+      groupPerms.forEach(p => userPermissions.add(p.permission_key)); 
+
+    } catch (error) {
+      console.error(`[FilterService] Error fetching permissions for user ${userId}:`, error);
+      userPermissions = new Set();
+    }
+  }
+
   let filteredText = text;
 
   for (const rule of filterCache.rules) {
-    const replacementValue = rule.replacement !== null && rule.replacement !== undefined ? rule.replacement : '[REDACTED]'; 
+    const filterGroup = filterCache.groups[rule.filter_group_id];
 
-    try {
-      if (rule.rule_type === 'regex') {
-        try {
-          const singleEscapedPattern = rule.pattern.replace(/\\\\/g, '\\');
-          const regex = new RegExp(singleEscapedPattern, 'gi');
-          filteredText = filteredText.replace(regex, replacementValue);
-        } catch (regexError) {
-           console.error(`[FilterService] Error creating/applying regex for rule ID ${rule.id} (Pattern: ${rule.pattern}):`, regexError);
-        }
-      } else if (rule.rule_type.startsWith('ner_')) {
-        // Dynamically import franc
-        const { franc } = await import('franc');
-        const sampleText = filteredText.length > 500 ? filteredText.substring(0, 500) : filteredText;
-        const langCode = franc(sampleText, { minLength: 3, whitelist: ['eng', 'deu', 'fra', 'spa'] }); 
-        let langShortCode = 'en'; 
-        if (langCode === 'deu') langShortCode = 'de';
-        else if (langCode === 'fra') langShortCode = 'fr';
-        else if (langCode === 'spa') langShortCode = 'es';
-        
-
-        const entityType = rule.pattern; 
-        const detectedEntities = await filteringWorkerService.detectEntities(filteredText, [entityType], langShortCode);
-
-        // Replace detected entities (simple replacement for now)
-        // Note: This is a basic replacement; more sophisticated masking might be needed
-        // Also, overlapping entities could cause issues with simple replace.
-        let offset = 0;
-        detectedEntities.sort((a, b) => a.start_char - b.start_char); 
-        for (const entity of detectedEntities) {
-           const start = entity.start_char + offset;
-           const end = entity.end_char + offset;
-           const replacement = rule.replacement || `[${entity.label}]`; 
-           filteredText = filteredText.substring(0, start) + replacement + filteredText.substring(end);
-           offset += replacement.length - (end - start);
-        }
-      } else if (rule.rule_type.startsWith('presidio_')) {
-         // Placeholder for Presidio integration (if added later)
-         console.warn(`[FilterService] Presidio rule type (${rule.rule_type}) not yet implemented. Rule ID: ${rule.id}`);
-         // const presidioEntityType = rule.pattern;
-         // const results = await filteringWorkerService.analyzeWithPresidio(filteredText, [presidioEntityType]);
-         // filteredText = filteringWorkerService.anonymizeWithPresidio(filteredText, results, replacementValue);
-      } else {
-         console.warn(`[FilterService] Unknown rule type "${rule.rule_type}" for rule ID ${rule.id}. Skipping.`);
-      }
-    } catch (e) {
-       console.error(`[FilterService] Error applying rule ID ${rule.id} (Type: ${rule.rule_type}, Pattern: ${rule.pattern}):`, e);
+    if (!filterGroup || filterGroup.is_enabled !== 1) {
+      continue; 
     }
-    // Removed logging based on textBeforeRule
+
+    const exemptionPermission = filterGroup.exemption_permission_key;
+    const isExempt = exemptionPermission && userPermissions.has(exemptionPermission);
+
+    if (!isExempt) {
+      const replacementValue = rule.replacement !== null && rule.replacement !== undefined ? rule.replacement : '[REDACTED]'; 
+
+      try {
+        if (rule.rule_type === 'regex') {
+          try {
+            const singleEscapedPattern = rule.pattern.replace(/\\\\/g, '\\');
+            const regex = new RegExp(singleEscapedPattern, 'gi');
+            filteredText = filteredText.replace(regex, replacementValue);
+          } catch (regexError) {
+             console.error(`[FilterService] Error creating/applying regex for rule ID ${rule.id} (Pattern: ${rule.pattern}):`, regexError);
+          }
+        } else if (rule.rule_type.startsWith('ner_')) {
+          // Dynamically import franc
+          const { franc } = await import('franc');
+          const sampleText = filteredText.length > 500 ? filteredText.substring(0, 500) : filteredText;
+          const langCode = franc(sampleText, { minLength: 3, whitelist: ['eng', 'deu', 'fra', 'spa'] }); 
+          let langShortCode = 'en'; 
+          if (langCode === 'deu') langShortCode = 'de';
+          else if (langCode === 'fra') langShortCode = 'fr';
+          else if (langCode === 'spa') langShortCode = 'es';
+          
+
+          const entityType = rule.pattern; 
+          const detectedEntities = await filteringWorkerService.detectEntities(filteredText, [entityType], langShortCode);
+
+          // Replace detected entities (simple replacement for now)
+          // Note: This is a basic replacement; more sophisticated masking might be needed
+          // Also, overlapping entities could cause issues with simple replace.
+          let offset = 0;
+          detectedEntities.sort((a, b) => a.start_char - b.start_char); 
+          for (const entity of detectedEntities) {
+             const start = entity.start_char + offset;
+             const end = entity.end_char + offset;
+             const replacement = rule.replacement || `[${entity.label}]`; 
+             filteredText = filteredText.substring(0, start) + replacement + filteredText.substring(end);
+             offset += replacement.length - (end - start);
+          }
+        } else if (rule.rule_type.startsWith('presidio_')) {
+           // Placeholder for Presidio integration (if added later)
+           console.warn(`[FilterService] Presidio rule type (${rule.rule_type}) not yet implemented. Rule ID: ${rule.id}`);
+           // const presidioEntityType = rule.pattern;
+           // const results = await filteringWorkerService.analyzeWithPresidio(filteredText, [presidioEntityType]);
+           // filteredText = filteringWorkerService.anonymizeWithPresidio(filteredText, results, replacementValue);
+        } else {
+           console.warn(`[FilterService] Unknown rule type "${rule.rule_type}" for rule ID ${rule.id}. Skipping.`);
+        }
+      } catch (e) {
+         console.error(`[FilterService] Error applying rule ID ${rule.id} (Type: ${rule.rule_type}, Pattern: ${rule.pattern}):`, e);
+      }
+      // Removed logging based on textBeforeRule
+    } else {
+       // Optional: Log skipped rules (due to exemption)
+    }
   }
 
   // Removed final debug log

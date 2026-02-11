@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Google Gemini Provider Module - Fixed Version
  *
@@ -33,7 +35,7 @@ if (!globalThis.TextDecoderStream) {
 
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
 const axios = require('axios');
-const { broadcastToRoom } = require('../../config/socketHandlers');
+const { broadcastToRoom } = require('../../config/socket');
 
 /**
  * Discover Google models using the API key

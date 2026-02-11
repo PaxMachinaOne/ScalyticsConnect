@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.0",
-  "info": {
-    "title": "Scalytics Connect API",
-    "version": "1.8.0",
-    "description": "API documentation for the Scalytics Connect backend, including AI Agents and MCP features."
-  },
+    "info": {
+        "title": "Scalytics Copilot",
+        "version": "4.0.1",
+        "description": "API for Scalytics Copilot"
+    },
   "servers": [
     {
       "url": "/api",
@@ -645,7 +645,7 @@
     },
     "/api/agents/deep-search": {
       "post": {
-        "summary": "Initiate the Scalytics Live Search (Live Search) workflow",
+        "summary": "Initiate the Scalytics Deep Search workflow",
         "tags": [
           "Agents"
         ],

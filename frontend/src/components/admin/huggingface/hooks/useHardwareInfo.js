@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import { useState, useEffect, useRef } from 'react';
 import apiService from '../../../../services/apiService';
 
@@ -26,6 +28,13 @@ const modelSizeData = {
   '70B': {
     description: 'High-end model with near-human performance',
     fp16_vram_gb: 80,
+  },
+  '120B': {
+    description: 'GPT-class models requiring multi-GPU setup',
+    fp16_vram_gb: 240,
+    int8_vram_gb: 160,
+    multi_gpu_required: true,
+    recommended_setup: '2x H100 80GB or 8x L4 24GB'
   }
 };
 
@@ -81,18 +90,29 @@ const useHardwareInfo = () => {
 
       if (gpus.length > 0 || isAppleSilicon) {
           let bestFitSize = 'N/A';
-          const modelSizesOrdered = ['70B', '34B', '13B', '7B', '3B', '1B'];
+          let recommendationText = '';
+          const modelSizesOrdered = ['120B', '70B', '34B', '13B', '7B', '3B', '1B'];
 
           for (const size of modelSizesOrdered) {
             const sizeInfo = modelSizeData[size];
-            if (sizeInfo && sizeInfo.fp16_vram_gb <= effectiveVramLimitGb) {
-              bestFitSize = size;
-              break; // Found the largest size that fits
+            if (sizeInfo) {
+              if (size === '120B') {
+                if (sizeInfo.int8_vram_gb <= effectiveVramLimitGb) {
+                  bestFitSize = size;
+                  recommendationText = `Up to ${bestFitSize} parameter models (INT8 quantization). ${sizeInfo.recommended_setup} required for GPT-class models.`;
+                  break;
+                }
+              } else if (sizeInfo.fp16_vram_gb <= effectiveVramLimitGb) {
+                bestFitSize = size;
+                recommendationText = `Up to ${bestFitSize} parameter models (FP16). Smaller models or quantized versions (AWQ, GPTQ) will use less VRAM.`;
+                break;
+              }
             }
           }
 
           if (bestFitSize === 'N/A') {
             console.warn(`No suitable model found for effective VRAM limit: ${effectiveVramLimitGb} GB`);
+            recommendationText = 'Available VRAM may be insufficient for standard models. Consider quantized versions.';
           }
 
           setRecommendations({
@@ -102,7 +122,7 @@ const useHardwareInfo = () => {
             totalSystemMemoryGB: totalSystemMemoryGB,
             isAppleSilicon: isAppleSilicon,
             maxModelSize: bestFitSize,
-            recommendationText: `Up to ${bestFitSize} parameter models (FP16). Smaller models or quantized versions (AWQ, GPTQ) will use less VRAM.`
+            recommendationText
           });
 
       } else {

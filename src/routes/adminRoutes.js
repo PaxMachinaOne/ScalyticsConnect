@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const router = express.Router();
 
@@ -11,9 +13,12 @@ const adminModelController = require('../controllers/adminModelController');
 const apiKeyController = require('../controllers/apiKeyController'); 
 const hardwareController = require('../controllers/hardwareController'); 
 const huggingFaceController = require('../controllers/huggingFaceController'); 
+const groupController = require('../controllers/groupController'); 
+const privacyController = require('../controllers/privacyController'); 
 const downloadController = require('../controllers/downloadController'); 
 const adminMcpController = require('../controllers/admin/adminMcpController');
 const primaryModelController = require('../controllers/model/primaryModelController'); 
+const gpuController = require('../controllers/admin/gpuController');
 
 // --- Middleware Imports ---
 const { protect, admin, adminOrPermission } = require('../middleware/authMiddleware');
@@ -107,7 +112,7 @@ router.post('/models/upload', adminOrPermission('models:manage'), adminModelCont
 router.get('/models/local', adminOrPermission('models:manage'), adminModelController.getLocalModels);
 router.delete('/models/:id', adminOrPermission('models:manage'), adminModelController.deleteModel);
 router.post('/models/:id/activate', adminOrPermission('models:manage'), adminModelController.activateModel);
-router.post('/models/deactivate', adminOrPermission('models:manage'), adminModelController.deactivateModel);
+router.post('/models/:id/deactivate', adminOrPermission('models:manage'), adminModelController.deactivateModel);
 router.get('/models/pool-status', adminOrPermission('models:manage'), adminModelController.getWorkerPoolStatus);
 router.put('/models/:id/config', adminOrPermission('models:manage'), adminModelController.updateModelConfig);
 router.patch('/models/:id/status', adminOrPermission('models:manage'), adminModelController.updateModelStatus);
@@ -119,6 +124,26 @@ router.post('/primary-model/unset', adminOrPermission('models:manage'), primaryM
 
 // User model access routes
 router.get('/users/:userId/models', adminOrPermission('model-access:manage'), adminModelController.getUserModelAccess);
+router.get('/users/:userId/models/groups', adminOrPermission('model-access:manage'), groupController.getUserModelAccessWithGroups);
+router.post('/users/:userId/copy-permissions', adminOrPermission('model-access:manage'), groupController.copyGroupPermissionsToUser);
+router.get('/users/:userId/model-access', adminOrPermission('model-access:manage'), groupController.getUserModelAccessWithGroups);
+
+// Group management routes
+router.get('/groups', adminOrPermission('groups:manage'), groupController.getGroups);
+router.get('/groups/:id', adminOrPermission('groups:manage'), groupController.getGroup);
+router.post('/groups', adminOrPermission('groups:manage'), groupController.createGroup);
+router.put('/groups/:id', adminOrPermission('groups:manage'), groupController.updateGroup);
+router.delete('/groups/:id', admin, groupController.deleteGroup);
+
+// Group user management routes
+router.post('/users/:userId/groups', adminOrPermission('groups:manage'), groupController.assignUserToGroup);
+router.delete('/users/:userId/groups/:groupId', adminOrPermission('groups:manage'), groupController.removeUserFromGroup);
+
+// Group model access routes
+router.get('/groups/:groupId/models', adminOrPermission('model-access:manage'), groupController.getGroupModelAccess);
+router.put('/groups/:groupId/models', adminOrPermission('model-access:manage'), groupController.updateGroupModelAccess);
+router.post('/groups/:groupId/models/reset', adminOrPermission('model-access:manage'), groupController.resetGroupModelAccess);
+router.post('/groups/:groupId/providers/:providerId/reset', adminOrPermission('model-access:manage'), groupController.resetGroupProviderModelAccess);
 
 // User permission management routes
 router.get('/permissions', admin, adminPermissionController.getAllPermissions);
@@ -126,6 +151,18 @@ router.get('/users/:userId/permissions', admin, adminPermissionController.getUse
 router.post('/users/:userId/permissions/:permissionId', admin, adminPermissionController.grantPermission);
 router.delete('/users/:userId/permissions/:permissionId', admin, adminPermissionController.revokePermission);
 
+// Group permission management routes
+router.get('/groups/:groupId/permissions', adminOrPermission('groups:manage'), adminPermissionController.getGroupPermissions);
+router.post('/groups/:groupId/permissions/:permissionId', adminOrPermission('groups:manage'), adminPermissionController.grantGroupPermission);
+router.delete('/groups/:groupId/permissions/:permissionId', adminOrPermission('groups:manage'), adminPermissionController.revokeGroupPermission);
+
+// Privacy settings routes
+router.get('/privacy', admin, privacyController.getPrivacySettings); // General privacy settings (includes global mode)
+// router.get('/global', admin, privacyController.getPrivacySettings); // Temporarily commented out to avoid potential conflict
+router.get('/privacy/status', protect, privacyController.getPrivacyStatus); // Public status endpoint
+router.put('/privacy/global-mode', admin, privacyController.updateGlobalPrivacyMode);
+router.get('/privacy/chat-archival', admin, adminSettingsController.getChatArchivalSetting); // Corrected controller
+router.put('/privacy/chat-archival', admin, adminSettingsController.updateChatArchivalSetting); // Corrected controller
 
 // System Settings Routes
 router.get('/settings/air_gapped', admin, adminSettingsController.getAirGappedMode);
@@ -145,5 +182,8 @@ router.put('/settings/preferred-embedding-model', admin, adminSettingsController
 // Active Filter Languages Setting (Admin only)
 router.get('/settings/active-filter-languages', admin, adminSettingsController.getActiveFilterLanguages); 
 router.put('/settings/active-filter-languages', admin, adminSettingsController.updateActiveFilterLanguages); 
+
+// GPU stats route
+router.get('/gpu/stats', admin, gpuController.getGpuStats);
 
 module.exports = router;

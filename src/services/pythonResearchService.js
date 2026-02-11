@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 /**
  * Python Research Service Client
  *
- * Communicates with the Python FastAPI-based Live Search Orchestrator service.
+ * Communicates with the Python FastAPI-based Deep Search Orchestrator service.
  */
 const axios = require('axios');
 const EventSource = require('eventsource'); 
@@ -11,7 +13,7 @@ const { getSystemSetting } = require('../config/systemConfig');
 
 class PythonResearchService {
     constructor() {
-        const serviceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+        const serviceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
         
         this.baseUrl = serviceBaseUrl;
 
@@ -23,12 +25,12 @@ class PythonResearchService {
 
     /**
      * Initiates a new deep research task with the Python service.
-     * @param {object} params - Parameters for the live search request.
+     * @param {object} params - Parameters for the deep search request.
      * @returns {Promise<object>} - Resolves with { taskId, streamUrl, cancelUrl }
      */
     async initiateResearch(params) {
         try {
-            const response = await axios.post(`${this.baseUrl}/research_tasks`, params, { timeout: 30000 }); // 30-second timeout
+            const response = await axios.post(`${this.baseUrl}/research_tasks`, params);
             if (response.status === 202 && response.data && response.data.task_id) {
                 return response.data; 
             } else {
@@ -67,7 +69,7 @@ class PythonResearchService {
                     onErrorHandler(new Error(`SSE stream ${taskId} stalled: No messages received within 30 seconds of opening.`));
                 }
                 eventSource.close();
-            }, 30000); // 30-second timeout for the first message after open
+            }, 30000); // Set to 30 seconds as per the error message
         };
 
         const processSseEvent = (event) => {

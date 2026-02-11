@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 """
 run_model.py - Script to run local AI models using Hugging Face Transformers
 

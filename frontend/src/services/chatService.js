@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import apiService from './apiService';
 import chatApiService from './chatApiService';
 import tokenProcessor from '../utils/tokenProcessor';
@@ -33,7 +35,21 @@ const chatService = {
   getChat: async (chatId) => {
     try {
       const response = await apiService.get(CHAT_ENDPOINTS.CHAT(chatId));
-      return response.data || null;
+      const chatData = response.data;
+
+      if (chatData && chatData.messages) {
+        chatData.messages.forEach(message => {
+          if (message.mcp_metadata && typeof message.mcp_metadata === 'string') {
+            try {
+              message.mcp_metadata = JSON.parse(message.mcp_metadata);
+            } catch (e) {
+              console.error('Failed to parse mcp_metadata:', e);
+            }
+          }
+        });
+      }
+
+      return chatData || null;
     } catch (error) {
       console.error(`Error getting chat ${chatId}:`, error);
       throw error;
@@ -56,12 +72,10 @@ const chatService = {
         title: chatData.title
       };
       
-      // Add optional initial message if provided
       if (chatData.initialMessage) {
         payload.initialMessage = chatData.initialMessage;
       }
       
-      // Add file IDs if provided
       if (chatData.files && chatData.files.length > 0) {
         payload.files = chatData.files.map(file => 
           typeof file === 'object' ? file.id : file
@@ -117,22 +131,18 @@ const chatService = {
    */
   sendMessage: async (chatId, content, files = [], isImagePrompt = false) => {
     try {
-      // Prepare payload
       const payload = { content };
       
-      // Add file IDs if provided
       if (files && files.length > 0) {
         payload.files = files.map(file => 
           typeof file === 'object' ? file.id : file
         );
       }
 
-      // Add isImagePrompt flag if true
       if (isImagePrompt) {
         payload.isImagePrompt = true;
       }
       
-      // Use chat-specific API service with longer timeout for message sending
       const response = await chatApiService.post(CHAT_ENDPOINTS.MESSAGES(chatId), payload);
       return response || null;
     } catch (error) {
@@ -148,12 +158,10 @@ const chatService = {
    */
   isSupportedFileType: (fileType) => {
     const supportedTypes = [
-      // Text files
       'text/plain',
       'text/csv',
       'text/markdown',
       'application/json',
-      // Code files
       'text/javascript',
       'text/html',
       'text/css',
@@ -161,7 +169,6 @@ const chatService = {
       'text/x-java',
       'text/x-c',
       'text/x-cpp',
-      // Document files
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -176,16 +183,11 @@ const chatService = {
    * @returns {string} Formatted time string
    */
   formatMessageTime: (timestamp) => {
-    // Parse timestamp to Date object
     const date = new Date(timestamp);
-    
-    // Today's date for comparison
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
     
-    // Format options
     if (isToday) {
-      // Show only time for today's messages using browser's timezone
       return tokenProcessor.formatDateForDisplay(timestamp, {
         hour: '2-digit',
         minute: '2-digit',
@@ -194,7 +196,6 @@ const chatService = {
         day: undefined
       });
     } else {
-      // Show date and time for older messages
       return tokenProcessor.formatDateForDisplay(timestamp, {
         month: 'short',
         day: 'numeric',
@@ -223,25 +224,20 @@ const chatService = {
    */
   getFileIcon: (fileType) => {
     const iconMap = {
-      // Text files
       'text/plain': '📄',
       'text/csv': '📊',
       'text/markdown': '📝',
       'application/json': '📋',
-      // Code files
       'text/javascript': '💻',
       'text/html': '🌐',
       'text/css': '🎨',
       'text/x-python': '🐍',
-      // Document files
       'application/pdf': '📑',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📘',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
-      // Image files
       'image/jpeg': '🖼️',
       'image/png': '🖼️',
       'image/gif': '🖼️',
-      // Default
       'default': '📁'
     };
     
@@ -258,11 +254,9 @@ const chatService = {
     try {
       const payload = { modelId, messages };
       const response = await apiService.post(CHAT_ENDPOINTS.CONTEXT_STATUS, payload);
-      // The backend returns the validation result directly in the 'data' field
       return response.data || { valid: false, error: 'Failed to get context status' };
     } catch (error) {
       console.error('Error getting context status:', error);
-      // Return a default error state
       return {
         valid: false,
         error: error.response?.data?.message || 'Error checking context status',
@@ -281,11 +275,10 @@ const chatService = {
    */
   runToolInChat: async (chatId, toolName, args) => {
     try {
-      const endpoint = `/api/chats/${chatId}/run-tool`; // Using /api prefix as per typical setup
+      const endpoint = `/api/chats/${chatId}/run-tool`; 
       const payload = { toolName, args };
-      // Use the regular apiService for this, as it's not a long-polling chat response
       const response = await apiService.post(endpoint, payload);
-      return response.data; // Or response directly if needed
+      return response.data; 
     } catch (error) {
       console.error(`Error running tool ${toolName} in chat ${chatId}:`, error);
       throw error;
@@ -298,13 +291,10 @@ const chatService = {
    */
   getMonthlyTokenUsage: async () => {
     try {
-      // The backend route is GET /api/chats/usage/monthly
-      // apiService prepends /api, so the path for apiService.get should be CHAT_ENDPOINTS.MONTHLY_TOKEN_USAGE
       const response = await apiService.get(CHAT_ENDPOINTS.MONTHLY_TOKEN_USAGE);
-      return response.data || { totalInputTokens: 0, totalOutputTokens: 0, totalTokens: 0 }; // Ensure a default object
+      return response.data || { totalInputTokens: 0, totalOutputTokens: 0, totalTokens: 0 }; 
     } catch (error) {
       console.error('Error getting monthly token usage:', error);
-      // Return a default object on error to prevent breaking the UI
       return { totalInputTokens: 0, totalOutputTokens: 0, totalTokens: 0 };
     }
   }

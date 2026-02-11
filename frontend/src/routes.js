@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import authService from './services/authService';

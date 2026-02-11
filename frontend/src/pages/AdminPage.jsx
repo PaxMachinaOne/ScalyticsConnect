@@ -1,14 +1,18 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import StatisticsPanel from '../components/admin/statistics';
 import UserManager from '../components/admin/users';
 import ModelManager from '../components/admin/models';
+import GroupManager from '../components/admin/groups';
 import ProvidersAdmin from '../components/admin/providers';
 import HardwareMonitor from '../components/admin/hardware';
 import HuggingFaceModelManager from '../components/admin/huggingface';
 import MaintenancePanel from '../components/admin/maintenance';
 import IntegrationsManager from '../components/admin/integrations/IntegrationsManager';
+import PrivacySectionContainer from '../components/admin/privacy/PrivacySectionContainer'; 
 import LocalToolsManager from '../components/admin/local-tools/LocalToolsManager'; 
 import { useAuth } from '../contexts/AuthContext';
 import { ModelStatusProvider } from '../contexts/ModelStatusContext';
@@ -22,12 +26,14 @@ const AdminPage = () => {
   const allTabs = useMemo(() => [
     { name: 'Statistics', id: 'stats', requiredPermission: 'stats:view' },
     { name: 'Users', id: 'users', requiredPermission: 'users:manage' },
+    { name: 'Groups', id: 'groups', requiredPermission: 'groups:manage' },
     { name: 'Models', id: 'models', requiredPermission: 'models:manage' },
     { name: 'Hugging Face', id: 'huggingface', requiredPermission: 'huggingface:access' }, 
     { name: 'API Provider', id: 'providers', requiredPermission: 'providers:manage' }, 
     { name: 'Hardware', id: 'hardware', requiredPermission: 'hardware:view' },
     { name: 'Maintenance', id: 'system', requiredPermission: 'access_admin' }, 
     { name: 'Integrations', id: 'integrations', requiredPermission: 'view_integrations' },
+    { name: 'Privacy', id: 'privacy', requiredPermission: 'access_admin' },
     { name: 'Local Tools', id: 'local-tools', requiredPermission: 'access_admin' }
   ], []);
 
@@ -129,6 +135,10 @@ const AdminPage = () => {
                 accessibleTabs.some(tab => tab.id === 'users') && 
                 <UserManager />
               }
+              {section === 'groups' && 
+                accessibleTabs.some(tab => tab.id === 'groups') && 
+                <GroupManager />
+              }
               {section === 'models' && 
                 accessibleTabs.some(tab => tab.id === 'models') && 
                 <ModelStatusProvider>
@@ -154,6 +164,10 @@ const AdminPage = () => {
               {section === 'integrations' && 
                 accessibleTabs.some(tab => tab.id === 'integrations') && 
                 <IntegrationsManager />
+              }
+              {section === 'privacy' &&
+                accessibleTabs.some(tab => tab.id === 'privacy') &&
+                <PrivacySectionContainer /> // Render the container again
               }
               {/* Removed direct rendering for filtering tab */}
               {section === 'local-tools' &&

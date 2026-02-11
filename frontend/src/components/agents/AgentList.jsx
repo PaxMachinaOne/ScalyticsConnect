@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate, useLocation } from 'react-router-dom'; 
@@ -54,7 +56,7 @@ const AgentList = ({
     fetchAgents();
   }, [refreshTrigger, fetchAgents]);
 
-  // Handle selecting an agent task (like Scalytics Live Search or a specific agent)
+  // Handle selecting an agent task (like Scalytics Deep Search or a specific agent)
   const handleAgentTaskClick = (taskId) => {
     if (onAgentTaskSelected) {
       onAgentTaskSelected(taskId);
@@ -99,7 +101,7 @@ const AgentList = ({
       {/* Agent Task list sections */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 py-4">
 
-        {/* Scalytics Live Search Section */}
+        {/* Scalytics Deep Search Section */}
         <div className="py-1">
             <button
               onClick={() => setIsTasksOpen(!isTasksOpen)}
@@ -110,7 +112,7 @@ const AgentList = ({
             </button>
             {isTasksOpen && (
               <div className="mt-1 space-y-1">
-                 {/* Static Scalytics Live Search Button/Link */}
+                 {/* Static Scalytics Deep Search Button/Link */}
                  <button 
                    key="scalytics-seek"
                    className={`
@@ -122,7 +124,7 @@ const AgentList = ({
                    onClick={() => handleAgentTaskClick('scalytics-seek')}
                  >
                    <ScalyticsSeekIcon className="flex-shrink-0 h-5 w-5 mr-3 text-teal-500 dark:text-teal-400" />
-                   <span className="truncate">Scalytics Live Search</span>
+                   <span className="truncate">Scalytics Deep Search</span>
                  </button>
               </div>
             )}

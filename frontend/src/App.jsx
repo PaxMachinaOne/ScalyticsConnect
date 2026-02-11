@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Transition } from '@headlessui/react';
@@ -6,7 +8,8 @@ import Navbar from './components/common/Navbar';
 import ConnectionStatus from './components/common/ConnectionStatus';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext'; 
-import { DownloadStatusProvider } from './contexts/DownloadStatusContext'; 
+import { DownloadStatusProvider } from './contexts/DownloadStatusContext';
+import { ModelLoadingProvider } from './contexts/ModelLoadingContext';
 import { ToastContainer } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css'; 
 import eventBusService from './services/eventBusService';
@@ -50,12 +53,12 @@ const App = () => {
 
   return (
     <ThemeProvider>
-      <AuthProvider> {/* Wrap DownloadStatusProvider and Router */}
+      <AuthProvider>
         <DownloadStatusProvider>
-          <Router>
-            <AppContent />
-            <ConnectionStatus />
-          {/* Add ToastContainer here for global toast notifications */}
+          <ModelLoadingProvider>
+            <Router>
+              <AppContent />
+              <ConnectionStatus />
           <ToastContainer
             position="bottom-right"
             autoClose={5000}
@@ -68,7 +71,8 @@ const App = () => {
             pauseOnHover
             theme="colored" 
           />
-          </Router>
+            </Router>
+          </ModelLoadingProvider>
         </DownloadStatusProvider>
       </AuthProvider>
     </ThemeProvider>

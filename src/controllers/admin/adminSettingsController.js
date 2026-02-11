@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios'); 
 const { db } = require('../../models/db');
 const { getSystemSetting, updateSystemSetting } = require('../../config/systemConfig');
@@ -51,7 +53,8 @@ exports.updateAirGappedMode = async (req, res) => {
         newGlobalPrivacyState = true; // Already true
       }
     }
-    // Note: If airGapped is being disabled, its rules apply.
+    // Note: If airGapped is being disabled, global_privacy_mode is handled by privacyController's dependency logic
+    // if global_privacy_mode is subsequently disabled. If global_privacy_mode remains enabled, its rules apply.
     // --- Dependency Logic End ---
 
     // Update the air-gapped setting itself
@@ -391,7 +394,7 @@ exports.updateChatArchivalSetting = async (req, res) => {
         const archivedChats = await db.allAsync('SELECT id FROM chats WHERE is_archived = 1');
         
         if (archivedChats.length > 0) {
-          const pythonServiceBaseUrl = getSystemSetting('PYTHON_LIVE_SEARCH_BASE_URL', 'http://localhost:8001');
+          const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
           const deleteVectorDocsUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
 
           for (const chat of archivedChats) {

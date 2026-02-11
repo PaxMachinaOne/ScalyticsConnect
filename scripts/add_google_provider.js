@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
@@ -25,7 +27,7 @@ try {
 // Default path if not found in .env
 if (!DB_PATH) {
   const dataDir = path.join(__dirname, '../data');
-  DB_PATH = path.join(dataDir, 'community.db');
+  DB_PATH = path.join(dataDir, 'mcp.db');
   console.log(`Using default DB_PATH: ${DB_PATH}`);
   // Ensure data directory exists if using default path
   if (!fs.existsSync(dataDir)) {

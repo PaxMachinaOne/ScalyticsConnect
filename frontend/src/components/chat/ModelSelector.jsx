@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import modelService from '../../services/modelService';
+import privacyService from '../../services/privacyService';
 
 const ModelSelector = ({ 
   selectedModelId, 
@@ -18,9 +21,19 @@ const ModelSelector = ({
       try {
         setLoading(true);
         
-        const modelData = await modelService.getActiveModels();
+        const [modelData, privacyData] = await Promise.all([
+          modelService.getActiveModels(),
+          privacyService.getPrivacyStatus()
+        ]);
         
-        const privacyModeEnabled = (modelData?.privacyModeEnabled === true);
+        const privacyModeFromStatus = 
+          (privacyData?.data?.globalPrivacyMode === true) || 
+          (privacyData?.globalPrivacyMode === true);
+        
+        const privacyModeFromModels = 
+          (modelData?.privacyModeEnabled === true);
+        
+        const privacyModeEnabled = privacyModeFromStatus || privacyModeFromModels;
         
         setPrivacyModeEnabled(privacyModeEnabled);
         

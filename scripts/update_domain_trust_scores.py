@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import sqlite3
 import os
 import time
@@ -10,7 +12,7 @@ import random
 
 # --- Configuration ---
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'community.db') 
+DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'mcp.db') 
 print(f"[UpdateDomainTrustScores] Resolved DB_PATH: {DB_PATH}") 
 USER_AGENT = "ScalyticsTrustRanker/1.0 (+https://scalytics.io/bot)"
 REQUEST_TIMEOUT = 10 
