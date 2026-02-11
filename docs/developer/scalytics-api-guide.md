@@ -34,10 +34,10 @@ The Scalytics API provides a `POST /v1/chat/completions` endpoint that mirrors t
 Authenticate your API requests by providing your generated Scalytics API key as a Bearer token in the `Authorization` header:
 
 ```
-Authorization: Bearer sk-scalytics-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Authorization: Bearer YOUR_SCALYTICS_API_KEY
 ```
 
-Replace `sk-scalytics-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` with your actual key.
+Replace `YOUR_SCALYTICS_API_KEY` with your actual key.
 
 ## Endpoint: Chat Completions
 
