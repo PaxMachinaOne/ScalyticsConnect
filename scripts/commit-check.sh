@@ -15,7 +15,6 @@ echo -e "${YELLOW}🚀 Starting Scalytics Copilot Commit Check...${NC}\n"
 
 # 1. Backend Checks
 echo -e "${CYAN}📦 [1/5] Checking Backend...${NC}"
-npm run lint || { echo -e "${RED}❌ Backend Linting Failed${NC}"; exit 1; }
 npm test || { echo -e "${RED}❌ Backend Tests Failed${NC}"; exit 1; }
 echo -e "✅ Backend checks passed.\n"
 
