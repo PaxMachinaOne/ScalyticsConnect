@@ -22,8 +22,7 @@ def summarize():
     total_errors = 0
     total_warnings = 0
     
-    print(f"
-{C.BLD}=== Local CodeQL Findings Summary ==={C.RST}")
+    print(f"\n{C.BLD}=== Local CodeQL Findings Summary ==={C.RST}")
 
     for path in sarifs:
         filename = path.split('/')[-1]
@@ -48,16 +47,13 @@ def summarize():
         total_warnings += file_warnings
 
     if total_errors > 0:
-        print(f"
-{C.RED}❌ CodeQL gate failed: {total_errors} blocking error(s) found.{C.RST}")
+        print(f"\n{C.RED}❌ CodeQL gate failed: {total_errors} blocking error(s) found.{C.RST}")
         sys.exit(1)
     
     if total_warnings > 0:
-         print(f"
-{C.YEL}⚠️ CodeQL passed with {total_warnings} warnings (non-blocking).{C.RST}")
+         print(f"\n{C.YEL}⚠️ CodeQL passed with {total_warnings} warnings (non-blocking).{C.RST}")
     else:
-         print(f"
-{C.GRN}✅ CodeQL passed: no findings found.{C.RST}")
+         print(f"\n{C.GRN}✅ CodeQL passed: no findings found.{C.RST}")
 
 if __name__ == "__main__":
     summarize()

@@ -4,6 +4,17 @@
 const fs = require('fs');
 const path = require('path');
 
+// Mock dependencies
+jest.mock('../src/models/db', () => ({
+  db: {
+    getAsync: jest.fn(),
+    allAsync: jest.fn(),
+    runAsync: jest.fn(),
+    execAsync: jest.fn(),
+  },
+  initializeDatabase: jest.fn().mockResolvedValue(true),
+}));
+
 describe('Migration Integrity', () => {
   const MIGRATIONS_DIR = path.join(__dirname, '../src/config/migrations');
 
