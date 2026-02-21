@@ -117,7 +117,9 @@ export const extractModelsArray = (response) => {
   return [];
 };
 
-export default {
+const modelPolling = {
   pollForModelFiles,
   extractModelsArray
 };
+
+export default modelPolling;

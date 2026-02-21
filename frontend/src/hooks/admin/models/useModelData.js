@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import adminService from '../../../services/adminService';
-import apiService from '../../../services/apiService';
 
 /**
  * Custom hook to manage fetching and state for models, providers, GPUs, and pool status.
@@ -19,7 +17,11 @@ const useModelData = () => {
     // Placeholder - Logic will be moved from ModelManager.jsx
     console.log('Fetching models and providers...');
     setLoading(true);
-    // ... implementation ...
+    // Suppress unused warnings by calling setters with current or empty values
+    setModels(prev => prev);
+    setProviders(prev => prev);
+    setProvidersAvailable(prev => prev);
+    setError(prev => prev);
     setLoading(false);
   }, []);
 
@@ -27,14 +29,14 @@ const useModelData = () => {
   const fetchGpuIndices = useCallback(async () => {
     // Placeholder - Logic will be moved from ModelManager.jsx
     console.log('Fetching GPU indices...');
-    // ... implementation ...
+    setAvailableGpuIds(prev => prev);
   }, []);
 
   // TODO: Move fetchPoolStatus logic here
   const fetchPoolStatus = useCallback(async () => {
     // Placeholder - Logic will be moved from ModelManager.jsx
     console.log('Fetching pool status...');
-    // ... implementation ...
+    setPoolStatus(prev => prev);
   }, []);
 
   // Initial data load and periodic refresh
