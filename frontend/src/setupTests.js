@@ -23,5 +23,6 @@ console.error = (...args) => {
   if (typeof args[0] === 'string' && args[0].includes('not wrapped in act(...)')) {
     return;
   }
+  // CodeQL [js/clear-text-logging] - Intentional wrapper for test environment silencing
   originalError(...args);
 };

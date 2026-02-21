@@ -365,7 +365,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
     });
 
     if (missingKeys.length > 0) {
-      console.error(`[DeepSearchAPI:${apiTaskId}] Missing or invalid required API keys: ${missingKeys.join(', ')} in api_config:`, api_config);
+      console.error(`[DeepSearchAPI:${apiTaskId}] Missing or invalid required API keys: ${missingKeys.join(', ')}`);
       return next(new APIError(`Missing or invalid API keys: ${missingKeys.join(', ')}. Please ensure these are configured in your account or system.`, 400));
     }
 

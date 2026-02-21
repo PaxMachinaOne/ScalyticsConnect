@@ -84,7 +84,7 @@ const ApiKeyManager = ({ canGenerate }) => {
         if (providersResponse.status === 'fulfilled') {
           setProviders(providersResponse.value.data || []);
         } else {
-          console.error("Failed to fetch providers:", providersResponse.reason);
+          console.error("Failed to fetch providers:", providersResponse.reason?.message || providersResponse.reason);
           setProviders([]);
         }
 
@@ -95,7 +95,7 @@ const ApiKeyManager = ({ canGenerate }) => {
           const existingScalytics = userKeys.some(key => key.provider_name === 'Scalytics API');
           setHasExistingScalyticsKey(existingScalytics);
         } else {
-           console.error("Failed to fetch user API keys:", apiKeysResponse.reason);
+           console.error("Failed to fetch user API keys:", apiKeysResponse.reason?.message || apiKeysResponse.reason);
           setApiKeys([]);
           setHasExistingScalyticsKey(false);
         }
@@ -107,7 +107,7 @@ const ApiKeyManager = ({ canGenerate }) => {
              (userData.groups && userData.groups.some(g => g.name.toLowerCase() === 'administrator')));
           setIsAdmin(userIsAdmin);
         } else {
-           console.error("Failed to fetch user info:", userInfoResponse.reason);
+           console.error("Failed to fetch user info:", userInfoResponse.reason?.message || userInfoResponse.reason);
           setIsAdmin(false);
         }
       } catch (err) {
