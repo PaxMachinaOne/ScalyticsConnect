@@ -15,6 +15,7 @@
     "setup": "node setup/init-db.js",
     "debug": "node --inspect server.js",
     "generate-openapi-spec": "node scripts/generate-openapi-spec.js",
+    "commit-check": "./scripts/commit-check.sh",
     "build:api-docs": "npm run generate-openapi-spec && npx @redocly/cli build-docs docs/openapi.json -o docs/api-docs.html",
     "deps:check": "npm outdated --depth=0 || true",
     "deps:audit": "npm audit --omit=dev || true"
