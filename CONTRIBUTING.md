@@ -47,18 +47,26 @@ npm start
 ## Coding Standards
 
 - Follow existing project patterns in `src/`, `frontend/`, and `scripts/`.
-- Run lint and tests before opening a PR:
+- **Pre-Commit Check:** We use a standardized validation script to ensure code quality and security. Run this command locally before pushing or opening a PR:
 
 ```bash
-npm run lint
-npm test -- --runInBand --passWithNoTests
-cd frontend && npm run build
+npm run commit-check
 ```
 
-- For Python changes, ensure code compiles:
+This script performs:
+1.  **Backend Tests:** Runs Jest unit and integrity tests.
+2.  **Frontend Validation:** Runs linting (`eslint`) and smoke tests.
+3.  **Python Sanity:** Compiles all Python services to detect syntax errors.
+4.  **Security Audit:** Scans dependencies for known vulnerabilities.
+5.  **Local CodeQL:** (Optional) Performs deep static analysis if the `codeql` CLI is installed.
 
+### Local CodeQL (Deep Analysis)
+
+For deep security analysis mirroring our CI, we recommend installing the [CodeQL CLI](https://github.com/github/codeql-cli-binaries/releases). If found in your `PATH`, `commit-check` will automatically run it and output results to `.tmp/codeql/`.
+
+If you need to increase memory for a local run:
 ```bash
-python -m compileall scripts src/python_services
+CODEQL_JS_RAM_MB=8192 npm run commit-check
 ```
 
 ## Pull Request Process
