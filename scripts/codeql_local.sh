@@ -16,10 +16,10 @@ mkdir -p .tmp/codeql
 echo "==> Ensuring CodeQL standard query packs are available"
 codeql pack download codeql/javascript-queries codeql/python-queries codeql/actions-queries
 
-# Stable defaults for local runs (set to 2GB as requested to avoid OOM)
-CODEQL_JS_RAM_MB="${CODEQL_JS_RAM_MB:-2048}"
+# Stable defaults for local runs (Increased to 4GB to avoid OOM)
+CODEQL_JS_RAM_MB="${CODEQL_JS_RAM_MB:-4096}"
 CODEQL_JS_THREADS="${CODEQL_JS_THREADS:-2}"
-CODEQL_PY_RAM_MB="${CODEQL_PY_RAM_MB:-2048}"
+CODEQL_PY_RAM_MB="${CODEQL_PY_RAM_MB:-4096}"
 CODEQL_ACTIONS_RAM_MB="${CODEQL_ACTIONS_RAM_MB:-1024}"
 
 # Strategy github/security-and-quality
