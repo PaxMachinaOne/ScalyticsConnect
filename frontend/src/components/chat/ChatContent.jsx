@@ -391,7 +391,7 @@ const ChatContent = (props) => {
                   !isModelActive ? "Model is inactive" :
                   activeInputTool === 'deep-search' && !isImagePromptMode ? (isDeepSearchEnabled ? "Enter Deep Search query..." : "Deep Search disabled") :
                   isImagePromptMode ? (isImageGenerationAvailable ? "Describe the image you want to generate..." : "Image Generation not available/configured") :
-                  "Message Scalytics Connect..."
+                  "Message Scalytics Copilot..."
                 }
               />
               <div className="flex items-center justify-between space-x-1 mt-1.5 h-9">

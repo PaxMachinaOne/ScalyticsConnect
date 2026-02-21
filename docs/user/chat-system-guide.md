@@ -1,8 +1,8 @@
-# Chat System in Scalytics Connect
+# Chat System in Scalytics Copilot
 
 ## Overview
 
-Scalytics Connect provides a versatile chat interface that allows you to interact with various AI models. The system is designed to support both external API-based chat services and local models, giving you flexibility in how you use AI capabilities.
+Scalytics Copilot provides a versatile chat interface that allows you to interact with various AI models. The system is designed to support both external API-based chat services and local models, giving you flexibility in how you use AI capabilities.
 
 ## Key Features
 
@@ -13,11 +13,11 @@ Scalytics Connect provides a versatile chat interface that allows you to interac
 
 ## Understanding Chat Providers
 
-Scalytics Connect uses a provider-based architecture for its chat system:
+Scalytics Copilot uses a provider-based architecture for its chat system:
 
 ### External Providers
 
-Scalytics Connect can connect to multiple external AI providers simultaneously, including:
+Scalytics Copilot can connect to multiple external AI providers simultaneously, including:
 
 - **OpenAI** (GPT models)
 - **Anthropic** (Claude models)
@@ -34,7 +34,7 @@ Each external provider requires its own API key, which you can configure in the 
 
 ### Local Model
 
-While you can connect to multiple external providers, Scalytics Connect supports **only one local model** at a time. The local model:
+While you can connect to multiple external providers, Scalytics Copilot supports **only one local model** at a time. The local model:
 
 - Runs directly on your hardware
 - Provides complete privacy (no data sent to external servers)
@@ -76,11 +76,11 @@ For long conversations, the chat history can become extensive, potentially excee
 
 **Automatic Summarization:**
 
-In addition to the manual `/sum` command, Scalytics Connect also has an automatic summarization feature. If a conversation becomes very long and approaches the AI model's context limit, the system will automatically summarize earlier parts of the chat to ensure new messages can be processed. This automatic summary will also appear as a system message, typically like: `[System Note: Earlier parts of this conversation have been summarized to conserve context space.]`. The `/sum` command allows you to create these summary points proactively.
+In addition to the manual `/sum` command, Scalytics Copilot also has an automatic summarization feature. If a conversation becomes very long and approaches the AI model's context limit, the system will automatically summarize earlier parts of the chat to ensure new messages can be processed. This automatic summary will also appear as a system message, typically like: `[System Note: Earlier parts of this conversation have been summarized to conserve context space.]`. The `/sum` command allows you to create these summary points proactively.
 
 ## Sharing Chats (Read-Only)
 
-You can share your conversations with other users within Scalytics Connect, granting them read-only access.
+You can share your conversations with other users within Scalytics Copilot, granting them read-only access.
 
 **How to Share:**
 
@@ -176,7 +176,7 @@ When interacting with an Assistant message, you will see thumbs-up (👍) and th
 
 **Why Provide Feedback?**
 
-Your feedback is crucial for improving the AI models within Scalytics Connect. Specifically, we use this data to:
+Your feedback is crucial for improving the AI models within Scalytics Copilot. Specifically, we use this data to:
 
 - **Optimize Reasoning:** Identify patterns in responses that demonstrate strong or weak logical reasoning, helping us fine-tune the models for better problem-solving.
 - **Reduce Hallucinations:** Detect instances where the model generates incorrect or fabricated information, allowing us to adjust parameters to improve factual accuracy.

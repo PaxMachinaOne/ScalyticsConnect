@@ -7,9 +7,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Scalytics Connect API',
+      title: 'Scalytics Copilot API',
       version: packageJson.version, // Use version from package.json
-      description: 'API documentation for the Scalytics Connect backend, including AI Agents and MCP features.',
+      description: 'API documentation for the Scalytics Copilot backend, including AI Agents and MCP features.',
     },
     servers: [
       {

@@ -1,7 +1,7 @@
 # Dependency Upgrade Plan
 
 ## Goal
-Keep ScalyticsConnect secure and maintainable while minimizing regression risk.
+Keep ScalyticsCopilot secure and maintainable while minimizing regression risk.
 
 ## Principles
 - Upgrade in small batches, not all-at-once.

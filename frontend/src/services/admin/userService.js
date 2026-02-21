@@ -82,11 +82,11 @@ const userService = {
         response.data = response.data || {};
         response.data.registrationLink = registrationLink;
         response.emailContent = {
-          subject: `Your Scalytics Connect Registration Link`,
+          subject: `Your Scalytics Copilot Registration Link`,
           body: `Hello ${userData.username},
 
 Hi, I’m Auri.
-You’ve been invited to join Scalytics Connect — your private AI Agent System for secure, intelligent collaboration. 
+You’ve been invited to join Scalytics Copilot — your private AI Agent System for secure, intelligent collaboration. 
 Please click the link below to set your password and activate your account:
 
 ${response.data.registrationLink}

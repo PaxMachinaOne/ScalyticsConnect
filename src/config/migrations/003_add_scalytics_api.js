@@ -38,7 +38,7 @@ async function up() {
       (?, ?, ?, ?, ?, ?)
   `, [
     SCALYTICS_API_PROVIDER_NAME,
-    'OpenAI-compatible API endpoint for this Scalytics Connect instance',
+    'OpenAI-compatible API endpoint for this Scalytics Copilot instance',
     '', 
     '', 
     1,  

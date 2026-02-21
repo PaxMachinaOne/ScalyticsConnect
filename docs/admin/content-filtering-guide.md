@@ -1,6 +1,6 @@
 # Content Filtering Guide (Admin)
 
-This guide explains how administrators can configure and manage the Content Filtering system within Scalytics Connect to prevent the leakage of sensitive information in AI responses.
+This guide explains how administrators can configure and manage the Content Filtering system within Scalytics Copilot to prevent the leakage of sensitive information in AI responses.
 
 ## Overview
 

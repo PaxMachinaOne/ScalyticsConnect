@@ -10,7 +10,7 @@ You can typically find the Scalytics Deep Search page in the main sidebar naviga
 
 When you submit a query:
 
-1.  **Search:** Scalytics Connect performs web searches using DuckDuckGo for general information and OpenAlex for academic/scholarly content. It can optionally use Google Search or Bing Search if configured by your admin and you have API keys set. It also scans any files you uploaded.
+1.  **Search:** Scalytics Copilot performs web searches using DuckDuckGo for general information and OpenAlex for academic/scholarly content. It can optionally use Google Search or Bing Search if configured by your admin and you have API keys set. It also scans any files you uploaded.
 2.  **Chunking & Embedding:** Relevant text snippets (chunks) from the search results and files are extracted and converted into numerical representations (embeddings) using a specialized local model configured by your administrator.
 3.  **Similarity Search:** The system finds the text chunks most relevant to your original query based on their embeddings.
 4.  **Analysis & Synthesis:** The most relevant chunks are sent to a Large Language Model (LLM) that you select, along with your original query.
@@ -20,7 +20,7 @@ When you submit a query:
 
 1.  **Select Analysis Models:**
     *   **External Analysis Model:** Choose a model like GPT-4, Claude, Gemini, etc., hosted by an external provider. Requires API keys to be configured (either globally by admin or personally by you in **Settings -> API Keys**). *Note: Use of external models may be restricted by admin settings like Privacy Mode or Air Gap Mode.*
-    *   **Local Analysis Model:** Choose a model hosted locally on this Scalytics Connect instance. These are typically available even if external access is restricted.
+    *   **Local Analysis Model:** Choose a model hosted locally on this Scalytics Copilot instance. These are typically available even if external access is restricted.
 2.  **Enter Your Query:** Type your research question or topic into the main text area. Be as specific as possible.
 3.  **(Optional) Add Files:** Click the paperclip icon next to the magnifier glass icon and select "Add Files". You can upload documents to be included in the search context.
     *   **Supported Formats for Analysis:** The system can effectively process and understand text-based documents such as PDF (text-based, not scanned images), DOCX, TXT, MD, CSV, JSON, and XLSX. These formats allow for reliable text extraction, chunking, and analysis.

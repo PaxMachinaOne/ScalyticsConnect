@@ -1,14 +1,14 @@
-# Scalytics Connect
+# Scalytics Copilot
 
-[![CI](https://github.com/scalytics/ScalyticsConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/scalytics/ScalyticsConnect/actions/workflows/ci.yml) [![Secrets Scan](https://github.com/scalytics/ScalyticsConnect/actions/workflows/secrets-scan.yml/badge.svg)](https://github.com/scalytics/ScalyticsConnect/actions/workflows/secrets-scan.yml)
+[![CI](https://github.com/scalytics/ScalyticsCopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/scalytics/ScalyticsCopilot/actions/workflows/ci.yml) [![Secrets Scan](https://github.com/scalytics/ScalyticsCopilot/actions/workflows/secrets-scan.yml/badge.svg)](https://github.com/scalytics/ScalyticsCopilot/actions/workflows/secrets-scan.yml)
 
-Scalytics Connect is a private AI operations platform for organizations that need governance, deployment control, and auditability for GenAI workloads.
+Scalytics Copilot is a private AI operations platform for organizations that need governance, deployment control, and auditability for GenAI workloads.
 
 Built by [Scalytics](https://www.scalytics.io), it is designed for teams that cannot rely on unmanaged black-box AI tooling.
 
 ## The Niche We Serve
 
-Most AI chat stacks optimize for speed-to-demo. Scalytics Connect optimizes for production control:
+Most AI chat stacks optimize for speed-to-demo. Scalytics Copilot optimizes for production control:
 
 - data locality and controlled model access
 - role-based permissions and policy enforcement
@@ -17,7 +17,7 @@ Most AI chat stacks optimize for speed-to-demo. Scalytics Connect optimizes for 
 
 ## For Enterprise Teams
 
-Use Scalytics Connect when you need:
+Use Scalytics Copilot when you need:
 
 - governed AI operations across departments
 - user/group/permission controls at model and provider level

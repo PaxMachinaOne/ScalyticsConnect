@@ -20,7 +20,7 @@ const WelcomeCard = ({ username }) => {
               {getGreeting()}, {username || 'there'}!
             </h3>
             <p className="mt-2 max-w-xl text-sm text-blue-100">
-              Welcome to Scalytics Connect - your enterprise-grade AI collaboration hub.
+              Welcome to Scalytics Copilot - your enterprise-grade AI collaboration hub.
               Access state-of-the-art language models through a secure, unified interface designed for teams.
             </p>
           </div>

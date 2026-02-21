@@ -1,12 +1,12 @@
 #!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-# Scalytics Connect Frontend Setup Script
+# Scalytics Copilot Frontend Setup Script
 
 set -e # Exit on error
 
 echo "======================================================================================"
-echo "  Scalytics Connect - Frontend Setup"
+echo "  Scalytics Copilot - Frontend Setup"
 echo "======================================================================================"
 echo
 
@@ -31,7 +31,7 @@ echo
 FRONTEND_DIR="frontend"
 mkdir -p "$FRONTEND_DIR"
 
-echo "📁 Setting up Scalytics Connect frontend in '$FRONTEND_DIR' directory..."
+echo "📁 Setting up Scalytics Copilot frontend in '$FRONTEND_DIR' directory..."
 
 # Create React App
 echo "⏳ Creating React app structure (this may take a few minutes)..."
@@ -67,7 +67,7 @@ mkdir -p src/utils
 echo "📄 Creating package.json..."
 cat > package.json << 'EOL'
 {
-  "name": "scalytics-connect",
+  "name": "scalytics-copilot",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -178,7 +178,7 @@ cat > .env << 'EOL'
 REACT_APP_API_URL=http://localhost:3000/api
 
 # Add other environment variables here
-REACT_APP_APP_NAME=Scalytics Connect
+REACT_APP_APP_NAME=Scalytics Copilot
 REACT_APP_VERSION=0.1.0
 EOL
 
@@ -1346,7 +1346,7 @@ echo "📦 Installing dependencies (final pass)..."
 npm install
 
 echo "======================================================================================"
-echo "  🎉 Scalytics Connect Frontend setup complete!"
+echo "  🎉 Scalytics Copilot Frontend setup complete!"
 echo "======================================================================================"
 echo
 echo "📂 The frontend is set up in: $(pwd)"

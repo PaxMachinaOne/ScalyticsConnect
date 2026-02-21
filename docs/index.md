@@ -1,6 +1,6 @@
-# Scalytics Connect Documentation
+# Scalytics Copilot Documentation
 
-Welcome to the Scalytics Connect documentation. Use the sidebar to navigate through different sections.
+Welcome to the Scalytics Copilot documentation. Use the sidebar to navigate through different sections.
 
 ## Documentation Categories
 

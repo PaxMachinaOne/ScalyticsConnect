@@ -89,7 +89,7 @@ const RegisterForm = () => {
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-orange-600 dark:text-orange-500">Scalytics Connect</h1>
+          <h1 className="mt-4 text-3xl font-bold text-orange-600 dark:text-orange-500">Scalytics Copilot</h1>
           <h2 className="mt-4 text-2xl font-extrabold text-gray-900 dark:text-dark-text-primary">
             Create a new account
           </h2>

@@ -1,8 +1,8 @@
-# Developer Guide: Scalytics Connect Messaging Hub
+# Developer Guide: Scalytics Copilot Messaging Hub
 
 ## 1. Overview
 
-This guide explains the core messaging system within Scalytics Connect, focusing on how messages are created, stored, and distributed. Understanding this system is crucial for developers integrating new features or MCP (Model Context Protocol) tools that need to interact with the chat interface.
+This guide explains the core messaging system within Scalytics Copilot, focusing on how messages are created, stored, and distributed. Understanding this system is crucial for developers integrating new features or MCP (Model Context Protocol) tools that need to interact with the chat interface.
 
 The key components involved are:
 

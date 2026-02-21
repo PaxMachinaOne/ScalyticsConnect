@@ -21,7 +21,7 @@ If you don't already have one, create an account on [huggingface.co](https://hug
 2.  Go to your **Settings** page by clicking on your profile picture in the top-right corner.
 3.  In the left sidebar, navigate to **Access Tokens**.
 4.  Click the **"New token"** button.
-5.  Give your token a descriptive name (e.g., "Scalytics Connect Access").
+5.  Give your token a descriptive name (e.g., "Scalytics Copilot Access").
 6.  Assign it the **`read`** role. The `write` role is not necessary for downloading models.
 7.  **Important**: In the token's **fine-grained permissions**, ensure the following are enabled:
     - ✅ **"Read access to public gated repositories"** - Required for downloading gated models
@@ -44,7 +44,7 @@ These permissions allow the system to:
 ### Step 4: Use the Token in the Application
 
 1.  Copy the generated token immediately. For security reasons, you will not be able to see it again.
-2.  In the Scalytics Connect admin panel, go to the **Admin -> Models -> Hugging Face** page.
+2.  In the Scalytics Copilot admin panel, go to the **Admin -> Models -> Hugging Face** page.
 3.  You will see a **"Hugging Face Hub Login"** section.
 4.  Paste your copied token into the input field and click **"Login"**.
 

@@ -65,7 +65,7 @@ const LoginForm = () => {
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <h1 className="mt-4 text-3xl font-bold" style={{ color: '#DD6B20' }}>Scalytics Connect</h1>
+          <h1 className="mt-4 text-3xl font-bold" style={{ color: '#DD6B20' }}>Scalytics Copilot</h1>
           <h2 className="mt-4 text-2xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>

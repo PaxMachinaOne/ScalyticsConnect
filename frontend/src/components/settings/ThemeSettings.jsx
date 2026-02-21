@@ -82,7 +82,7 @@ const ThemeSettings = ({ user: initialUser }) => {
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Appearance</h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
-            <p>Choose how Scalytics Connect looks to you. Select a theme or use your system settings.</p>
+            <p>Choose how Scalytics Copilot looks to you. Select a theme or use your system settings.</p>
           </div>
           
           <div className="mt-5 space-y-4">

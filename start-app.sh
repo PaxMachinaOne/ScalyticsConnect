@@ -84,7 +84,7 @@ pkill -f "uvicorn src.python_services.deep_search_service.main:app"
 sleep 2
 
 echo -e "${BOLD}=============================================================${RESET}"
-echo -e "${BOLD}  🚀 Starting Scalytics Connect Server${RESET}"
+echo -e "${BOLD}  🚀 Starting Scalytics Copilot Server${RESET}"
 echo -e "${BOLD}=============================================================${RESET}"
 echo
 

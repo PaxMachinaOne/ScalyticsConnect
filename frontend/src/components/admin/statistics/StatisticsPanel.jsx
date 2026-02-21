@@ -154,7 +154,7 @@ const StatisticsPanel = () => {
       const link = document.createElement('a');
       const url = window.URL.createObjectURL(blob);
       link.href = url;
-      link.setAttribute('download', 'scalytics_connect_activity_log.csv');
+      link.setAttribute('download', 'scalytics_copilot_activity_log.csv');
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -226,7 +226,7 @@ const StatisticsPanel = () => {
         <div className="px-4 py-5 sm:px-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">System Overview</h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-            Key metrics for Scalytics Connect platform.
+            Key metrics for Scalytics Copilot platform.
           </p>
         </div>
         {loading.stats ? (

@@ -4,7 +4,7 @@ This guide explains how administrators can manage the Scalytics API feature, whi
 
 ## Feature Overview
 
-The Scalytics API allows users to generate API keys that can be used to authenticate requests against the `/v1/chat/completions` endpoint. This enables integration with development tools, scripts, or other applications that support the OpenAI API format, but restricts usage to the local models hosted within this Scalytics Connect instance.
+The Scalytics API allows users to generate API keys that can be used to authenticate requests against the `/v1/chat/completions` endpoint. This enables integration with development tools, scripts, or other applications that support the OpenAI API format, but restricts usage to the local models hosted within this Scalytics Copilot instance.
 
 ## Concurrency and Model Selection
 
@@ -45,15 +45,15 @@ While users generate their own Scalytics API keys via their personal settings pa
 *   **Key Security:** Remind users that Scalytics API keys should be treated like passwords and kept confidential. Deleting a user's key is the way to revoke their specific access.
 *   **Rate Limiting:** Monitor overall API usage patterns (e.g., via logs or system monitoring) and adjust the global rate limits as necessary to balance usability and protect server resources.
 *   **Global Toggle:** Use the global disable switch when the API feature needs to be temporarily or permanently deactivated for maintenance or security reasons.
-*   **System Prompts:** Note that the Scalytics API endpoint (`/v1/chat/completions`) does **not** automatically apply any system prompts or profiles configured for the local model within the main Scalytics Connect UI. For API usage, any desired system prompt must be explicitly included by the client application as the first message in the `messages` array with `role: "system"`. This ensures compatibility with standard OpenAI client behavior.
+*   **System Prompts:** Note that the Scalytics API endpoint (`/v1/chat/completions`) does **not** automatically apply any system prompts or profiles configured for the local model within the main Scalytics Copilot UI. For API usage, any desired system prompt must be explicitly included by the client application as the first message in the `messages` array with `role: "system"`. This ensures compatibility with standard OpenAI client behavior.
 
 ## Connecting to a Remote Scalytics Instance
 
-You can configure this Scalytics Connect instance to use the models hosted on *another* Scalytics Connect instance. This is achieved by treating the remote instance's Scalytics API as an external provider and using a Global API Key.
+You can configure this Scalytics Copilot instance to use the models hosted on *another* Scalytics Copilot instance. This is achieved by treating the remote instance's Scalytics API as an external provider and using a Global API Key.
 
 **Prerequisites:**
 
-*   Access to the *remote* Scalytics Connect instance.
+*   Access to the *remote* Scalytics Copilot instance.
 *   An API key generated on the *remote* instance (via Settings -> API Keys -> Generate Scalytics API Key).
 *   The base URL of the *remote* instance (e.g., `https://remote-scalytics.yourcompany.com`).
 

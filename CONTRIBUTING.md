@@ -1,4 +1,4 @@
-# Contributing to Scalytics Connect
+# Contributing to Scalytics Copilot
 
 Thanks for contributing. This document defines the expected workflow for issues, changes, and pull requests.
 

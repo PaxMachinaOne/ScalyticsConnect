@@ -1,17 +1,17 @@
-# Scalytics Connect Agent System
+# Scalytics Copilot Agent System
 
 ## Overview
 
-The Scalytics Connect Agent System enables powerful AI agents to interact with external tools and resources through a WebSocket-based communication protocol. This document describes the architecture, implementation, and usage of the Scalytics Connect Agent System.
+The Scalytics Copilot Agent System enables powerful AI agents to interact with external tools and resources through a WebSocket-based communication protocol. This document describes the architecture, implementation, and usage of the Scalytics Copilot Agent System.
 
 ## Architecture
 
-The Scalytics Connect Agent System integrates with the existing infrastructure through a WebSocket interface, providing real-time bidirectional communication between clients and AI agents.
+The Scalytics Copilot Agent System integrates with the existing infrastructure through a WebSocket interface, providing real-time bidirectional communication between clients and AI agents.
 
 ```mermaid
 graph TD
     A[Client Application] <-->|WebSocket| B[WebSocket Server]
-    B <-->|Scalytics Connect Protocol| C[Scalytics Connect Agent System]
+    B <-->|Scalytics Copilot Protocol| C[Scalytics Copilot Agent System]
     C --> D[External Tools]
     C --> E[External Resources]
     C --> F[Model A]
@@ -22,21 +22,21 @@ graph TD
 ### Components
 
 1. **WebSocket Server**: Handles persistent connections, authentication, and message routing
-2. **Scalytics Connect Agent Interface**: Facilitates bidirectional communication with AI agents
+2. **Scalytics Copilot Agent Interface**: Facilitates bidirectional communication with AI agents
 3. **Tool Registry**: Manages available tools and their capabilities
 4. **Resource Provider**: Supplies context and data to agents
 5. **Agent Manager**: Handles agent lifecycle and state
 
-## Scalytics Connect Communication Protocol
+## Scalytics Copilot Communication Protocol
 
-The Scalytics Connect protocol is implemented as a specialized set of WebSocket messages:
+The Scalytics Copilot protocol is implemented as a specialized set of WebSocket messages:
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Client
     participant Server
-    participant Agent as Scalytics Connect Agent
+    participant Agent as Scalytics Copilot Agent
     participant Tool as External Tool
     
     User->>Client: Send message
@@ -57,7 +57,7 @@ sequenceDiagram
 
 ### Message Protocol
 
-The Scalytics Connect system uses a structured JSON message format for all communications:
+The Scalytics Copilot system uses a structured JSON message format for all communications:
 
 ```json
 {
@@ -73,7 +73,7 @@ The Scalytics Connect system uses a structured JSON message format for all commu
 
 | Type | Direction | Purpose |
 |------|-----------|---------|
-| `agent_action` | Server → Client | Scalytics Connect agent performing an action |
+| `agent_action` | Server → Client | Scalytics Copilot agent performing an action |
 | `agent_result` | Client → Server | Result of agent action |
 | `tool_list` | Bidirectional | Available tools information |
 | `resource_request` | Agent → Server | Agent requesting a resource |
@@ -84,7 +84,7 @@ The Scalytics Connect system uses a structured JSON message format for all commu
 Tools are integrated through standardized interfaces:
 
 ```javascript
-class ScalyticsConnectTool {
+class ScalyticsCopilotTool {
   // Tool definition
   getDefinition() {
     return {
@@ -170,7 +170,7 @@ stateDiagram-v2
 
 ## Security Model
 
-The Scalytics Connect Agent System implements a multi-layered security approach:
+The Scalytics Copilot Agent System implements a multi-layered security approach:
 
 1. **Authentication**: All connections require JWT authentication
 2. **Authorization**: Granular permissions for tool access
@@ -212,7 +212,7 @@ class CustomAgent extends BaseAgent {
 
 ## WebSocket Integration
 
-The Scalytics Connect Agent System connects to clients through the WebSocket server:
+The Scalytics Copilot Agent System connects to clients through the WebSocket server:
 
 ```javascript
 // Server-side websocket handler

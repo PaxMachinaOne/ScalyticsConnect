@@ -1,6 +1,6 @@
 # Using the Scalytics API
 
-The Scalytics API allows you to interact with the local AI models hosted on this Scalytics Connect instance using external tools, scripts, or development environments that support the OpenAI API format.
+The Scalytics API allows you to interact with the local AI models hosted on this Scalytics Copilot instance using external tools, scripts, or development environments that support the OpenAI API format.
 
 ## What is it for?
 
@@ -16,7 +16,7 @@ You can use the Scalytics API to:
 
 To use the Scalytics API, you first need to generate a personal API key:
 
-1.  Go to your **Settings** page within Scalytics Connect.
+1.  Go to your **Settings** page within Scalytics Copilot.
 2.  Navigate to the **API Keys** section.
 3.  Look for the **"Generate Scalytics API Key"** area.
 4.  Enter a **Key Name** that helps you remember what you'll use this key for (e.g., "My Laptop Dev Key", "Data Analysis Script").
@@ -28,7 +28,7 @@ To use the Scalytics API, you first need to generate a personal API key:
 
 When configuring your external tool or script:
 
-1.  **Endpoint URL:** Set the API endpoint URL to `https://[Your Scalytics Connect URL]/v1/chat/completions`. Replace `[Your Scalytics Connect URL]` with the actual address of this instance.
+1.  **Endpoint URL:** Set the API endpoint URL to `https://[Your Scalytics Copilot URL]/v1/chat/completions`. Replace `[Your Scalytics Copilot URL]` with the actual address of this instance.
 2.  **API Key:** Provide your generated Scalytics API key (the one starting with `sk-scalytics-`) as the API key or Bearer token. Many tools have a specific field for the API key. If configuring manually, it should be sent in the `Authorization` header like this:
     ```
     Authorization: Bearer YOUR_SCALYTICS_API_KEY
