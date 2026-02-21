@@ -88,7 +88,7 @@ async function routeInferenceRequest(options) {
   const {
     modelId,
     messages,
-    parameters,
+    parameters = {},
     onToken,
     userId,
     files,
@@ -188,7 +188,9 @@ async function routeInferenceRequest(options) {
 
     // --- End New Context Validation ---
     // max_tokens is intentionally removed to allow the model to determine the response length based on the prompt.
-    delete parameters.max_tokens;
+    if (parameters) {
+        delete parameters.max_tokens;
+    }
 
     // Prepare prompt for model
     let systemContent = null;
