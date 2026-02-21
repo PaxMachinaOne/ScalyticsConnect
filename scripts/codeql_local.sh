@@ -16,10 +16,10 @@ mkdir -p .tmp/codeql
 echo "==> Ensuring CodeQL standard query packs are available"
 codeql pack download codeql/javascript-queries codeql/python-queries codeql/actions-queries
 
-# Stable defaults for local runs.
-CODEQL_JS_RAM_MB="${CODEQL_JS_RAM_MB:-6144}"
+# Stable defaults for local runs (set to 2GB as requested to avoid OOM)
+CODEQL_JS_RAM_MB="${CODEQL_JS_RAM_MB:-2048}"
 CODEQL_JS_THREADS="${CODEQL_JS_THREADS:-2}"
-CODEQL_PY_RAM_MB="${CODEQL_PY_RAM_MB:-4096}"
+CODEQL_PY_RAM_MB="${CODEQL_PY_RAM_MB:-2048}"
 CODEQL_ACTIONS_RAM_MB="${CODEQL_ACTIONS_RAM_MB:-1024}"
 
 # Strategy github/security-and-quality
@@ -30,28 +30,28 @@ run_js() {
   echo "    using --ram=${CODEQL_JS_RAM_MB}MB --threads=${CODEQL_JS_THREADS}"
   rm -rf .tmp/codeql/js-db
   chmod +x scripts/codeql_js_build.sh
-  codeql database create .tmp/codeql/js-db 
-    --language=javascript-typescript 
-    --ram="$CODEQL_JS_RAM_MB" 
+  codeql database create .tmp/codeql/js-db \
+    --language=javascript \
+    --ram="$CODEQL_JS_RAM_MB" \
     --command="./scripts/codeql_js_build.sh"
 
   if [[ "$CODEQL_QUERY_STRATEGY" == "security-and-quality" ]]; then
-    codeql database analyze .tmp/codeql/js-db 
-      codeql/javascript-queries:codeql-suites/javascript-security-and-quality.qls 
-      --download 
-      --ram="$CODEQL_JS_RAM_MB" 
-      --threads="$CODEQL_JS_THREADS" 
-      --format=sarifv2.1.0 
-      --sarif-category="/language:javascript-typescript" 
+    codeql database analyze .tmp/codeql/js-db \
+      codeql/javascript-queries:codeql-suites/javascript-security-and-quality.qls \
+      --download \
+      --ram="$CODEQL_JS_RAM_MB" \
+      --threads="$CODEQL_JS_THREADS" \
+      --format=sarifv2.1.0 \
+      --sarif-category="/language:javascript" \
       --output .tmp/codeql/javascript.sarif
   else
-    codeql database analyze .tmp/codeql/js-db 
-      codeql/javascript-queries 
-      --download 
-      --ram="$CODEQL_JS_RAM_MB" 
-      --threads="$CODEQL_JS_THREADS" 
-      --format=sarifv2.1.0 
-      --sarif-category="/language:javascript-typescript" 
+    codeql database analyze .tmp/codeql/js-db \
+      codeql/javascript-queries \
+      --download \
+      --ram="$CODEQL_JS_RAM_MB" \
+      --threads="$CODEQL_JS_THREADS" \
+      --format=sarifv2.1.0 \
+      --sarif-category="/language:javascript" \
       --output .tmp/codeql/javascript.sarif
   fi
 }
@@ -61,26 +61,26 @@ run_py() {
   echo "    using --ram=${CODEQL_PY_RAM_MB}MB"
   rm -rf .tmp/codeql/py-db
   chmod +x scripts/codeql_py_build.sh
-  codeql database create .tmp/codeql/py-db 
-    --language=python 
-    --ram="$CODEQL_PY_RAM_MB" 
+  codeql database create .tmp/codeql/py-db \
+    --language=python \
+    --ram="$CODEQL_PY_RAM_MB" \
     --command="./scripts/codeql_py_build.sh"
 
   if [[ "$CODEQL_QUERY_STRATEGY" == "security-and-quality" ]]; then
-    codeql database analyze .tmp/codeql/py-db 
-      codeql/python-queries:codeql-suites/python-security-and-quality.qls 
-      --download 
-      --ram="$CODEQL_PY_RAM_MB" 
-      --format=sarifv2.1.0 
-      --sarif-category="/language:python" 
+    codeql database analyze .tmp/codeql/py-db \
+      codeql/python-queries:codeql-suites/python-security-and-quality.qls \
+      --download \
+      --ram="$CODEQL_PY_RAM_MB" \
+      --format=sarifv2.1.0 \
+      --sarif-category="/language:python" \
       --output .tmp/codeql/python.sarif
   else
-    codeql database analyze .tmp/codeql/py-db 
-      codeql/python-queries 
-      --download 
-      --ram="$CODEQL_PY_RAM_MB" 
-      --format=sarifv2.1.0 
-      --sarif-category="/language:python" 
+    codeql database analyze .tmp/codeql/py-db \
+      codeql/python-queries \
+      --download \
+      --ram="$CODEQL_PY_RAM_MB" \
+      --format=sarifv2.1.0 \
+      --sarif-category="/language:python" \
       --output .tmp/codeql/python.sarif
   fi
 }
@@ -89,17 +89,17 @@ run_actions() {
   echo "==> CodeQL (Actions)"
   echo "    using --ram=${CODEQL_ACTIONS_RAM_MB}MB"
   rm -rf .tmp/codeql/actions-db
-  codeql database create .tmp/codeql/actions-db 
-    --language=actions 
-    --build-mode=none 
+  codeql database create .tmp/codeql/actions-db \
+    --language=actions \
+    --build-mode=none \
     --ram="$CODEQL_ACTIONS_RAM_MB"
 
-  codeql database analyze .tmp/codeql/actions-db 
-    codeql/actions-queries 
-    --download 
-    --ram="$CODEQL_ACTIONS_RAM_MB" 
-    --format=sarifv2.1.0 
-    --sarif-category="/language:actions" 
+  codeql database analyze .tmp/codeql/actions-db \
+    codeql/actions-queries \
+    --download \
+    --ram="$CODEQL_ACTIONS_RAM_MB" \
+    --format=sarifv2.1.0 \
+    --sarif-category="/language:actions" \
     --output .tmp/codeql/actions.sarif
 }
 
