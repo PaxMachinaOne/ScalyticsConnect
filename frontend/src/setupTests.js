@@ -5,24 +5,27 @@
 const originalWarn = console.warn;
 const originalError = console.error;
 
-console.warn = (...args) => {
-  if (
-    (typeof args[0] === 'string' && args[0].includes('React Router Future Flag Warning')) ||
-    (typeof args[0] === 'string' && args[0].includes('Warning: Importing directly from "services/authService" is deprecated'))
-  ) {
+console.warn = (message, ...optionalParams) => {
+  // Silence specific known warnings
+  if (typeof message === 'string' && 
+      (message.includes('React Router Future Flag Warning') ||
+       message.includes('Warning: Importing directly from "services/authService" is deprecated'))) {
     return;
   }
-  originalWarn(...args);
+  
+  // codeql[js/clear-text-logging] - Test environment wrapper
+  originalWarn(message, ...optionalParams);
 };
 
-console.error = (...args) => {
-  if (typeof args[0] === 'string' && args[0].includes('Warning: `ReactDOMTestUtils.act` is deprecated')) {
+console.error = (message, ...optionalParams) => {
+  // Silence specific known warnings
+  if (typeof message === 'string' && 
+      (message.includes('Warning: `ReactDOMTestUtils.act` is deprecated') ||
+       message.includes('not wrapped in act(...)'))) {
     return;
   }
-  // Also silence the common Headless UI transition act warning in smoke tests
-  if (typeof args[0] === 'string' && args[0].includes('not wrapped in act(...)')) {
-    return;
-  }
-  // CodeQL [js/clear-text-logging] - Intentional wrapper for test environment silencing
-  originalError(...args);
+  
+  // For other errors, call the original logger
+  // codeql[js/clear-text-logging] - This is a test environment utility to silence noisy but expected warnings
+  originalError(message, ...optionalParams);
 };

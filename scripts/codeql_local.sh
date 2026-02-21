@@ -22,8 +22,8 @@ CODEQL_JS_THREADS="${CODEQL_JS_THREADS:-2}"
 CODEQL_PY_RAM_MB="${CODEQL_PY_RAM_MB:-4096}"
 CODEQL_ACTIONS_RAM_MB="${CODEQL_ACTIONS_RAM_MB:-1024}"
 
-# Strategy github/security-and-quality
-CODEQL_QUERY_STRATEGY="${CODEQL_QUERY_STRATEGY:-github}"
+# Strategy github/security-and-quality (Set to security-and-quality for deeper local analysis)
+CODEQL_QUERY_STRATEGY="${CODEQL_QUERY_STRATEGY:-security-and-quality}"
 
 run_js() {
   echo "==> CodeQL (JavaScript/TypeScript)"
