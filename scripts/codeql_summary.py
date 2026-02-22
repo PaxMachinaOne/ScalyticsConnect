@@ -21,6 +21,7 @@ def summarize():
 
     total_errors = 0
     total_warnings = 0
+    all_findings = []
     
     print(f"\n{C.BLD}=== Local CodeQL Findings Summary ==={C.RST}")
 
@@ -35,6 +36,13 @@ def summarize():
         for run in data.get("runs", []):
             for result in (run.get("results") or []):
                 level = (result.get("level") or "warning").lower()
+                rule = result.get("ruleId")
+                msg = result.get("message", {}).get("text")
+                loc = result.get("locations", [{}])[0].get("physicalLocation", {}).get("artifactLocation", {}).get("uri")
+                line = result.get("locations", [{}])[0].get("physicalLocation", {}).get("region", {}).get("startLine")
+                
+                all_findings.append(f"[{level.upper()}] {rule} at {loc}:{line} - {msg[:100]}")
+
                 if level == "error":
                     file_errors += 1
                 else:
@@ -46,14 +54,15 @@ def summarize():
         total_errors += file_errors
         total_warnings += file_warnings
 
-    if total_errors > 0:
-        print(f"\n{C.RED}❌ CodeQL gate failed: {total_errors} blocking error(s) found.{C.RST}")
+    if total_errors > 0 or total_warnings > 0:
+        print(f"\n{C.BLD}Top 50 Findings:{C.RST}")
+        for finding in all_findings[:50]:
+            print(f"  {finding}")
+            
+        print(f"\n{C.RED}❌ CodeQL gate failed: {total_errors + total_warnings} finding(s) found.{C.RST}")
         sys.exit(1)
     
-    if total_warnings > 0:
-         print(f"\n{C.YEL}⚠️ CodeQL passed with {total_warnings} warnings (non-blocking).{C.RST}")
-    else:
-         print(f"\n{C.GRN}✅ CodeQL passed: no findings found.{C.RST}")
+    print(f"\n{C.GRN}✅ CodeQL passed: no findings found.{C.RST}")
 
 if __name__ == "__main__":
     summarize()

@@ -131,7 +131,7 @@ async function main() {
       // Suggest adding to .env if it's not already there
       if (!process.env.ANTHROPIC_API_KEY) {
         console.log('\nTo use this key in your application, add it to your .env file:');
-        console.log('ANTHROPIC_API_KEY=' + apiKey);
+        console.log('ANTHROPIC_API_KEY=[REDACTED]');
       }
     } else {
       console.log('❌ Anthropic API key verification failed.');

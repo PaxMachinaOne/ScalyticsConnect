@@ -161,11 +161,10 @@ async function checkSchema() { // Made async
       } else {
         // Table exists - check for data
         const totalUsers = await countUsers();
-        const adminExists = await checkAdminExists();
-
-        console.log(`✅ Database schema exists (${totalUsers} users, admin user: ${adminExists ? 'YES' : 'NO'})`);
-
-        // Apply updates if schema exists
+              const adminExists = await checkAdminExists();
+        
+              console.log(`✅ Database schema exists (admin user: [REDACTED])`);
+                // Apply updates if schema exists
         try {
           await applySchemaUpdates(); // Await updates
         } catch (updateErr) {
@@ -312,10 +311,10 @@ async function initializeSchema() { // Made async
     console.log('🔒 Preserving admin password due to:');
     if (adminExists) console.log('   * Existing admin user detected');
     if (process.env.NODE_ENV === 'production') console.log('   * Running in production mode');
-    console.log(`   * PRESERVE_ADMIN_PASSWORD=${process.env.PRESERVE_ADMIN_PASSWORD || 'not set'}`);
-    console.log(`   * NEVER_RESET_ADMIN_PASSWORD=${process.env.NEVER_RESET_ADMIN_PASSWORD || 'not set'}`);
-    console.log(`   * DB_ADMIN_PASSWORD_PROTECTED=${process.env.DB_ADMIN_PASSWORD_PROTECTED || 'not set'}`);
-    console.log(`   * CRITICAL_PASSWORD_LOCK=${process.env.CRITICAL_PASSWORD_LOCK || 'not set'}`);
+    console.log(`   * PRESERVE_ADMIN_PASSWORD=[SET]`);
+    console.log(`   * NEVER_RESET_ADMIN_PASSWORD=[SET]`);
+    console.log(`   * DB_ADMIN_PASSWORD_PROTECTED=[SET]`);
+    console.log(`   * CRITICAL_PASSWORD_LOCK=[SET]`);
 
     // Comment out the admin user insert line to prevent overwriting
     finalSchemaSqlString = schemaSql.replace(
@@ -376,10 +375,7 @@ const preserveAdminPassword = process.env.PRESERVE_ADMIN_PASSWORD === 'true'
 
 if (preserveAdminPassword) {
   console.log('🔒 Admin password preservation enabled - password will NOT be reset');
-  console.log('🔒 Environment settings: PRESERVE_ADMIN_PASSWORD=' +
-              (process.env.PRESERVE_ADMIN_PASSWORD || 'not set') +
-              ', NEVER_RESET_ADMIN_PASSWORD=' +
-              (process.env.NEVER_RESET_ADMIN_PASSWORD || 'not set'));
+  console.log('🔒 Environment settings: PRESERVE_ADMIN_PASSWORD=[SET], NEVER_RESET_ADMIN_PASSWORD=[SET]');
 }
 
 // Main execution - simplified and using async/await

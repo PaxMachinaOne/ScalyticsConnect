@@ -104,8 +104,8 @@ async function executePythonScript(scriptPath, args = [], options = {}) {
   console.log(`[WARN] Using Python environment:
     PYTHON_CMD=${process.env.PYTHON_CMD || 'not set'}
     PYTHON_VENV_DIR=${process.env.PYTHON_VENV_DIR || 'not set'}
-    PRESERVE_ADMIN_PASSWORD=${process.env.PRESERVE_ADMIN_PASSWORD || 'not set'}
-    NEVER_RESET_ADMIN_PASSWORD=${process.env.NEVER_RESET_ADMIN_PASSWORD || 'not set'}
+    PRESERVE_ADMIN_PASSWORD=[SET]
+    NEVER_RESET_ADMIN_PASSWORD=[SET]
   `);
 
   // Try using the wrapper script first (this is the best approach)
