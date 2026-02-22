@@ -260,7 +260,8 @@ async function resetAdminPassword() {
     
     // Output the new password
     console.log('\n==================================================');
-    console.log('🔑 NEW ADMIN PASSWORD: [REDACTED]');
+    // codeql[js/clear-text-logging] - Intentional CLI output for user to save their new password
+    console.log('🔑 NEW ADMIN PASSWORD: ' + newPassword);
     console.log('==================================================');
     console.log('\n⚠️  IMPORTANT: Save this password immediately! It will not be shown again.\n');
     

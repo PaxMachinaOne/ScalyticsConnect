@@ -161,10 +161,12 @@ async function checkSchema() { // Made async
       } else {
         // Table exists - check for data
         const totalUsers = await countUsers();
-              const adminExists = await checkAdminExists();
-        
-              console.log(`✅ Database schema exists (admin user: [REDACTED])`);
-                // Apply updates if schema exists
+        const adminExists = await checkAdminExists();
+
+        // codeql[js/clear-text-logging] - Descriptive status log for setup visibility
+        console.log(`✅ Database schema exists (${totalUsers} users, admin user: ${adminExists ? 'YES' : 'NO'})`);
+
+        // Apply updates if schema exists
         try {
           await applySchemaUpdates(); // Await updates
         } catch (updateErr) {
@@ -375,7 +377,11 @@ const preserveAdminPassword = process.env.PRESERVE_ADMIN_PASSWORD === 'true'
 
 if (preserveAdminPassword) {
   console.log('🔒 Admin password preservation enabled - password will NOT be reset');
-  console.log('🔒 Environment settings: PRESERVE_ADMIN_PASSWORD=[SET], NEVER_RESET_ADMIN_PASSWORD=[SET]');
+  // codeql[js/clear-text-logging] - Intentional logging of environment flags for system administrator visibility during setup
+  console.log('🔒 Environment settings: PRESERVE_ADMIN_PASSWORD=' +
+              (process.env.PRESERVE_ADMIN_PASSWORD || 'not set') +
+              ', NEVER_RESET_ADMIN_PASSWORD=' +
+              (process.env.NEVER_RESET_ADMIN_PASSWORD || 'not set'));
 }
 
 // Main execution - simplified and using async/await
