@@ -1064,8 +1064,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     
                     # Specific check for Gemini-like finish_reason='length' but content is None
                     if raw_content is None and response_obj_litellm and response_obj_litellm.choices and response_obj_litellm.choices[0].finish_reason == 'length':
-                        model_used = final_litellm_params.get('model', 'unknown')
-                        logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: LLM (likely Gemini) reported finish_reason='length' but returned no content. Model: {model_used}")
+                        logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: LLM (likely Gemini) reported finish_reason='length' but returned no content.")
                         error_message_for_return_litellm = "LLM finished due to length but returned no content."
                         break 
 
