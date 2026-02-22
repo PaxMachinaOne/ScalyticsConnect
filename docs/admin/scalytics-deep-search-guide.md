@@ -42,7 +42,7 @@ Deep Search requires a locally hosted text embedding model to convert text chunk
 1.  Navigate to **Admin Panel -> Models**.
 2.  Locate the downloaded local embedding model you wish to use (it will be marked with a purple icon and "Local Embedding" type).
 3.  If the model is not the current default (Status will be "Inactive (Not Preferred)"), click the **"Set as System Embedding Model"** button (checkmark icon) in the Actions column.
-4.  **Important:** After setting a new preferred embedding model, you **must restart the Scalytics Connect server** for the change to take effect and the new model to be loaded by the embedding worker.
+4.  **Important:** After setting a new preferred embedding model, you **must restart the Scalytics Copilot server** for the change to take effect and the new model to be loaded by the embedding worker.
 
 **d) CRITICAL WARNING: Changing the Embedding Model Post-Initialization**
 
@@ -85,7 +85,7 @@ By default, Deep Search is optimized for English queries. However, it can be con
     *   Open the `src/python_services/deep_search_service/config.py` file.
     *   Locate the `DEEP_SEARCH_EMBEDDING_MODEL_IS_MULTILINGUAL` setting.
     *   Change its value from `False` to `True`.
-    *   Save the file and restart the Scalytics Connect server for the change to take effect.
+    *   Save the file and restart the Scalytics Copilot server for the change to take effect.
 
 ## 3. Configuring Search Providers
 

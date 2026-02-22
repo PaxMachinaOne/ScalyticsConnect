@@ -1171,10 +1171,13 @@ exports.generateScalyticsApiKey = async (req, res) => {
     const randomBytes = crypto.randomBytes(24);
     const base62Chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let randomString = '';
-    for (let i = 0; i < randomBytes.length; i++) {
-        randomString += base62Chars[randomBytes[i] % 62];
+    while (randomString.length < 32) {
+        const byte = crypto.randomBytes(1)[0];
+        if (byte < 248) { // 248 is the largest multiple of 62 less than 256
+            randomString += base62Chars[byte % 62];
+        }
     }
-    const rawApiKey = `sk-scalytics-${randomString.slice(0, 32)}`;
+    const rawApiKey = `sk-scalytics-${randomString}`;
 
     const hashedApiKey = await bcrypt.hash(rawApiKey, BCRYPT_SALT_ROUNDS);
 

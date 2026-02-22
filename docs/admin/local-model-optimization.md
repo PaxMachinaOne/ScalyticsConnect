@@ -4,7 +4,7 @@ This comprehensive reference provides enterprise-grade configuration parameters 
 
 ## Introduction to vLLM-Powered Inference
 
-Scalytics Connect now uses **vLLM** (Very Fast LLM) as the unified inference engine for all local models. vLLM provides state-of-the-art serving throughput with dynamic batching, optimized attention mechanisms, and efficient memory management. All models are downloaded in PyTorch format from HuggingFace and automatically optimized by vLLM.
+Scalytics Copilot now uses **vLLM** (Very Fast LLM) as the unified inference engine for all local models. vLLM provides state-of-the-art serving throughput with dynamic batching, optimized attention mechanisms, and efficient memory management. All models are downloaded in PyTorch format from HuggingFace and automatically optimized by vLLM.
 
 ## Key vLLM Advantages
 
@@ -24,7 +24,7 @@ Scalytics Connect now uses **vLLM** (Very Fast LLM) as the unified inference eng
 
 ## Default Inference Parameters
 
-Scalytics Connect uses the following optimized default parameters for vLLM inference:
+Scalytics Copilot uses the following optimized default parameters for vLLM inference:
 
 | Parameter | Default Value | Description |
 |-----------|--------------|-------------|

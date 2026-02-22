@@ -1,10 +1,10 @@
-# Scalytics Connect Agent Administration Guide
+# Scalytics Copilot Agent Administration Guide
 
-This guide is intended for system administrators responsible for configuring, managing, and monitoring the Scalytics Connect Agent system.
+This guide is intended for system administrators responsible for configuring, managing, and monitoring the Scalytics Copilot Agent system.
 
 ## Overview
 
-The Scalytics Connect Agent system provides AI agent capabilities to your users through a WebSocket-based communication protocol. As an administrator, you'll be responsible for:
+The Scalytics Copilot Agent system provides AI agent capabilities to your users through a WebSocket-based communication protocol. As an administrator, you'll be responsible for:
 
 1. Configuring available agent types
 2. Managing tool permissions
@@ -13,7 +13,7 @@ The Scalytics Connect Agent system provides AI agent capabilities to your users 
 
 ## System Requirements
 
-The Scalytics Connect Agent system relies on the following components:
+The Scalytics Copilot Agent system relies on the following components:
 
 - Node.js server with WebSocket support
 - Database for agent state persistence
@@ -59,7 +59,7 @@ Tools are configured in `config/tools.json`. Each tool requires:
 
 ### Permission Levels
 
-The Scalytics Connect Agent system uses the following permission levels:
+The Scalytics Copilot Agent system uses the following permission levels:
 
 | Level | Description | Approval Required | Example Tools |
 |-------|-------------|-------------------|--------------|
@@ -88,7 +88,7 @@ Example PM2 configuration:
 ```json
 {
   "apps": [{
-    "name": "scalytics-connect-agent-server",
+    "name": "scalytics-copilot-agent-server",
     "script": "server.js",
     "instances": "max",
     "exec_mode": "cluster",
@@ -137,7 +137,7 @@ http {
 
 ### Assigning Agent Access
 
-Control which users have access to which agents through the Scalytics Connect Admin panel:
+Control which users have access to which agents through the Scalytics Copilot Admin panel:
 
 1. Navigate to Admin > User Management
 2. Select a user
@@ -240,12 +240,12 @@ All agent activities are logged for security and troubleshooting:
 
 ### Log Analysis
 
-The Scalytics Connect Agent system writes logs to the following locations:
+The Scalytics Copilot Agent system writes logs to the following locations:
 
-- **Application logs**: `/var/log/scalyticsconnect/application.log`
-- **WebSocket logs**: `/var/log/scalyticsconnect/websocket.log`
-- **Agent logs**: `/var/log/scalyticsconnect/agents.log`
-- **Error logs**: `/var/log/scalyticsconnect/error.log`
+- **Application logs**: `/var/log/scalyticscopilot/application.log`
+- **WebSocket logs**: `/var/log/scalyticscopilot/websocket.log`
+- **Agent logs**: `/var/log/scalyticscopilot/agents.log`
+- **Error logs**: `/var/log/scalyticscopilot/error.log`
 
 Use the log viewer in Admin > System > Logs for filtering and analysis.
 
@@ -281,7 +281,7 @@ Consider the following for data privacy:
 
 ### Updates
 
-When updating the Scalytics Connect Agent system:
+When updating the Scalytics Copilot Agent system:
 
 1. Review the changelog for breaking changes
 2. Backup configuration files
@@ -308,5 +308,5 @@ Recovery procedure:
 ## Support Resources
 
 - **Documentation**: `/docs/admin/agent-administration.md`
-- **Knowledge Base**: Internal support portal > Scalytics Connect Agents
-- **Support Contact**: support@scalyticsconnect.example.com or internal ticket system
+- **Knowledge Base**: Internal support portal > Scalytics Copilot Agents
+- **Support Contact**: support@scalyticscopilot.example.com or internal ticket system

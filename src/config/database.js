@@ -66,16 +66,20 @@ async function runMigrations(db) {
   
 
   for (const migrationFile of pendingMigrations) {
-    
     const migrationPath = path.join(MIGRATIONS_DIR, migrationFile);
     try {
       const migration = require(migrationPath);
+      
+      // Support both 'up' (standard) and 'runMigration' (used in some files)
+      const migrationFn = migration.up || migration.runMigration;
 
-      if (migration && typeof migration.up === 'function') {
-        await migration.up();
+      if (migration && typeof migrationFn === 'function') {
+        console.log(`[Database] Applying migration: ${migrationFile}`);
+        await migrationFn();
         await db.runAsync('INSERT INTO migrations (name) VALUES (?)', [migrationFile]);
+        console.log(`[Database] Successfully applied ${migrationFile}`);
       } else {
-        console.warn(`Skipping ${migrationFile}: 'up' function not found.`);
+        console.warn(`Skipping ${migrationFile}: No valid entry point ('up' or 'runMigration') found.`);
       }
     } catch (error) {
       console.error(`❌ FAILED to apply migration ${migrationFile}:`, error);

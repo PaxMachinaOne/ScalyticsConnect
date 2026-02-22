@@ -1064,7 +1064,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     
                     # Specific check for Gemini-like finish_reason='length' but content is None
                     if raw_content is None and response_obj_litellm and response_obj_litellm.choices and response_obj_litellm.choices[0].finish_reason == 'length':
-                        logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: LLM (likely Gemini) reported finish_reason='length' but returned no content. Model: {final_litellm_params.get('model')}")
+                        logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: LLM (likely Gemini) reported finish_reason='length' but returned no content.")
                         error_message_for_return_litellm = "LLM finished due to length but returned no content."
                         break 
 
@@ -1171,7 +1171,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
 
         if error_message_for_return_litellm or llm_response_content_litellm is None:
             final_error_message = error_message_for_return_litellm or "LLM response content empty/unparsable after all retries."
-            logger.error(f"{log_prefix} (LiteLLM) Final failure after all retries. Error: {final_error_message}. Params used: {json.dumps(final_litellm_params, default=str)}")
+            logger.error(f"{log_prefix} (LiteLLM) Final failure after all retries. Error: {final_error_message}")
             default_output = {} if expected_output_format == "json" else ""
             result_to_return = {"output": default_output, "usage": {"prompt_tokens": prompt_tokens_litellm, "completion_tokens": completion_tokens_litellm, "total_tokens": total_tokens_litellm}, "error": final_error_message}
         else:

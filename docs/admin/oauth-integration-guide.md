@@ -1,10 +1,10 @@
 # OAuth Integration Guide
 
-This guide covers the OAuth integration features of Scalytics Connect, including security considerations for administrators.
+This guide covers the OAuth integration features of Scalytics Copilot, including security considerations for administrators.
 
 ## Overview
 
-Scalytics Connect supports OAuth integration with several identity providers to enable single sign-on (SSO) functionality. When enabled, users can authenticate using their accounts from supported providers such as GitHub, Google, Microsoft, Azure AD, or Okta.
+Scalytics Copilot supports OAuth integration with several identity providers to enable single sign-on (SSO) functionality. When enabled, users can authenticate using their accounts from supported providers such as GitHub, Google, Microsoft, Azure AD, or Okta.
 
 ## Supported Providers
 
@@ -89,5 +89,5 @@ If you encounter issues with OAuth:
 
 ## Related Documentation
 
-- [Scalytics Connect Agent Administration](./scalytics-connect-agent-administration.md)
+- [Scalytics Copilot Agent Administration](./scalytics-copilot-agent-administration.md)
 - [External API Integrations](../developer/api-integration.md) (if available)

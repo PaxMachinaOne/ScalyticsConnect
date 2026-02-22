@@ -1,6 +1,6 @@
 # Effective Prompt Engineering
 
-This documentation provides comprehensive guidance on creating effective AI agents through proper prompt engineering in the Scalytics Connect platform. These techniques will help you maximize the capabilities of the open-source models available in your deployment.
+This documentation provides comprehensive guidance on creating effective AI agents through proper prompt engineering in the Scalytics Copilot platform. These techniques will help you maximize the capabilities of the open-source models available in your deployment.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This documentation provides comprehensive guidance on creating effective AI agen
 
 ## Model Selection Guide
 
-Each model family in Scalytics Connect has distinctive strengths that make it suitable for specific use cases. Understanding these differences will help you select the optimal model for your requirements.
+Each model family in Scalytics Copilot has distinctive strengths that make it suitable for specific use cases. Understanding these differences will help you select the optimal model for your requirements.
 
 ### Llama (Meta)
 
@@ -110,7 +110,7 @@ Each model family in Scalytics Connect has distinctive strengths that make it su
 
 ## Prompt Engineering Fundamentals
 
-Prompt engineering is the process of designing instructions that effectively communicate with AI models. In Scalytics Connect, well-crafted prompts directly impact:
+Prompt engineering is the process of designing instructions that effectively communicate with AI models. In Scalytics Copilot, well-crafted prompts directly impact:
 
 ### Key Impact Areas
 
@@ -129,7 +129,7 @@ Prompt engineering is the process of designing instructions that effectively com
 
 ## Creating Effective AI Agents
 
-The Scalytics Connect interface allows you to create specialized AI agents for specific functions. Follow these best practices to maximize their effectiveness:
+The Scalytics Copilot interface allows you to create specialized AI agents for specific functions. Follow these best practices to maximize their effectiveness:
 
 ### Professional Identity Definition
 
@@ -592,4 +592,4 @@ Focus on enhancing clarity and impact in data communication while ensuring techn
 
 ---
 
-By applying these prompt engineering techniques within your Scalytics Connect environment, you'll significantly enhance the performance and business value of your AI agents. Remember that effective prompting is an iterative process—continuously evaluate performance and refine your approach based on operational results.
+By applying these prompt engineering techniques within your Scalytics Copilot environment, you'll significantly enhance the performance and business value of your AI agents. Remember that effective prompting is an iterative process—continuously evaluate performance and refine your approach based on operational results.

@@ -350,11 +350,11 @@ const DocumentationPage = () => {
       try {
         const decodedDocId = decodeURIComponent(docId);
         
-        // Map old MCP file names to the new Scalytics Connect names
+        // Map old MCP file names to the new Scalytics Copilot names
         let docIdToFetch = decodedDocId;
         const fileNameMappings = {
-          'developer/mcp-agent-system': 'developer/scalytics-connect-agent-system',
-          'admin/mcp-agent-administration': 'admin/scalytics-connect-agent-administration'
+          'developer/mcp-agent-system': 'developer/scalytics-copilot-agent-system',
+          'admin/mcp-agent-administration': 'admin/scalytics-copilot-agent-administration'
         };
         
         // Check if we need to map an old file name to a new one

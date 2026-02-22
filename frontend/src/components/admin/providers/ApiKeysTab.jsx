@@ -40,7 +40,7 @@ const ApiKeysTab = ({
     );
   }
 
-  if (!apiKeys || !Array.isArray(apiKeys) || apiKeys.length === 0) {
+  if (apiKeys.length === 0) {
     return (
       <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
         <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

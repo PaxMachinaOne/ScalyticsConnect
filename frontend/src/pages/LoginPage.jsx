@@ -133,7 +133,7 @@ const LoginPage = () => {
             <Logo size="lg" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary">
-            Scalytics Connect
+            Scalytics Copilot
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-dark-text-secondary">
           Your private AI platform to securely run and manage your most powerful models — with full data privacy.

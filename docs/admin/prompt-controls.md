@@ -41,7 +41,7 @@ This approach allows administrators to establish mandatory final guidelines via 
 
 ## Context Window Management
 
-To prevent errors and ensure reliable responses, Scalytics Connect automatically manages the conversation history to fit within the selected AI model's context window limit. This involves several steps, primarily handled by the Inference Router service (`src/services/inferenceRouter.js`).
+To prevent errors and ensure reliable responses, Scalytics Copilot automatically manages the conversation history to fit within the selected AI model's context window limit. This involves several steps, primarily handled by the Inference Router service (`src/services/inferenceRouter.js`).
 
 ### Overview
 

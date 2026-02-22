@@ -1,6 +1,6 @@
 # Scalytics API Developer Guide
 
-This guide explains how developers can use the Scalytics API, an OpenAI-compatible endpoint, to interact programmatically with local models hosted on this Scalytics Connect instance.
+This guide explains how developers can use the Scalytics API, an OpenAI-compatible endpoint, to interact programmatically with local models hosted on this Scalytics Copilot instance.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The Scalytics API provides a `POST /v1/chat/completions` endpoint that mirrors t
 *   Specify a local model available on this instance.
 *   Receive responses, either as a complete message or a stream of tokens.
 
-**Key Restriction:** This API endpoint **only** works with models designated as "local" by the administrator (i.e., models running directly on the Scalytics Connect server infrastructure). Requests for external models (like those from OpenAI, Anthropic, etc.) will be rejected.
+**Key Restriction:** This API endpoint **only** works with models designated as "local" by the administrator (i.e., models running directly on the Scalytics Copilot server infrastructure). Requests for external models (like those from OpenAI, Anthropic, etc.) will be rejected.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ The Scalytics API provides a `POST /v1/chat/completions` endpoint that mirrors t
 
 ## Generating an API Key
 
-1.  Log in to your Scalytics Connect account.
+1.  Log in to your Scalytics Copilot account.
 2.  Navigate to **Settings** > **API Keys**.
 3.  Find the section titled **"Generate Scalytics API Key"**.
 4.  Enter a descriptive **Key Name** (e.g., "My Local Dev Key", "Integration Script Key").
@@ -41,7 +41,7 @@ Replace `YOUR_SCALYTICS_API_KEY` with your actual key.
 
 ## Endpoint: Chat Completions
 
-*   **URL:** `/v1/chat/completions` (relative to the Scalytics Connect instance base URL)
+*   **URL:** `/v1/chat/completions` (relative to the Scalytics Copilot instance base URL)
 *   **Method:** `POST`
 *   **Headers:**
     *   `Content-Type: application/json`
@@ -139,7 +139,7 @@ Check the `error` object in the JSON response body for more details.
 
 Initiates a Deep Search task and streams results and progress updates via Server-Sent Events (SSE). This allows for complex, multi-step research on a given query, leveraging web searches, content scraping, vector analysis, and LLM-based reasoning and synthesis.
 
-*   **URL:** `/v1/deepsearch` (relative to the Scalytics Connect instance base URL)
+*   **URL:** `/v1/deepsearch` (relative to the Scalytics Copilot instance base URL)
 *   **Method:** `POST`
 *   **Headers:**
     *   `Content-Type: application/json`
@@ -238,9 +238,9 @@ The stream is terminated when the client disconnects or after a `complete`, fata
 
 ## Endpoint: Image Generations
 
-Creates an image given a prompt, utilizing an image generation model configured on the Scalytics Connect instance.
+Creates an image given a prompt, utilizing an image generation model configured on the Scalytics Copilot instance.
 
-*   **URL:** `/v1/images/generations` (relative to the Scalytics Connect instance base URL)
+*   **URL:** `/v1/images/generations` (relative to the Scalytics Copilot instance base URL)
 *   **Method:** `POST`
 *   **Headers:**
     *   `Content-Type: application/json`
@@ -339,7 +339,7 @@ In addition to common API errors:
     *   Model does not support image generation.
     *   Invalid parameters (e.g., unsupported `size` for the model, `n` not equal to 1).
 *   `404 Not Found`: Specified `model` ID not found or not configured.
-*   `501 Not Implemented`: The provider configured for the specified model does not have image generation capabilities implemented in Scalytics Connect.
+*   `501 Not Implemented`: The provider configured for the specified model does not have image generation capabilities implemented in Scalytics Copilot.
 
 ---
 

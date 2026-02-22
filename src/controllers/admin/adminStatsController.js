@@ -262,7 +262,7 @@ exports.downloadSystemLogs = async (req, res) => {
 
     // Set headers for CSV download
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="scalytics_connect_activity_log.csv"'); // Restored original filename
+    res.setHeader('Content-Disposition', 'attachment; filename="scalytics_copilot_activity_log.csv"'); // Restored original filename
     res.setHeader('Content-Length', Buffer.byteLength(csv, 'utf8')); // Explicitly set Content-Length
 
     // Send the CSV data

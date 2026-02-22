@@ -8,13 +8,13 @@ AI Agents are specialized assistants that can perform specific tasks for you usi
 
 ### Accessing AI Agents
 
-1. Log in to your Scalytics Connect account
+1. Log in to your Scalytics Copilot account
 2. Click on the "AI Agents" link in the left sidebar
 3. Browse available agents or select one you've used before
 
 ### Types of Available Agents
 
-The Scalytics Connect platform offers several types of specialized agents:
+The Scalytics Copilot platform offers several types of specialized agents:
 
 - **Research Assistant**: Helps find and summarize information from various sources
 - **Data Analyst**: Analyzes data files and creates visualizations

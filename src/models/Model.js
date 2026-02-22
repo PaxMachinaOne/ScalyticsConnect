@@ -259,7 +259,6 @@ class Model {
         WHERE m.is_active = 1 AND k.user_id = ? AND k.is_valid = 1
       `;
 
-      const systemApiKeyInfo = [];
       const systemKeyParams = [];
       const providers = [
         { env: 'OPENAI_API_KEY', name: 'OpenAI' },

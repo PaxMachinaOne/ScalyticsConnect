@@ -84,3 +84,4 @@ venv.bak/
 .coverage
 htmlcov/
 .ipynb_checkpoints
+.tmp/

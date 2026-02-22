@@ -115,7 +115,7 @@ const LocalToolsManager = () => {
     <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-4 sm:p-6">
       <h2 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary mb-4">Local MCP Tool Management</h2>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        Enable or disable internal tools provided by this Scalytics Connect instance.
+        Enable or disable internal tools provided by this Scalytics Copilot instance.
       </p>
 
       {error && (
