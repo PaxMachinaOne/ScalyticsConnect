@@ -4,13 +4,22 @@
  * API routes configuration
  */
 const path = require('path');
-const express = require('express'); 
+const express = require('express');
+const rateLimit = require('express-rate-limit');
 
 /**
  * Set up all API routes
  * @param {Object} app - Express application instance
  * @param {Object} middleware - Middleware functions
  */
+
+// Rate limiter for static file serving routes
+const staticLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 function setupRoutes(app, middleware) {
 
@@ -62,7 +71,7 @@ function setupRoutes(app, middleware) {
 
   // --- Serve Static API Docs (Redoc HTML) ---
   const apiDocsPath = path.join(__dirname, '../../docs/api-docs.html');
-  app.get('/api-docs', (req, res, next) => {
+  app.get('/api-docs', staticLimiter, (req, res, next) => {
     res.sendFile(apiDocsPath, (err) => {
       // Optional: Handle error if sendFile fails (e.g., file not found)
       if (err) {
@@ -101,7 +110,7 @@ function setupRoutes(app, middleware) {
     app.use(require('express').static(path.join(process.cwd(), 'frontend/build')));
     
     // All remaining requests go to index.html for client-side routing, EXCLUDING /api-docs (which serves HTML)
-    app.get('*', (req, res, next) => {
+    app.get('*', staticLimiter, (req, res, next) => {
       if (req.path.startsWith('/api-docs')) { 
         return next();
       }
