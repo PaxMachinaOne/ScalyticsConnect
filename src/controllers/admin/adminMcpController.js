@@ -30,7 +30,7 @@ exports.updateLocalToolStatus = async (req, res) => {
          return res.status(400).json({ success: false, message: `Cannot enable Deep Search: Configured embedding model (ID: ${preferredEmbeddingModelId}) is inactive, not found, or not an embedding model.` });
        }
      } catch (modelError) {
-       console.error(`Error verifying embedding model ${preferredEmbeddingModelId}:`, modelError);
+       console.error('Error verifying embedding model %s:', preferredEmbeddingModelId, modelError);
        return res.status(500).json({ success: false, message: 'Error verifying the required embedding model.' });
      }
    }
@@ -62,7 +62,7 @@ exports.updateLocalToolStatus = async (req, res) => {
     res.status(200).json({ success: true, message: `Status for tool '${toolName}' updated successfully.` });
 
   } catch (error) {
-    console.error(`Error updating status for local tool '${toolName}':`, error);
+    console.error('Error updating status for local tool \'%s\':', toolName, error);
     res.status(500).json({ success: false, message: 'Error updating local tool status.' });
   }
 };

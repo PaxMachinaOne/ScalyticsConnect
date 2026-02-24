@@ -147,7 +147,7 @@ exports.getAgentCapabilities = async (req, res) => {
         };
       }
     } catch (error) {
-      console.error(`Error fetching capabilities for agent ${agentId}:`, error);
+      console.error('Error fetching capabilities for agent %s:', agentId, error);
       capabilities = {
         context_window: agent.context_window || 8192,
         supports_functions: true, supports_tools: true,
@@ -435,7 +435,7 @@ exports.runToolInChat = async (req, res) => {
                 // Message.create({ chatId: numericChatId, role: 'system', content: `Tool '${toolName}' finished.` }).catch(console.error);
             })
             .catch(toolError => {
-                console.error(`[Agent Ctrl] Background execution of internal tool '${toolName}' for chat ${numericChatId} failed:`, toolError);
+                console.error('[Agent Ctrl] Background execution of internal tool \'%s\' for chat %s failed:', toolName, numericChatId, toolError);
                 let systemMessageContent;
                 if (toolError instanceof UserCancelledError) {
                     // Use a more direct message for user cancellations
@@ -448,7 +448,7 @@ exports.runToolInChat = async (req, res) => {
             });
 
     } catch (error) {
-        console.error(`[Agent Ctrl] Error running tool '${toolName}' in chat ${numericChatId}:`, error);
+        console.error('[Agent Ctrl] Error running tool \'%s\' in chat %s:', toolName, numericChatId, error);
         if (!res.headersSent) {
             return res.status(500).json({ success: false, message: `Failed to run tool: ${error.message}` });
         }

@@ -198,7 +198,7 @@ exports.deleteModel = async (req, res) => {
         await vllmService.deactivateModel(modelId, gpuId);
       }
     } catch (stopError) {
-      console.error(`Error stopping vLLM process for model ID ${modelId}:`, stopError.message);
+      console.error('Error stopping vLLM process for model ID %s:', modelId, stopError.message);
     }
 
     await Model.delete(modelId);

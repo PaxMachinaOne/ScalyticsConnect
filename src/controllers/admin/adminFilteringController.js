@@ -142,7 +142,7 @@ exports.getFilterRules = async (req, res) => {
     const rules = await db.allAsync('SELECT * FROM filter_rules WHERE filter_group_id = ? ORDER BY id', [groupId]);
     res.status(200).json({ success: true, data: rules });
   } catch (error) {
-    console.error(`Error fetching filter rules for group ${groupId}:`, error);
+    console.error('Error fetching filter rules for group %s:', groupId, error);
     res.status(500).json({ success: false, message: 'Failed to fetch filter rules.' });
   }
 };
@@ -332,7 +332,7 @@ exports.updateRuleStatus = async (req, res) => {
     res.status(200).json({ success: true, data: updatedRule, message: 'Filter rule status updated successfully.' });
 
   } catch (error) {
-    console.error(`Error updating status for filter rule ${ruleId}:`, error);
+    console.error('Error updating status for filter rule %s:', ruleId, error);
     res.status(500).json({ success: false, message: 'Failed to update filter rule status.' });
   }
 };

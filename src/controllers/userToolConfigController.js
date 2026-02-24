@@ -36,7 +36,7 @@ exports.getUserToolConfig = async (req, res) => {
     try {
       configData = JSON.parse(row.config);
     } catch (parseError) {
-      console.error(`Error parsing tool config JSON for user ${userId}, tool ${toolName}:`, parseError);
+      console.error('Error parsing tool config JSON for user %s, tool %s:', userId, toolName, parseError);
       // Return the raw string if parsing fails? Or return error? Let's return null.
       return res.status(200).json({ success: true, data: null, warning: 'Stored config is not valid JSON.' });
     }
@@ -44,7 +44,7 @@ exports.getUserToolConfig = async (req, res) => {
     res.status(200).json({ success: true, data: configData });
 
   } catch (error) {
-    console.error(`Error fetching tool config for user ${userId}, tool ${toolName}:`, error);
+    console.error('Error fetching tool config for user %s, tool %s:', userId, toolName, error);
     res.status(500).json({ success: false, message: 'Error fetching tool configuration.' });
   }
 };
@@ -72,7 +72,7 @@ exports.saveUserToolConfig = async (req, res) => {
     // Ensure the config is stored as a JSON string
     configString = JSON.stringify(config);
   } catch (stringifyError) {
-    console.error(`Error stringifying tool config for user ${userId}, tool ${toolName}:`, stringifyError);
+    console.error('Error stringifying tool config for user %s, tool %s:', userId, toolName, stringifyError);
     return res.status(400).json({ success: false, message: 'Invalid config object provided.' });
   }
 
@@ -104,7 +104,7 @@ exports.saveUserToolConfig = async (req, res) => {
     res.status(200).json({ success: true, message: 'Configuration saved successfully.', data: updatedConfigData });
 
   } catch (error) {
-    console.error(`Error saving tool config for user ${userId}, tool ${toolName}:`, error);
+    console.error('Error saving tool config for user %s, tool %s:', userId, toolName, error);
     res.status(500).json({ success: false, message: 'Error saving tool configuration.' });
   }
 };

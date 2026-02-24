@@ -235,7 +235,7 @@ exports.uploadFile = async (req, res) => {
     try {
       await unlinkAsync(uploadedFile.tempFilePath);
     } catch (cleanupError) {
-      console.warn(`[FileController] Warning: Failed to delete temporary file ${uploadedFile.tempFilePath}:`, cleanupError.message);
+      console.warn('[FileController] Warning: Failed to delete temporary file %s:', uploadedFile.tempFilePath, cleanupError.message);
     }
     const result = await db.runAsync(
       `INSERT INTO user_files (user_id, original_name, file_path, file_type, file_size) 

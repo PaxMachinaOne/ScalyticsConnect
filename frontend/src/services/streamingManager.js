@@ -183,7 +183,7 @@ class StreamingManager {
     const streamsForChat = Array.from(this.activeStreams.values()).filter(stream => String(stream.chatId) === currentChatIdStr);
     
     if (streamsForChat.length === 0 && Array.from(this.activeStreams.values()).some(s => String(s.chatId) === currentChatIdStr)) {
-        console.warn(`[StreamingManager] notifySubscriber: streamsForChat is empty for chatId ${currentChatIdStr}, but activeStreams contains matching entries. This might indicate an issue or a race condition if a stream just ended.`, {
+        console.warn('[StreamingManager] notifySubscriber: streamsForChat is empty for chatId %s, but activeStreams contains matching entries. This might indicate an issue or a race condition if a stream just ended.', currentChatIdStr, {
             chatId: currentChatIdStr,
             activeStreamsContent: Array.from(this.activeStreams.values())
         });
@@ -192,7 +192,7 @@ class StreamingManager {
     try {
       callback({ ...event, streams: streamsForChat, activeStreams: this.activeStreams }); 
     } catch (error) {
-      console.error(`[StreamingManager] Error notifying subscriber for chat ${chatId}:`, error);
+      console.error('[StreamingManager] Error notifying subscriber for chat %s:', chatId, error);
     }
   }
 

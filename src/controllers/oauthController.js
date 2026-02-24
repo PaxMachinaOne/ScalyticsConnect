@@ -37,7 +37,7 @@ exports.handleOAuthCallback = async (req, res) => {
     try {
       tokenData = await exchangeCodeForToken(code, providerConfig, provider);
     } catch (error) {
-      console.error(`Error exchanging code for token with ${provider}:`, error);
+      console.error('Error exchanging code for token with %s:', provider, error);
       return res.status(401).json({
         success: false,
         message: `Authentication failed with ${provider}`
@@ -49,7 +49,7 @@ exports.handleOAuthCallback = async (req, res) => {
     try {
       userProfile = await getUserProfile(tokenData.access_token, provider, providerConfig);
     } catch (error) {
-      console.error(`Error getting user profile from ${provider}:`, error);
+      console.error('Error getting user profile from %s:', provider, error);
       return res.status(401).json({
         success: false,
         message: `Failed to retrieve user profile from ${provider}`

@@ -203,7 +203,7 @@ exports.getDocumentation = async (req, res) => {
     // Send raw file content
     return res.status(200).send(fileContent);
   } catch (error) {
-    console.error(`Error fetching documentation '${req.params.id}':`, error);
+    console.error('Error fetching documentation \'%s\':', req.params.id, error);
     res.status(500).json({
       success: false,
       message: `Error fetching documentation: ${error.message}`

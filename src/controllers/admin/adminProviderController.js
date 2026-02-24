@@ -355,7 +355,7 @@ exports.discoverModels = async (req, res) => {
           }
         });
       } catch (providerError) {
-        console.error(`Error discovering models for provider ${providerId}:`, providerError);
+        console.error('Error discovering models for provider %s:', providerId, providerError);
         return res.status(500).json({
           success: false,
           message: `Error discovering models: ${providerError.message}`

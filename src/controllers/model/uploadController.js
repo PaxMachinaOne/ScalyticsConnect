@@ -126,14 +126,14 @@ exports.uploadModel = async (req, res) => {
       });
 
     } catch (dbError) {
-      console.error(`DB error for model ${name}:`, dbError);
+      console.error('DB error for model %s:', name, dbError);
 
       // Clean up if DB creation failed
       try {
-        console.log(`Attempting to delete model file ${modelPath} after DB error.`);
+        console.log('Attempting to delete model file %s after DB error.', modelPath);
         await fs.unlink(modelPath);
       } catch (fileDeleteError) {
-        console.error(`Failed to delete model file ${modelPath} during cleanup:`, fileDeleteError);
+        console.error('Failed to delete model file %s during cleanup:', modelPath, fileDeleteError);
       }
 
       // Return error response
