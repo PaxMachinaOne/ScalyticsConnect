@@ -120,7 +120,7 @@ const getDiskSpaceWindows = async (absolutePath) => {
   try {
     // Get the drive letter from the path
     const drive = path.parse(absolutePath).root;
-    const command = `wmic logicaldisk where caption="${drive.replace('\\', '')}" get size,freespace /format:csv`;
+    const command = `wmic logicaldisk where caption="${drive.replaceAll('\\', '')}" get size,freespace /format:csv`;
     
     const { stdout } = await execPromise(command);
     const lines = stdout.trim().split('\n');
