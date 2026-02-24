@@ -2,6 +2,7 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const huggingFaceService = require('../services/huggingFaceService');
 const axios = require('axios');
+const { sanitizePathSegment } = require('../utils/urlValidation');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -382,7 +383,7 @@ exports.listModelFiles = async (req, res) => {
     }
     
     // API endpoint for HF files API
-    const apiUrl = `https://huggingface.co/api/models/${modelId}/tree/main`;
+    const apiUrl = `https://huggingface.co/api/models/${sanitizePathSegment(modelId)}/tree/main`;
     const headers = {};
     if (process.env.HUGGINGFACE_API_KEY) {
       headers.Authorization = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;

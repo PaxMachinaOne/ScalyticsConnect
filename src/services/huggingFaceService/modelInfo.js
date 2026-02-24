@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
+const { sanitizePathSegment } = require('../../utils/urlValidation');
 
 const getModelInfo = async (modelId, hfToken = null) => {
   try {
@@ -16,7 +17,7 @@ const getModelInfo = async (modelId, hfToken = null) => {
     }
     
     // Only make the request if we have a valid authorization header or no token is needed
-    const response = await axios.get(`https://huggingface.co/api/models/${modelId}`, { headers });
+    const response = await axios.get(`https://huggingface.co/api/models/${sanitizePathSegment(modelId)}`, { headers });
     return response.data;
   } catch (error) {
     console.error(`Error fetching model info for ${modelId}:`, error);

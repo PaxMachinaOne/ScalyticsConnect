@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
+const { validateProviderUrl } = require('../../utils/urlValidation');
 
 /**
  * Brave Search Provider Module
@@ -18,9 +19,11 @@ const braveSearchProvider = {
       return { isValid: false, errorMessage: 'API key (X-Subscription-Token) is required for Brave Search.' };
     }
 
-    const braveApiUrl = providerConfig?.api_url && providerConfig.api_url.includes('api.search.brave.com') 
-      ? providerConfig.api_url 
-      : 'https://api.search.brave.com/res/v1'; 
+    const braveApiUrl = validateProviderUrl(
+      providerConfig?.api_url,
+      'api.search.brave.com',
+      'https://api.search.brave.com/res/v1'
+    );
 
     const testUrl = `${braveApiUrl.replace(/\/$/, '')}/web/search?q=test&count=1`;
 

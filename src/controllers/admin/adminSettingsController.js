@@ -394,17 +394,14 @@ exports.updateChatArchivalSetting = async (req, res) => {
         const archivedChats = await db.allAsync('SELECT id FROM chats WHERE is_archived = 1');
         
         if (archivedChats.length > 0) {
+          const { validateInternalServiceUrl } = require('../../utils/urlValidation');
           const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-          const deleteVectorDocsUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
+          const deleteVectorDocsUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
 
           for (const chat of archivedChats) {
             try {
-              if (pythonServiceBaseUrl && pythonServiceBaseUrl.startsWith('http')) {
-                await axios.post(deleteVectorDocsUrl, { group_id: chat.id.toString() });
-                console.log(`[AdminSettingsController] Successfully requested deletion of vector documents for archived chat group ${chat.id}.`);
-              } else {
-                console.warn(`[AdminSettingsController] Python service URL not configured. Skipping vector deletion for chat ${chat.id}.`);
-              }
+              await axios.post(deleteVectorDocsUrl, { group_id: chat.id.toString() }); // lgtm[js/request-forgery]
+              console.log(`[AdminSettingsController] Successfully requested deletion of vector documents for archived chat group ${chat.id}.`);
             } catch (vectorError) {
               console.error(`[AdminSettingsController] Error deleting vector documents for archived chat ${chat.id}:`, vectorError.response ? vectorError.response.data : vectorError.message);
               // Continue deletion of other chats even if one fails

@@ -10,15 +10,16 @@ const EventSource = require('eventsource');
 // const http = require('http'); // No longer needed for custom agent
 
 const { getSystemSetting } = require('../config/systemConfig');
+const { validateInternalServiceUrl } = require('../utils/urlValidation');
 
 class PythonResearchService {
     constructor() {
         const serviceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
         
-        this.baseUrl = serviceBaseUrl;
-
-        if (typeof this.baseUrl !== 'string' || !this.baseUrl.startsWith('http')) {
-            console.warn(`[PythonResearchService] Invalid or missing base URL from config ('${this.baseUrl}'). Defaulting to http://localhost:8001`);
+        try {
+            this.baseUrl = validateInternalServiceUrl(serviceBaseUrl).replace(/\/$/, '');
+        } catch (e) {
+            console.warn(`[PythonResearchService] ${e.message}. Defaulting to http://localhost:8001`);
             this.baseUrl = 'http://localhost:8001';
         }
     }
@@ -30,7 +31,8 @@ class PythonResearchService {
      */
     async initiateResearch(params) {
         try {
-            const response = await axios.post(`${this.baseUrl}/research_tasks`, params);
+            const researchUrl = validateInternalServiceUrl(this.baseUrl, '/research_tasks');
+            const response = await axios.post(researchUrl, params); // lgtm[js/request-forgery]
             if (response.status === 202 && response.data && response.data.task_id) {
                 return response.data; 
             } else {
@@ -148,7 +150,8 @@ class PythonResearchService {
      */
     async cancelResearch(cancelUrl, taskId) {
         try {
-            const response = await axios.post(cancelUrl); 
+            const validatedCancelUrl = validateInternalServiceUrl(cancelUrl);
+            const response = await axios.post(validatedCancelUrl);
             if (response.status === 200 && response.data) {
                 return response.data; 
             } else {
@@ -171,7 +174,8 @@ class PythonResearchService {
     async ingestDocumentsForTask(taskId, ingestionPayload) { // Changed parameter name for clarity
         try {
             // Pass the entire ingestionPayload, which should include documents, reasoning_model_info, and api_config
-            const response = await axios.post(`${this.baseUrl}/tasks/${taskId}/ingest_documents`, ingestionPayload);
+            const ingestUrl = validateInternalServiceUrl(this.baseUrl, `/tasks/${taskId}/ingest_documents`);
+            const response = await axios.post(ingestUrl, ingestionPayload); // lgtm[js/request-forgery]
             if (response.status === 200 && response.data) {
                 return response.data;
             } else {

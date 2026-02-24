@@ -5,7 +5,8 @@ const apiKeyService = require('../apiKeyService');
 const { getSystemSetting } = require('../../config/systemConfig'); 
 // const { embeddingWorkerService } = require('../embeddingWorkerService'); // Removed, service deleted
 const { db } = require('../../models/db'); 
-const axios = require('axios'); // For future Python API calls
+const axios = require('axios');
+const { validateInternalServiceUrl } = require('../../utils/urlValidation');
 
 /**
  * Selects the appropriate embedding model and its dimension based on system settings and availability.
@@ -134,16 +135,11 @@ async function generateEmbeddings(chunks, userId) {
     // Call the Python FastAPI service for local embedding generation
     try {
         const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-        if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-            console.error(`[EmbeddingService] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-            throw new Error("Python embedding service URL is not configured correctly.");
-        }
-
-        const embedApiUrl = `${pythonServiceBaseUrl}/vector/embed-texts`;
+        const embedApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/embed-texts');
         
         console.log(`[EmbeddingService] Requesting embeddings for ${chunks.length} chunks from ${embedApiUrl} using model (expected by Node): ${selectedModel.name || selectedModel.id}`);
 
-        const apiResponse = await axios.post(embedApiUrl, { texts: chunks });
+        const apiResponse = await axios.post(embedApiUrl, { texts: chunks }); // lgtm[js/request-forgery]
 
         if (!apiResponse.data || !Array.isArray(apiResponse.data.embeddings) || typeof apiResponse.data.dimension !== 'number' || !apiResponse.data.model_used) {
             console.error("[EmbeddingService] Invalid response structure from Python embedding service:", apiResponse.data);

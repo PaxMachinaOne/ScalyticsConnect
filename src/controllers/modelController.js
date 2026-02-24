@@ -8,6 +8,7 @@ const Model = require('../models/Model');
 const { writeModelConfigJson } = require('../utils/modelConfigUtils');
 const vllmService = require('../services/vllmService');
 const { triggerPythonServiceRestart, handleEmbeddingModelChange } = require('../utils/pythonServiceUtils');
+const { sanitizePathSegment } = require('../utils/urlValidation');
 
 exports.getModels = async (req, res) => {
   try {
@@ -165,7 +166,7 @@ exports.getModel = async (req, res) => {
 
 async function getEmbeddingDimensionFromHuggingFace(repoId) {
   if (!repoId) return null;
-  const configUrl = `https://huggingface.co/${repoId}/raw/main/config.json`;
+  const configUrl = `https://huggingface.co/${sanitizePathSegment(repoId)}/raw/main/config.json`;
   return new Promise((resolve) => {
     https.get(configUrl, (res) => {
       if (res.statusCode !== 200) {
@@ -180,19 +181,19 @@ async function getEmbeddingDimensionFromHuggingFace(repoId) {
           const hfConfig = JSON.parse(rawData);
           const dimension = hfConfig.hidden_size || hfConfig.d_model || hfConfig.hidden_dim || hfConfig.embedding_dim || hfConfig.dimension;
           if (dimension && typeof dimension === 'number' && dimension > 0) {
-            console.log(`[HF Config Fetch] Found dimension ${dimension} for ${repoId}`);
+            console.log('[HF Config Fetch] Found dimension %s for %s', dimension, repoId);
             resolve(dimension);
           } else {
-            console.warn(`[HF Config Fetch] Dimension not found or invalid in config for ${repoId}. Config:`, hfConfig);
+            console.warn('[HF Config Fetch] Dimension not found or invalid in config for %s. Config:', repoId, hfConfig);
             resolve(null);
           }
         } catch (e) {
-          console.error(`[HF Config Fetch] Error parsing config.json for ${repoId}:`, e);
+          console.error('[HF Config Fetch] Error parsing config.json for %s:', repoId, e);
           resolve(null);
         }
       });
     }).on('error', (e) => {
-      console.error(`[HF Config Fetch] Error fetching config.json for ${repoId}:`, e);
+      console.error('[HF Config Fetch] Error fetching config.json for %s:', repoId, e);
       resolve(null);
     });
   });

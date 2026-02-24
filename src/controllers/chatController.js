@@ -175,7 +175,7 @@ exports.summarizeChatHistory = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[ChatCtrl /sum] Error summarizing chat history for chat ${req.params.id}:`, error);
+    console.error('[ChatCtrl /sum] Error summarizing chat history for chat %s:', req.params.id, error);
     res.status(500).json({
       success: false,
       message: `Error summarizing chat: ${error.message || 'Internal server error'}`
@@ -483,10 +483,10 @@ exports.acceptShare = async (req, res) => {
           ownerUsername: chatDetails.ownerUsername
         });
       } else {
-         console.warn(`[acceptShare] Could not fetch chat details for chat ID ${share.chat_id} after accepting share ${shareId}. Notification not sent.`);
+         console.warn('[acceptShare] Could not fetch chat details for chat ID %s after accepting share %s. Notification not sent.', share.chat_id, shareId);
       }
     } catch (notifyError) {
-      console.error(`[acceptShare] Error emitting chat:share_accepted event for user ${userId}, share ${shareId}:`, notifyError);
+      console.error('[acceptShare] Error emitting chat:share_accepted event for user %s, share %s:', userId, shareId, notifyError);
     }
 
     res.status(200).json({ success: true, message: 'Share invitation accepted.' });
@@ -668,16 +668,13 @@ exports.deleteChat = async (req, res) => {
     const chatIdToDelete = req.params.id;
 
     try {
+      const { validateInternalServiceUrl } = require('../utils/urlValidation');
       const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-      if (pythonServiceBaseUrl && pythonServiceBaseUrl.startsWith('http')) {
-        const deleteVectorDocsUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
-        await axios.post(deleteVectorDocsUrl, { group_id: chatIdToDelete.toString() });
-        console.log(`[ChatCtrl Delete] Successfully requested deletion of vector documents for chat group ${chatIdToDelete} from Python service.`);
-      } else {
-        console.warn(`[ChatCtrl Delete] Python service URL is not configured or invalid. Skipping vector document deletion for chat ${chatIdToDelete}. URL: '${pythonServiceBaseUrl}'`);
-      }
+      const deleteVectorDocsUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
+      await axios.post(deleteVectorDocsUrl, { group_id: chatIdToDelete.toString() }); // lgtm[js/request-forgery]
+      console.log('[ChatCtrl Delete] Successfully requested deletion of vector documents for chat group %s from Python service.', chatIdToDelete);
     } catch (vectorDeleteError) {
-      console.error(`[ChatCtrl Delete] Error requesting vector document deletion for chat group ${chatIdToDelete} from Python service:`, vectorDeleteError.response ? vectorDeleteError.response.data : vectorDeleteError.message);
+      console.error('[ChatCtrl Delete] Error requesting vector document deletion for chat group %s from Python service:', chatIdToDelete, vectorDeleteError.response ? vectorDeleteError.response.data : vectorDeleteError.message);
       }
 
     const archiveEnabled = getSystemSetting('archive_deleted_chats_for_refinement', '0') === 'true';
@@ -946,13 +943,13 @@ exports.sendMessage = async (req, res) => {
               }
             }
           } catch (renameError) {
-            console.error(`[Chat Ctrl] Error during auto-rename for chat ${chatId}:`, renameError);
+            console.error('[Chat Ctrl] Error during auto-rename for chat %s:', chatId, renameError);
           }
 
         })
         .catch(async (error) => {
           const errorMessage = error.message || 'Failed to get response.';
-          console.error(`[Async Task] Error processing stream for placeholder message ${placeholderAssistantMessageId}:`, errorMessage);
+          console.error('[Async Task] Error processing stream for placeholder message %s:', placeholderAssistantMessageId, errorMessage);
 
           try {
             await Message.update(placeholderAssistantMessageId, {

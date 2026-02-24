@@ -2,6 +2,7 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
 const { db } = require('../models/db');
+const { sanitizePathSegment } = require('../utils/urlValidation');
 
 /**
  * GitHub OAuth controller
@@ -206,7 +207,7 @@ const githubController = {
       
       // Get content from GitHub API
       const contentResponse = await axios.get(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        `https://api.github.com/repos/${sanitizePathSegment(owner)}/${sanitizePathSegment(repo)}/contents/${sanitizePathSegment(path)}`,
         {
           headers: {
             Authorization: `token ${tokenResult.access_token}`
@@ -259,7 +260,7 @@ const githubController = {
       
       // Get file content from GitHub API
       const fileResponse = await axios.get(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        `https://api.github.com/repos/${sanitizePathSegment(owner)}/${sanitizePathSegment(repo)}/contents/${sanitizePathSegment(path)}`,
         {
           headers: {
             Authorization: `token ${tokenResult.access_token}`
@@ -323,7 +324,7 @@ const githubController = {
       
       // Get file content from GitHub API
       const fileResponse = await axios.get(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        `https://api.github.com/repos/${sanitizePathSegment(owner)}/${sanitizePathSegment(repo)}/contents/${sanitizePathSegment(path)}`,
         {
           headers: {
             Authorization: `token ${tokenResult.access_token}`
