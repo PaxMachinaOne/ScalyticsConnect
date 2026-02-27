@@ -15,14 +15,9 @@ const { cancelInferenceRequest } = require('../services/inferenceRouter');
 let wsServer = null;
 
 const rooms = new Map();
-const clientIdMap = new Map();
-const roomTimeouts = new Map();
 
 function joinRoom(roomName, ws) { if (!rooms.has(roomName)) { rooms.set(roomName, new Set()); } rooms.get(roomName).add(ws); }
 function leaveRoom(roomName, ws) { if (rooms.has(roomName)) { rooms.get(roomName).delete(ws); if (rooms.get(roomName).size === 0) { rooms.delete(roomName); } } }
-function leaveAllRooms(ws, immediate = false) { rooms.forEach((clients, roomName) => { if (clients.has(ws)) { if (immediate) { leaveRoom(roomName, ws); } else { delayedRoomCleanup(roomName, ws); } } }); }
-function delayedRoomCleanup(roomName, ws) { const clientId = ws.clientId; const isChatRoom = roomName.startsWith('chat:'); if (!clientId && !isChatRoom) { leaveRoom(roomName, ws); return; } const trackingId = clientId || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`; if (!clientIdMap.has(trackingId)) { clientIdMap.set(trackingId, new Set()); } clientIdMap.get(trackingId).add(roomName); const timeoutKey = `${roomName}:${trackingId}`; if (roomTimeouts.has(timeoutKey)) { clearTimeout(roomTimeouts.get(timeoutKey)); } const timeout = setTimeout(() => { if (rooms.has(roomName) && clientIdMap.has(trackingId)) { let clientWs = null; rooms.get(roomName).forEach(existingWs => { if (existingWs.clientId === trackingId) { clientWs = existingWs; } }); if (clientWs) { leaveRoom(roomName, clientWs); } clientIdMap.get(trackingId).delete(roomName); if (clientIdMap.get(trackingId).size === 0) { clientIdMap.delete(trackingId); } } roomTimeouts.delete(timeoutKey); }, 180000); roomTimeouts.set(timeoutKey, timeout); }
-function cleanupClosedConnectionsInRoom(roomName) { if (!rooms.has(roomName)) return 0; const clients = rooms.get(roomName); const closedClients = []; clients.forEach(client => { if (client.readyState === WebSocket.CLOSED || client.readyState === WebSocket.CLOSING) { closedClients.push(client); } }); closedClients.forEach(client => { clients.delete(client); }); if (clients.size === 0) { rooms.delete(roomName); } return closedClients.length; }
 
 const tokenProcessor = {
   inThinkingSection: false, buffer: '',
@@ -51,10 +46,10 @@ function handleStopGeneration(payload) {
     if (requestIdToStop) {
         const success = cancelInferenceRequest(requestIdToStop);
         if (!success) {
-            console.warn(`[Socket] Failed to send interrupt for request ID: ${requestIdToStop} (maybe already completed)`);
+            console.warn("[Socket] Failed to send interrupt for request ID: %s (maybe already completed)", String(requestIdToStop).replace(/\n|\r/g, ''));
         }
     } else {
-        console.error(`[Socket] Received stop_generation with invalid requestId:`, payload?.requestId);
+        console.error("[Socket] Received stop_generation with invalid requestId: %s", String(payload?.requestId).replace(/\n|\r/g, ''));
     }
 }
 
@@ -63,7 +58,7 @@ function handleStopDeepSearch(payload) {
     if (requestId) {
         requestCancellation(requestId);
     } else {
-        console.error(`[Socket] Received stop_deep_search with invalid requestId:`, payload?.requestId);
+        console.error("[Socket] Received stop_deep_search with invalid requestId: %s", String(payload?.requestId).replace(/\n|\r/g, ''));
     }
 }
 
@@ -79,12 +74,12 @@ function handleWebSocketMessage(ws, message) {
     switch (type) {
       case 'chat:subscribe':
         let chatId = String(typeof payload === 'object' ? (payload.chatId || payload.id || JSON.stringify(payload).substring(0, 20)) : payload);
-        if (chatId === '[object Object]') { console.error('Invalid chat ID format received. Payload:', payload); chatId = 'invalid-' + Date.now(); }
+        if (chatId === '[object Object]') { console.error('Invalid chat ID format received. Payload: %s', JSON.stringify(payload)); chatId = 'invalid-' + Date.now(); }
         joinRoom(`chat:${chatId}`, ws);
         break;
       case 'chat:unsubscribe':
         let unsubChatId = String(typeof payload === 'object' ? (payload.chatId || payload.id || JSON.stringify(payload).substring(0, 20)) : payload);
-        if (unsubChatId === '[object Object]') { console.error('Invalid chat ID format received for unsubscribe. Payload:', payload); unsubChatId = 'invalid-' + Date.now(); }
+        if (unsubChatId === '[object Object]') { console.error('Invalid chat ID format received for unsubscribe. Payload: %s', JSON.stringify(payload)); unsubChatId = 'invalid-' + Date.now(); }
         leaveRoom(`chat:${unsubChatId}`, ws);
         break;
       case 'download:subscribe':
@@ -130,7 +125,7 @@ function broadcastToRoom(roomName, message) {
         clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 try { client.send(messageStr); }
-                catch (sendError) { console.error(`[WS Broadcast] Error sending message to client ${client.clientId || 'unknown'} in room ${roomName}:`, sendError.message); }
+                catch (sendError) { console.error('[WS Broadcast] Error sending message to client %s in room %s:', client.clientId || 'unknown', roomName, sendError.message); }
             }
         });
     }
@@ -265,14 +260,14 @@ async function authenticateMcpServer(request) {
     }
     try {
         const server = await db.getAsync('SELECT api_key_hash, is_active, name FROM mcp_servers WHERE id = ?', [serverId]);
-        if (!server) { console.warn(`[WebSocket Auth] MCP connection rejected: Server ID ${serverId} not found.`); return false; }
-        if (!server.is_active) { console.warn(`[WebSocket Auth] MCP connection rejected: Server ${server.name} (ID: ${serverId}) is not active.`); return false; }
-        if (!server.api_key_hash) { console.warn(`[WebSocket Auth] MCP connection rejected: Server ${server.name} (ID: ${serverId}) has no API key configured.`); return false; }
+        if (!server) { console.warn('[WebSocket Auth] MCP connection rejected: Server ID %s not found.', serverId); return false; }
+        if (!server.is_active) { console.warn('[WebSocket Auth] MCP connection rejected: Server %s (ID: %s) is not active.', server.name, serverId); return false; }
+        if (!server.api_key_hash) { console.warn('[WebSocket Auth] MCP connection rejected: Server %s (ID: %s) has no API key configured.', server.name, serverId); return false; }
         const match = await bcrypt.compare(receivedKey, server.api_key_hash);
-         if (!match) { console.warn(`[WebSocket Auth] MCP connection rejected: Invalid API key for server ${server.name} (ID: ${serverId}).`); return false; }
+         if (!match) { console.warn('[WebSocket Auth] MCP connection rejected: Invalid API key for server %s (ID: %s).', server.name, serverId); return false; }
          return true;
      } catch (error) {
-        console.error(`[WebSocket Auth] Error during MCP server authentication for ID ${serverId}:`, error);
+        console.error('[WebSocket Auth] Error during MCP server authentication for ID %s:', serverId, error);
         return false;
     }
 }
@@ -309,8 +304,7 @@ function initializeSocket(server) {
 
   // Set up connection handler
   wsServer.on('connection', (ws, req) => {
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-     const clientIdFromUrl = url.parse(req.url, true).query.clientId;
+    const clientIdFromUrl = url.parse(req.url, true).query.clientId;
 
      if (ws.isMcpServer) {
      } else {

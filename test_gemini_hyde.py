@@ -39,8 +39,7 @@ Question: \"{query}\"
     }
 
     print("--- Sending request to LiteLLM with parameters: ---")
-    params_to_print = {k: (v if k != "api_key" else "****REDACTED****") for k, v in params.items()}
-    print(json.dumps(params_to_print, indent=2))
+    print(json.dumps({"model": model_id, "temperature": temperature, "stream": True}, indent=2))
     print("----------------------------------------------------")
 
     try:

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import requests
-from typing import Dict, Any
 from .models import LegalResearchState
 
 COURTLISTENER_API_BASE_URL = "https://www.courtlistener.com/api/rest/v4"

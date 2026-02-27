@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import SystemPromptTooltip from '../common/SystemPromptTooltip'; 
 
 const ChatHeader = ({
   isEditing,

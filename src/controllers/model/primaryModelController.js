@@ -7,7 +7,6 @@
  * Note: Loading/unloading of local models is handled by activating/deactivating them,
  * which interacts with the ModelWorkerPoolManager. This controller only sets the flag.
  */
-const { protect } = require('../../middleware/authMiddleware');
 const Model = require('../../models/Model');
 const { db } = require('../../models/db'); // Import db for direct updates
 const vllmService = require('../../services/vllmService');
@@ -98,7 +97,7 @@ exports.setPrimaryModelById = async (req, res) => {
         await db.runAsync('COMMIT');
 
         if (result.changes > 0) {
-            console.log(`[PrimaryCtrl] Set model ${id} as primary in DB.`);
+            console.log("[PrimaryCtrl] Set model %s as primary in DB.", String(id).replace(/\n|\r/g, ''));
             // Note: No direct interaction with worker pool here. Activation handles loading.
             if (model.is_embedding_model) {
               await handleEmbeddingModelChange();

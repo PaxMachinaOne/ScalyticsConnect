@@ -4,7 +4,6 @@
 Research Comptroller Module
 Oversees the research process for efficiency, policy adherence, and quality control.
 """
-import json 
 import re
 from typing import Dict, List, Any, Optional, Set 
 
@@ -44,7 +43,7 @@ class ResearchComptroller:
 
         # 1. Max Total URLs Scraped
         if state.total_urls_scraped_count >= state.max_total_urls_per_task:
-            logger.warning(f"[{task_id}] Comptroller: Hard constraint reached - Max Total URLs Scraped ({state.max_total_urls_per_task}).")
+            logger.warning("[%s] Comptroller: Hard constraint reached - Max Total URLs Scraped (%s).", task_id, state.max_total_urls_per_task)
             stop_due_to_constraint = True
         return stop_due_to_constraint
 
@@ -71,7 +70,7 @@ class ResearchComptroller:
             
         llm_reasoner: Optional[LLMReasoning] = self.services.get("llm_reasoner")
         if not llm_reasoner:
-            logger.error(f"[{task_id}] Comptroller: LLMReasoning service not found, cannot recommend site reinvestigation.")
+            logger.error("[%s] Comptroller: LLMReasoning service not found, cannot recommend site reinvestigation.", task_id)
             return None
 
         prioritization_result = await llm_reasoner.prioritize_internal_links_for_exploration(
@@ -120,7 +119,7 @@ class ResearchComptroller:
                     unverified_count += 1
         
         if total_relevant_dps > 0 and (unverified_count / total_relevant_dps) > low_confidence_threshold:
-            logger.warning(f"[{task_id}] Comptroller: High proportion of unverified/low-confidence data points ({unverified_count}/{total_relevant_dps}). Setting low_confidence_synthesis_mode.")
+            logger.warning("[%s] Comptroller: High proportion of unverified/low-confidence data points (%s/%s). Setting low_confidence_synthesis_mode.", task_id, unverified_count, total_relevant_dps)
 
     def should_enable_low_confidence_synthesis_mode(self, state: models.OverallState) -> bool:
         task_id = state.task_id
@@ -161,14 +160,14 @@ class ResearchComptroller:
         pivot_needed = False
 
         if state.consecutive_low_diversity_hops >= self.settings.DEEP_SEARCH_MAX_CONSECUTIVE_LOW_DIVERSITY_HOPS_FOR_PIVOT:
-            logger.warning(f"[{task_id}] Comptroller: Strategic pivot signal - Persistent low diversity for {state.consecutive_low_diversity_hops} hops.")
+            logger.warning("[%s] Comptroller: Strategic pivot signal - Persistent low diversity for %s hops.", task_id, state.consecutive_low_diversity_hops)
             pivot_needed = True
         
         if len(state.aggregated_token_usage) > 5: 
             recent_token_usage = sum(usage.total_tokens for usage in state.aggregated_token_usage[-3:]) 
             if len(state.covered_reasoning_steps) < len(state.all_reasoning_steps) * 0.5: 
                 if recent_token_usage > (self.settings.DEEP_SEARCH_TOKEN_BUDGET_WARNING_THRESHOLD_PER_TASK * 0.2): 
-                    logger.warning(f"[{task_id}] Comptroller: Strategic pivot signal - High recent token cost ({recent_token_usage}) with low overall progress ({len(state.covered_reasoning_steps)}/{len(state.all_reasoning_steps)}).")
+                    logger.warning("[%s] Comptroller: Strategic pivot signal - High recent token cost (%s) with low overall progress (%s/%s).", task_id, recent_token_usage, len(state.covered_reasoning_steps), len(state.all_reasoning_steps))
                     pivot_needed = True
         
         return pivot_needed
@@ -189,7 +188,7 @@ class ResearchComptroller:
 
         llm_reasoner: Optional[LLMReasoning] = self.services.get("llm_reasoner")
         if not llm_reasoner:
-            logger.error(f"[{task_id}] Comptroller: LLMReasoning service not found for final draft review.")
+            logger.error("[%s] Comptroller: LLMReasoning service not found for final draft review.", task_id)
             return {"approved": False, "feedback_points": ["Comptroller LLM service unavailable."], "usage": {}, "error": "LLM Service unavailable"}
 
         uncovered_steps_list = [step for step in all_reasoning_steps if step not in covered_reasoning_steps]
@@ -298,7 +297,7 @@ JSON Output:
         error = result.get("error")
         
         if error:
-            logger.error(f"[{task_id}] Comptroller: LLM call for final draft review failed: {error}")
+            logger.error("[%s] Comptroller: LLM call for final draft review failed: %s", task_id, error)
             return {"approved": False, "feedback_points": [f"Draft review LLM call failed: {error}"], "usage": usage, "error": error}
 
         review_output = result.get("output")
@@ -306,11 +305,11 @@ JSON Output:
             # Deduplication logic
             is_repetitive = _is_feedback_repetitive(review_output["feedback_points"], current_state.previous_comptroller_feedback)
             if not review_output["approved"] and is_repetitive and current_state.comptroller_feedback_retry_count >= self.settings.DEEP_SEARCH_MAX_REPETITIVE_FEEDBACK_LIMIT:
-                logger.warning(f"[{task_id}] Comptroller: Repetitive feedback detected, overriding to approve.")
+                logger.warning("[%s] Comptroller: Repetitive feedback detected, overriding to approve.", task_id)
                 review_output["approved"] = True
                 review_output["feedback_points"] = ["Auto-approved due to repetitive feedback."]
 
             return {"approved": review_output["approved"], "feedback_points": review_output["feedback_points"], "usage": usage, "error": None}
         else:
-            logger.error(f"[{task_id}] Comptroller: Final draft review LLM output was not in the expected format: {review_output}")
+            logger.error("[%s] Comptroller: Final draft review LLM output was not in the expected format: %s", task_id, review_output)
             return {"approved": False, "feedback_points": ["Draft review LLM output malformed."], "usage": usage, "error": "Malformed LLM output for draft review"}

@@ -21,8 +21,8 @@ async function getLimiter() {
       const windowMsSetting = await db.getAsync("SELECT value FROM system_settings WHERE key = 'scalytics_api_rate_limit_window_ms'");
       const maxRequestsSetting = await db.getAsync("SELECT value FROM system_settings WHERE key = 'scalytics_api_rate_limit_max'");
 
-      const windowMs = windowMsSetting?.value ? parseInt(windowMsSetting.value, 10) : DEFAULT_WINDOW_MS;
-      const maxRequests = maxRequestsSetting?.value ? parseInt(maxRequestsSetting.value, 10) : DEFAULT_MAX_REQUESTS;
+      let windowMs = windowMsSetting?.value ? parseInt(windowMsSetting.value, 10) : DEFAULT_WINDOW_MS;
+      let maxRequests = maxRequestsSetting?.value ? parseInt(maxRequestsSetting.value, 10) : DEFAULT_MAX_REQUESTS;
 
       if (isNaN(windowMs) || windowMs <= 0) {
         console.warn(`Invalid rate limit window setting (${windowMsSetting?.value}), using default: ${DEFAULT_WINDOW_MS}ms`);

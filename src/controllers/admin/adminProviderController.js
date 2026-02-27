@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../../models/db');
-const Model = require('../../models/Model');
 const modelDiscoveryService = require('../../services/modelDiscoveryService');
 
 /**
@@ -338,7 +337,7 @@ exports.discoverModels = async (req, res) => {
             } else {
             }
           } catch (keyError) {
-            console.warn(`Error retrieving API key: ${keyError.message}, continuing without API key`);
+            console.warn('Error retrieving API key: %s, continuing without API key', keyError.message);
           }
         }
 
@@ -355,7 +354,7 @@ exports.discoverModels = async (req, res) => {
           }
         });
       } catch (providerError) {
-        console.error(`Error discovering models for provider ${providerId}:`, providerError);
+        console.error('Error discovering models for provider %s:', String(providerId).replace(/\n|\r/g, ''), providerError);
         return res.status(500).json({
           success: false,
           message: `Error discovering models: ${providerError.message}`

@@ -2,7 +2,7 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const express = require('express');
 const router = express.Router();
-const { protect, admin, adminOrPermission, hasPermission } = require('../middleware/authMiddleware'); 
+const { protect, adminOrPermission, hasPermission } = require('../middleware/authMiddleware'); 
 const apiKeyController = require('../controllers/apiKeyController');
 
 // Apply protect middleware to all API key routes

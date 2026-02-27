@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
-const eventBus = require('../../utils/eventBus');
 
 const DEFAULT_XAI_API_URL = 'https://api.x.ai';
 
@@ -41,7 +40,7 @@ async function completion(options) {
         const parsedEndpoints = typeof providerDetails.endpoints === 'string' ? JSON.parse(providerDetails.endpoints) : providerDetails.endpoints;
         if (parsedEndpoints?.chat) chatEndpoint = parsedEndpoints.chat;
       } catch (e) {
-        console.error(`[xai.js] Error parsing endpoints for ${providerDetails.name}, using default. Endpoints: ${providerDetails.endpoints}`, e);
+        console.error('[xai.js] Error parsing endpoints for %s, using default. Endpoints: %s', providerDetails.name, providerDetails.endpoints, e);
       }
     }
   }
@@ -60,7 +59,7 @@ async function completion(options) {
     };
     return result;
   } catch (error) {
-    console.error(`[xai.js] API error for model ${modelId} (non-streaming):`, error.response?.data || error.message); 
+    console.error('[xai.js] API error for model %s (non-streaming):', modelId, error.response?.data || error.message); 
     const errorMessage = error.response?.data?.error?.message || error.response?.data?.detail || error.message || 'Unknown xAI API error';
     throw new Error(`xAI API error: ${errorMessage}`);
   }
@@ -83,7 +82,7 @@ async function streamCompletion(options) {
         const parsedEndpoints = typeof providerDetails.endpoints === 'string' ? JSON.parse(providerDetails.endpoints) : providerDetails.endpoints;
         if (parsedEndpoints?.chat) chatEndpoint = parsedEndpoints.chat;
       } catch (e) {
-        console.error(`[xai.js] Error parsing endpoints for ${providerDetails.name} (streaming), using default. Endpoints: ${providerDetails.endpoints}`, e);
+        console.error('[xai.js] Error parsing endpoints for %s (streaming), using default. Endpoints: %s', providerDetails.name, providerDetails.endpoints, e);
       }
     }
   }
@@ -181,7 +180,7 @@ async function streamCompletion(options) {
       });
     });
   } catch (error) {
-    console.error(`[xai.js] API error for model ${modelId} (streaming setup):`, error.response?.data || error.message); 
+    console.error('[xai.js] API error for model %s (streaming setup):', modelId, error.response?.data || error.message); 
     const errorMessage = error.response?.data?.error?.message || error.response?.data?.detail || error.message || 'Unknown xAI API error';
     throw new Error(`xAI API error: ${errorMessage}`);
   }
@@ -193,7 +192,7 @@ async function discoverModels(options = {}) {
 
   if (apiKey && modelsEndpoint && baseUrl) {
     const targetUrl = `${baseUrl.replace(/\/$/, '')}${modelsEndpoint.startsWith('/') ? '' : '/'}${modelsEndpoint}`;
-    console.log(`[xai.js] Attempting to discover models from URL: ${targetUrl}`);
+    console.log('[xai.js] Attempting to discover models from URL: %s', targetUrl);
     try {
       const response = await axios.get(targetUrl, { 
         headers: { 'Authorization': `Bearer ${apiKey}` } 
@@ -209,7 +208,7 @@ async function discoverModels(options = {}) {
           context_window: model.context_window || 8192, // Default context if not provided
           raw_capabilities_info: model // Store the whole original object
         }));
-        console.log(`[xai.js] Successfully discovered ${models.length} models from API.`);
+        console.log('[xai.js] Successfully discovered %s models from API.', models.length);
         return { models, error: null };
       }
       
@@ -219,7 +218,7 @@ async function discoverModels(options = {}) {
       const errorMessage = error.response ? 
         `API error (${error.response.status}): ${error.response.data?.error?.message || error.response.data?.detail || error.message}` : 
         `Network error: ${error.message}`;
-      console.error(`[xai.js] discoverModels: Error fetching models from xAI API (${targetUrl}): ${errorMessage}`);
+      console.error('[xai.js] discoverModels: Error fetching models from xAI API (%s): %s', targetUrl, errorMessage);
       if (error.response) {
         console.error('[xai.js] Full error response data:', JSON.stringify(error.response.data).substring(0, 500));
       }
@@ -228,7 +227,7 @@ async function discoverModels(options = {}) {
   }
 
   const missingConfigError = `API discovery not configured for xAI provider. Missing one or more of: API Key, Base URL ('${baseUrl}'), Models Endpoint ('${modelsEndpoint}').`;
-  console.warn(`[xai.js] discoverModels: ${missingConfigError}`);
+  console.warn('[xai.js] discoverModels: %s', missingConfigError);
   return { models: [], error: missingConfigError };
 }
 
@@ -286,7 +285,7 @@ async function generateImage(options) {
     
     throw new Error('No image data (b64_json or url) found in xAI response');
   } catch (error) {
-    console.error(`[xai.js] Image generation API error for model ${modelId}:`, error.response?.data || error.message); 
+    console.error('[xai.js] Image generation API error for model %s:', modelId, error.response?.data || error.message); 
     const errorMessage = error.response?.data?.error?.message || error.message || 'Unknown xAI image generation error';
     throw new Error(`xAI Image API error: ${errorMessage}`);
   }

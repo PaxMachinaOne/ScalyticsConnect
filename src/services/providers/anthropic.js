@@ -26,7 +26,7 @@ async function discoverModels(options = {}) {
     const validationResult = await validateApiKey(apiKey);
     
     if (!validationResult.isValid) {
-      console.error(`Invalid API key provided for Anthropic model discovery: ${validationResult.errorMessage}`);
+      console.error('Invalid API key provided for Anthropic model discovery: %s', validationResult.errorMessage);
       return { models: [], error: validationResult.errorMessage };
     }
     
@@ -50,7 +50,7 @@ async function discoverModels(options = {}) {
       context_window: getContextWindow(model.id)
     }));
     
-    console.log(`Discovered ${models.length} Anthropic models with valid API key`);
+    console.log('Discovered %s Anthropic models with valid API key', models.length);
     return { models, error: null };
   } catch (error) {
     console.error('Error discovering Anthropic models:', error.message);
@@ -161,9 +161,7 @@ async function validateApiKey(apiKey) {
 async function streamCompletion(options) {
   const {
     apiKey,
-    modelId,
     payload,
-    streamingContext,
     abortSignal, // Accept abortSignal
     onToken // Accept onToken callback
   } = options;
@@ -189,7 +187,7 @@ async function streamCompletion(options) {
   // Log payload *without* circular references like abortSignal
   const loggablePayload = { ...streamingPayload };
   delete loggablePayload.abortSignal; // Exclude signal from log - This line might be removed if abortSignal is fully gone
-  // console.log(`[Anthropic Stream] Sending Payload for ${modelId}:`, JSON.stringify(loggablePayload, null, 2)); // Removed log
+  // console.log('[Anthropic Stream] Sending Payload for %s:', modelId, JSON.stringify(loggablePayload, null, 2)); // Removed log
 
   // Make the API call with stream response type
   const response = await axios.post(
@@ -266,7 +264,6 @@ async function streamCompletion(options) {
 async function completion(options) {
   const {
     apiKey,
-    modelId,
     payload,
     abortSignal // Add abortSignal
   } = options;
@@ -276,7 +273,7 @@ async function completion(options) {
   // Log payload *without* circular references like abortSignal
   const loggablePayload = { ...payload };
   delete loggablePayload.abortSignal; // Exclude signal from log - This line might be removed if abortSignal is fully gone
-  // console.log(`[Anthropic Completion] Sending Payload for ${modelId}:`, JSON.stringify(loggablePayload, null, 2)); // Removed log
+  // console.log('[Anthropic Completion] Sending Payload for %s:', modelId, JSON.stringify(loggablePayload, null, 2)); // Removed log
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',

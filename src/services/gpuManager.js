@@ -8,10 +8,10 @@
  * temperature, and power draw. This information is crucial for the Model Pool Manager
  * to make informed decisions about model placement.
  */
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const util = require('util');
 const { db } = require('../models/db');
-const execAsync = util.promisify(exec);
+const execFileAsync = util.promisify(execFile);
 
 class GpuManager {
     constructor() {
@@ -55,8 +55,7 @@ class GpuManager {
         this.isFetching = true;
 
         try {
-            const command = 'nvidia-smi --query-gpu=index,uuid,name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw --format=csv,noheader,nounits';
-            const { stdout } = await execAsync(command);
+            const { stdout } = await execFileAsync('nvidia-smi', ['--query-gpu=index,uuid,name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw', '--format=csv,noheader,nounits']);
             
             const lines = stdout.trim().split('\n');
             const stats = lines.map(line => {

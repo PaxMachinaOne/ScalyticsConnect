@@ -5,7 +5,7 @@ Research Controller Module
 Manages the overall flow, state, and decision-making for a multi-hop deep research task.
 """
 import asyncio
-from typing import List, Set, Optional, Dict, Any, Tuple
+from typing import List, Optional, Tuple
 
 from .. import models
 from .. import config as app_config
@@ -75,7 +75,7 @@ class ResearchController:
 
     def set_cancellation_flag(self):
         self.state.is_cancelled_flag = True
-        logger.info(f"[ResearchController:{self.task_id}] Cancellation flag set by runner.")
+        logger.info("[ResearchController:%s] Cancellation flag set by runner.", self.task_id)
 
     def _are_all_steps_covered(self) -> bool:
         if not self.state.all_reasoning_steps:
@@ -89,22 +89,22 @@ class ResearchController:
         The event_key can be used to fetch a formatted message if should_continue is False.
         """
         if self.state.is_cancelled_flag:
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: Cancelled.")
+            logger.info("[ResearchController:%s] Stop condition: Cancelled.", self.task_id)
             return False, "SYSTEM_CANCELLED_BY_USER"
         if self.state.current_hop >= self.state.max_hops:
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: Max hops ({self.state.max_hops}) reached.")
+            logger.info("[ResearchController:%s] Stop condition: Max hops (%s) reached.", self.task_id, self.state.max_hops)
             return False, "CONTROLLER_MAX_HOPS_REACHED"
         if self._are_all_steps_covered():
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: All reasoning steps covered.")
+            logger.info("[ResearchController:%s] Stop condition: All reasoning steps covered.", self.task_id)
             return False, "CONTROLLER_ALL_COVERED"
         if self.state.stagnation_counter >= self.state.max_stagnation_limit:
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: Stagnation limit ({self.state.max_stagnation_limit}) reached.")
+            logger.info("[ResearchController:%s] Stop condition: Stagnation limit (%s) reached.", self.task_id, self.state.max_stagnation_limit)
             return False, "CONTROLLER_STAGNATION_STOP"
         if self.state.total_urls_scraped_count >= self.state.max_total_urls_per_task:
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: Max total URLs ({self.state.max_total_urls_per_task}) reached.")
+            logger.info("[ResearchController:%s] Stop condition: Max total URLs (%s) reached.", self.task_id, self.state.max_total_urls_per_task)
             return False, "CONTROLLER_MAX_URLS_REACHED"
         if self.state.similarity_stop_triggered_this_hop and current_queries_for_hop_count == 0 and current_links_to_explore_pq_size == 0:
-            logger.info(f"[ResearchController:{self.task_id}] Stop condition: Similarity stop triggered with no other leads.")
+            logger.info("[ResearchController:%s] Stop condition: Similarity stop triggered with no other leads.", self.task_id)
             # This specific message might be better handled by the runner after similarity_stop_triggered_this_hop is set
             return False, "CONTROLLER_NO_FURTHER_ACTIONS"
             
@@ -114,7 +114,7 @@ class ResearchController:
         """Increments hop count and resets hop-specific flags."""
         self.state.current_hop += 1
         self.state.similarity_stop_triggered_this_hop = False
-        logger.info(f"[ResearchController:{self.task_id}] Starting Hop {self.state.current_hop}.")
+        logger.info("[ResearchController:%s] Starting Hop %s.", self.task_id, self.state.current_hop)
         return self.state.current_hop
 
     def update_coverage(self, newly_covered_steps_this_hop: List[str]) -> bool:
@@ -139,7 +139,7 @@ class ResearchController:
         """
         if made_progress_on_coverage or has_new_queries or has_new_links:
             self.state.stagnation_counter = 0
-            logger.debug(f"[ResearchController:{self.task_id}] Stagnation counter reset due to progress/new leads.")
+            logger.debug("[ResearchController:%s] Stagnation counter reset due to progress/new leads.", self.task_id)
             return None
         else:
             self.state.stagnation_counter += 1
@@ -160,7 +160,7 @@ class ResearchController:
     def set_similarity_stop_flag(self, value: bool):
         self.state.similarity_stop_triggered_this_hop = value
         if value:
-            logger.info(f"[ResearchController:{self.task_id}] Similarity stop flag set for current hop.")
+            logger.info("[ResearchController:%s] Similarity stop flag set for current hop.", self.task_id)
 
     async def get_formatted_controller_message(self, event_key: str, **kwargs) -> Optional[str]:
         """
@@ -169,7 +169,7 @@ class ResearchController:
         """
         template = getattr(agent_dialogue, event_key, None)
         if not template:
-            logger.warning(f"[ResearchController:{self.task_id}] Dialogue template for key '{event_key}' not found.")
+            logger.warning("[ResearchController:%s] Dialogue template for key '%s' not found.", self.task_id, event_key)
             return None
         
         try:
@@ -184,7 +184,7 @@ class ResearchController:
             if event_key in required_args_for_template:
                 for req_arg in required_args_for_template[event_key]:
                     if req_arg not in kwargs:
-                        logger.warning(f"Missing kwarg '{req_arg}' for template '{event_key}'. Using default.")
+                        logger.warning("Missing kwarg '%s' for template '%s'. Using default.", req_arg, event_key)
                         if "str" in req_arg: kwargs[req_arg] = "N/A"
                         else: kwargs[req_arg] = 0
 
@@ -195,10 +195,10 @@ class ResearchController:
             # The runner will typically handle the full SSEEvent construction
             return formatted_message
         except KeyError as e_key:
-            logger.error(f"[ResearchController:{self.task_id}] Missing key '{e_key}' for formatting dialogue template '{event_key}'. Args: {kwargs}")
+            logger.error("[ResearchController:%s] Missing key '%s' for formatting dialogue template '%s'. Args: %s", self.task_id, e_key, event_key, kwargs)
             return f"**[Research Controller]** Error: Message template {event_key} is missing a parameter."
         except Exception as e_format:
-            logger.error(f"[ResearchController:{self.task_id}] Error formatting dialogue template '{event_key}': {e_format}. Args: {kwargs}", exc_info=True)
+            logger.error("[ResearchController:%s] Error formatting dialogue template '%s': %s. Args: %s", self.task_id, event_key, e_format, kwargs, exc_info=True)
             return f"**[Research Controller]** Error: Could not format message for {event_key}."
 
     def get_final_status_message(self) -> str:

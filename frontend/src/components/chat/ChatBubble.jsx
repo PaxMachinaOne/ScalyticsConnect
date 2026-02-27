@@ -524,7 +524,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
           {(() => {
             let processedSystemContent = processFinalContent(message.content);
             let personaName = "System Message";
-            const personaRegex = /^\[([\w\s-]+(?: - [\w\s-]+)*)\]\s*(.*)/s;
+            const personaRegex = /^\[([^\]]+)\]\s*(.*)/s;
             const match = processedSystemContent.match(personaRegex);
             if (match) {
               personaName = match[1].trim(); 
@@ -535,7 +535,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
                 <div className="font-medium mb-1">{personaName}</div>
                 <div className="text-sm">
                   <ReactMarkdown className="prose dark:prose-invert max-w-none prose-sm" components={reactMarkdownComponents} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                    {String(processedSystemContent || '')}
+                    {String(processedSystemContent)}
                   </ReactMarkdown>
                 </div>
               </div>

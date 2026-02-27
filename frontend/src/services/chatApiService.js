@@ -42,7 +42,7 @@ chatApi.interceptors.request.use(
 
 // Error handler function (simplified version of the one in apiService)
 const handleApiError = (error) => {
-  let message = 'An unexpected error occurred';
+  let message;
   
   if (error.response) {
     // The server responded with a status code outside the 2xx range

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 // src/middleware/requestBlocker.js
-const path = require('path');
 
 // Expanded list of patterns to block
 const suspiciousPatterns = [
@@ -33,7 +32,7 @@ const suspiciousPatterns = [
 
   // --- Log4j / JNDI ---
   /jndi:/i,                // Covers jndi:ldap, jndi:rmi, etc.
-  /\$\{.*\}/,              // Basic template injection check (might need refinement)
+  /\$\{[^}]{1,100}\}/,     // Template injection check - use negated char class to avoid backtracking
 
   // --- Sensitive File Access Attempts ---
   /\.env/i,
@@ -63,7 +62,7 @@ function blockSuspiciousRequests(req, res, next) {
           fullUrlToCheck += decodeURIComponent(queryStringPart.replace(/\+/g, ' '));
       } catch (e) {
           // Handle potential URI malformed errors during decoding
-          console.warn(`[Request Blocker] Could not decode URI component for check: ${req.originalUrl}. Error: ${e.message}`);
+          console.warn("[Request Blocker] Could not decode URI component for check: %s. Error: %s",  String(req.originalUrl).replace(/\n|\r/g, ''), e.message);
           // Block potentially malformed URIs as they can be used for evasion
           return res.status(400).send('Bad Request: Malformed URI');
       }
@@ -72,7 +71,7 @@ function blockSuspiciousRequests(req, res, next) {
   for (const pattern of suspiciousPatterns) {
     if (pattern.test(fullUrlToCheck)) {
       // Log the blocked attempt for monitoring
-      console.warn(`[Request Blocker] Blocked suspicious request matching pattern ${pattern}: ${req.method} ${req.originalUrl} from ${req.ip}`);
+      console.warn("[Request Blocker] Blocked suspicious request matching pattern %s: %s %s from %s", pattern, String(req.method).replace(/\n|\r/g, ''), String(req.originalUrl).replace(/\n|\r/g, ''), String(req.ip).replace(/\n|\r/g, ''));
       // Send a generic 404 Not Found
       return res.status(404).send('Not Found');
     }

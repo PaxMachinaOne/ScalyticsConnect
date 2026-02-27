@@ -8,7 +8,6 @@
  *
  * Enhanced with response filtering, context window management, and markdown sanitization.
  */
-const { tokenProcessor } = require('../../config/socket');
 const { routeInferenceRequest } = require('../inferenceRouter');
 const Model = require('../../models/Model');
 const Message = require('../../models/Message'); // Import Message model for DB updates
@@ -188,9 +187,8 @@ exports.streamModel = (options) => {
       if (rawToken === null || rawToken === undefined) return;
       
       // Store the truly original token immediately and ensure it's a string
-      const originalToken = rawToken; 
-      if (originalToken !== null && originalToken !== undefined) {
-        try {
+      const originalToken = rawToken;
+      try {
           // Handle string, object or other types by explicitly converting to string
           let tokenStr = typeof originalToken === 'string' ? originalToken : JSON.stringify(originalToken);
           
@@ -216,11 +214,10 @@ exports.streamModel = (options) => {
           // Save the properly processed token
           contentToSave += tokenStr;
         } catch (tokenProcessingError) {
-          console.error(`Token processing error: ${tokenProcessingError.message}`);
+          console.error('Token processing error: %s', tokenProcessingError.message);
           // Fallback to basic string conversion in case of any error
           contentToSave += String(originalToken);
         }
-      }
 
       bufferContent += originalToken;
 
@@ -243,7 +240,7 @@ exports.streamModel = (options) => {
       // --- TEMPORARILY DISABLED Termination Pattern Check ---
       // if (autoFilter) {
       //   if (terminationPatterns.some(pattern => pattern.test(bufferContent))) {
-      //     console.warn(`[streamProvider] Detected invalid content pattern, terminating stream for ${placeholderAssistantMessageId}`);
+      //     console.warn('[streamProvider] Detected invalid content pattern, terminating stream for %s', placeholderAssistantMessageId);
       //     stopSequenceDetected = true;
       //     return;
       //   }
@@ -251,7 +248,7 @@ exports.streamModel = (options) => {
       // Re-enabled termination pattern check
       if (autoFilter) {
         if (terminationPatterns.some(pattern => pattern.test(bufferContent))) {
-          console.warn(`[streamProvider] Detected invalid content pattern, terminating stream for ${placeholderAssistantMessageId}`);
+          console.warn('[streamProvider] Detected invalid content pattern, terminating stream for %s', placeholderAssistantMessageId);
           stopSequenceDetected = true;
           return; // Stop processing if termination pattern detected
         }
@@ -314,24 +311,24 @@ exports.streamModel = (options) => {
                // Sanitize the separate variable for the UI
                contentForUI = await sanitizeResponseForModel(modelId, contentForUI, { lastUserMessage }); 
             } else {
-               console.warn(`[streamProvider] Could not fetch model ${modelId} details for sanitization. Skipping.`);
+               console.warn('[streamProvider] Could not fetch model %s details for sanitization. Skipping.', modelId);
                // contentForUI remains as contentToSave (implicitly, as it wasn't changed)
             }
          } catch (sanitizeModelFetchError) {
-            console.error(`[streamProvider] Error fetching model ${modelId} for sanitization:`, sanitizeModelFetchError);
+            console.error('[streamProvider] Error fetching model %s for sanitization:', modelId, sanitizeModelFetchError);
             // contentForUI remains as contentToSave (implicitly, as it wasn't changed)
          }
       } else {
         // No filtering for 'none' mode or when autoFilter is false
         // contentForUI remains as contentToSave (implicitly, as it wasn't changed)
-        console.log(`[streamProvider] Using raw content for final response (sanitizationMode: ${sanitizationMode}, autoFilter: ${autoFilter})`);
+        console.log('[streamProvider] Using raw content for final response (sanitizationMode: %s, autoFilter: %s)', sanitizationMode, autoFilter);
       }
       // Assign the potentially sanitized content to finalContent for later use
       finalContent = contentForUI;
 
     } catch (error) {
       // Stream Failed
-      console.error(`Inference failed for model ${modelId} (${modelName}):`, error);
+      console.error('Inference failed for model %s (%s):', modelId, modelName, error);
       streamError = error;
       // REMOVED: contentToSave = accumulatedTokens.join(''); (contentToSave should hold partial content on error)
 
@@ -368,7 +365,7 @@ exports.streamModel = (options) => {
           // If there was an error, we might want to delete the placeholder or mark it differently
           // For now, we simply don't update it, leaving it potentially empty and loading=true
           // The frontend should handle the chat:error event and potentially remove/update the UI element
-          console.log(`[streamProvider] Skipping DB update for message ${placeholderAssistantMessageId} due to stream error.`);
+          console.log('[streamProvider] Skipping DB update for message %s due to stream error.', placeholderAssistantMessageId);
         }
 
         // Publish the potentially SANITIZED content (finalContent) or the error to the frontend

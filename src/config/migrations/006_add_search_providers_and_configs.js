@@ -55,7 +55,7 @@ async function up() {
       // --- Add/Update Google Search Provider ---
        const googleExists = await db.getAsync("SELECT 1 FROM api_providers WHERE name = ?", ['Google Search']);
        if (!googleExists) {
-         const googleResult = await db.runAsync(
+         await db.runAsync(
            `INSERT INTO api_providers (name, description, is_active, requires_api_key, supports_extra_config, is_external, is_manual, website, api_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
            ['Google Search', 'Google Custom Search JSON API for web results.', 1, 1, 1, 1, 0, 'https://ai.google.dev/', 'https://www.googleapis.com/customsearch/v1'] 
          );
@@ -69,7 +69,7 @@ async function up() {
       // --- Add/Update Bing Search Provider ---
        const bingExists = await db.getAsync("SELECT 1 FROM api_providers WHERE name = ?", ['Bing Search']);
        if (!bingExists) {
-         const bingResult = await db.runAsync(
+         await db.runAsync(
            `INSERT INTO api_providers (name, description, is_active, requires_api_key, supports_extra_config, is_external, is_manual, website, api_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
            ['Bing Search', 'Microsoft Bing Web Search API for web results.', 1, 1, 0, 1, 0, 'https://www.microsoft.com/bing/apis/web-search-api', 'https://api.bing.microsoft.com/v7.0/search']
          );

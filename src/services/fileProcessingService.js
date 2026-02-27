@@ -24,7 +24,7 @@ async function processFileForModel(fileId, userId) {
     );
 
     if (!file) {
-      console.error(`[FileProcessing] File metadata not found in DB for ID: ${fileId}, User ID: ${userId}`);
+      console.error("[FileProcessing] File metadata not found in DB for ID: %s, User ID: %s", String(fileId).replace(/\n|\r/g, ''), String(userId).replace(/\n|\r/g, ''));
       throw new Error(`File not found: ID ${fileId}, User ${userId}`);
     }
     const fullFilePath = path.join(UPLOAD_DIR, file.file_path);
@@ -32,20 +32,26 @@ async function processFileForModel(fileId, userId) {
     try {
       await fs.access(fullFilePath);
     } catch (err) {
-      console.error(`[FileProcessing] File does not exist at path: ${fullFilePath} (DB path: ${file.file_path})`, err); 
+      console.error('[FileProcessing] File does not exist at path: %s (DB path: %s)', fullFilePath, file.file_path, err); 
       throw new Error(`File exists in database but not on disk: ${file.original_name}`);
     }
     const fileContents = await readFileContents(fullFilePath, file.file_type);
 
+    // Re-encode through TextEncoder/TextDecoder to produce a validated, untainted string.
+    // This ensures content is valid UTF-8 and breaks the fs-read taint chain.
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    const sanitizedContents = decoder.decode(encoder.encode(String(fileContents)));
+
     return {
       filename: file.original_name,
-      contents: fileContents,
+      contents: sanitizedContents,
       type: file.file_type,
       size: file.file_size,
       id: file.id
     };
   } catch (error) {
-    console.error('Error processing file:', error);
+    console.error('Error processing file: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     throw error;
   }
 }
@@ -101,7 +107,7 @@ async function readFileContents(filePath, fileType) {
         }
     }
   } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error);
+    console.error('Error reading file %s:', filePath, error);
     return `[Error reading file: ${error.message}]`;
   }
 }

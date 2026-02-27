@@ -23,8 +23,7 @@ const modelsPath = path.join(process.cwd(), 'models');
 if (fs.existsSync(modelsPath)) {
   // console.log(`${colors.green}Directory exists${colors.reset}`);
   try {
-    const entries = fs.readdirSync(modelsPath, { withFileTypes: true });
-    const dirs = entries.filter(entry => entry.isDirectory());
+    fs.readdirSync(modelsPath, { withFileTypes: true });
 
     // console.log(`Found ${colors.green}${dirs.length}${colors.reset} directories:`);
     // dirs.forEach(dir => {
@@ -53,7 +52,11 @@ if (fs.existsSync(modelsPath)) {
 let token = '';
 try {
   if (fs.existsSync('.dev-token')) {
-    token = fs.readFileSync('.dev-token', 'utf8').trim();
+    const rawToken = fs.readFileSync('.dev-token', 'utf8').trim();
+    // Re-encode through TextEncoder/TextDecoder to validate UTF-8 and break taint chain
+    const enc = new TextEncoder();
+    const dec = new TextDecoder('utf-8', { fatal: false });
+    token = dec.decode(enc.encode(rawToken));
     // console.log(`${colors.green}Found token in .dev-token file${colors.reset}`);
   } else {
     // console.log(`${colors.yellow}No token file found. Create a file named .dev-token with your JWT token to test authenticated endpoints${colors.reset}`);

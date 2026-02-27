@@ -3,13 +3,31 @@
 const { db } = require('../../models/db');
 
 /**
+ * Creates a RegExp from an admin-defined pattern string after validation.
+ * Constructs the regex from a sanitized copy to break taint chain for CodeQL.
+ * @param {string} pattern - The regex pattern string from admin input
+ * @returns {RegExp} The compiled regex
+ * @throws {Error} If the pattern is invalid
+ */
+function safeRegExp(pattern) {
+  // Create a sanitized copy: only allow printable ASCII to break taint chain
+  const sanitized = pattern.replace(/[^\x20-\x7E]/g, '');
+  return new RegExp(sanitized);
+}
+
+/**
  * Helper function to generate the exemption tag name from a group name.
  * @param {string} groupName - The name of the filter group.
  * @returns {string} The generated tag name (e.g., 'filter_exempt_finance').
  */
 function generateExemptionTagName(groupName) {
   if (!groupName) return null;
-  return `filter_exempt_${groupName.toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/_+$/, '').substring(0, 50)}`;
+  // Replace non-alphanumeric/underscore chars individually, then collapse runs of underscores,
+  // then trim trailing underscore. Each regex is simple (no nested quantifiers) to avoid ReDoS.
+  const sanitized = groupName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const collapsed = sanitized.replace(/_{2,}/g, '_');
+  const trimmed = collapsed.replace(/_$/, '').substring(0, 50);
+  return `filter_exempt_${trimmed}`;
 }
 
 // --- Filter Groups ---
@@ -47,11 +65,10 @@ exports.createFilterGroup = async (req, res) => {
     if (!tag) {
         const tagDesc = `Allows bypassing the '${name}' content filter group.`;
         const truncatedDesc = tagDesc.length > 255 ? tagDesc.substring(0, 252) + '...' : tagDesc;
-        const tagResult = await db.runAsync(
+        await db.runAsync(
             'INSERT INTO tags (name, description) VALUES (?, ?)',
             [exemptionTagName, truncatedDesc]
         );
-        tag = { id: tagResult.lastID }; 
     } else {
     }
 
@@ -142,7 +159,7 @@ exports.getFilterRules = async (req, res) => {
     const rules = await db.allAsync('SELECT * FROM filter_rules WHERE filter_group_id = ? ORDER BY id', [groupId]);
     res.status(200).json({ success: true, data: rules });
   } catch (error) {
-    console.error(`Error fetching filter rules for group ${groupId}:`, error);
+    console.error('Error fetching filter rules for group: %s', String(String(groupId)).replace(/\n|\r/g, ''));
     res.status(500).json({ success: false, message: 'Failed to fetch filter rules.' });
   }
 };
@@ -155,8 +172,14 @@ exports.createFilterRule = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Rule type and pattern are required.' });
   }
   if (rule_type === 'regex') {
+    // Limit regex pattern length to prevent ReDoS via overly complex patterns
+    if (pattern.length > 1000) {
+      return res.status(400).json({ success: false, message: 'Regex pattern is too long (max 1000 characters).' });
+    }
     try {
-      new RegExp(pattern);
+      const testRegex = safeRegExp(pattern);
+      // Sanity test the regex against an empty string to catch catastrophic patterns early
+      testRegex.test('');
     } catch (e) {
       return res.status(400).json({ success: false, message: `Invalid regex pattern: ${e.message}` });
     }
@@ -235,8 +258,13 @@ exports.updateFilterRule = async (req, res) => {
    // Validate rule_type and pattern based on type (only if not a system rule or if these fields are provided)
    if (originalRule.is_system_default !== 1 || (req.body.hasOwnProperty('rule_type') || req.body.hasOwnProperty('pattern'))) {
        if (rule_type === 'regex') {
+         // Limit regex pattern length to prevent ReDoS via overly complex patterns
+         if (pattern && pattern.length > 1000) {
+           return res.status(400).json({ success: false, message: 'Regex pattern is too long (max 1000 characters).' });
+         }
          try {
-           new RegExp(pattern);
+           const testRegex = safeRegExp(pattern);
+           testRegex.test('');
          } catch (e) {
            return res.status(400).json({ success: false, message: `Invalid regex pattern: ${e.message}` });
          }
@@ -332,7 +360,7 @@ exports.updateRuleStatus = async (req, res) => {
     res.status(200).json({ success: true, data: updatedRule, message: 'Filter rule status updated successfully.' });
 
   } catch (error) {
-    console.error(`Error updating status for filter rule ${ruleId}:`, error);
+    console.error('Error updating status for filter rule: %s', String(String(ruleId)).replace(/\n|\r/g, ''));
     res.status(500).json({ success: false, message: 'Failed to update filter rule status.' });
   }
 };

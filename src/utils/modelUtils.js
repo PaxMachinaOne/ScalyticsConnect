@@ -5,9 +5,9 @@
  */
 const path = require('path');
 const fs = require('fs').promises;
-const { spawn, exec } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const util = require('util');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 /**
  * Determine model type based on file extension or directory contents
@@ -26,7 +26,7 @@ async function detectModelType(modelPath) {
       return detectModelTypeFromFile(modelPath);
     }
   } catch (error) {
-    console.error(`Error detecting model type: ${error.message}`);
+    console.error('Error detecting model type: %s', error.message);
     return {
       type: 'unknown',
       requiredLibraries: ['transformers', 'torch', 'accelerate'], // vLLM dependencies
@@ -42,7 +42,6 @@ async function detectModelType(modelPath) {
  */
 function detectModelTypeFromFile(filePath) {
   const ext = path.extname(filePath).toLowerCase();
-  const fileName = path.basename(filePath).toLowerCase();
   
   // Hugging Face format files (for vLLM)
   if (ext === '.safetensors' || ext === '.bin' || ext === '.pt' || ext === '.pth') {
@@ -114,7 +113,7 @@ async function detectModelTypeFromDirectory(dirPath) {
       format: 'unknown'
     };
   } catch (error) {
-    console.error(`Error detecting model type from directory: ${error.message}`);
+    console.error('Error detecting model type from directory: %s', error.message);
     return {
       type: 'unknown',
       requiredLibraries: ['transformers', 'torch', 'accelerate'],
@@ -137,15 +136,15 @@ async function installModelDependencies(modelInfo) {
     try {
       await fs.access(setupScript);
     } catch (err) {
-      console.error(`Setup script not found at: ${setupScript}`);
+      console.error('Setup script not found at: %s', setupScript);
       return false;
     }
     
-    console.log(`Running setup script for model type: ${modelInfo.type} (${modelInfo.format})`);
-    console.log(`Required libraries: ${modelInfo.requiredLibraries.join(', ')}`);
+    console.log('Running setup script for model type: %s (%s)', modelInfo.type, modelInfo.format);
+    console.log('Required libraries: %s', modelInfo.requiredLibraries.join(', '));
     
     // Make the script executable
-    await execPromise(`chmod +x "${setupScript}"`);
+    await execFilePromise('chmod', ['+x', setupScript]);
     
     // Run the setup script
     return new Promise((resolve, reject) => {
@@ -159,18 +158,18 @@ async function installModelDependencies(modelInfo) {
           console.log('Setup script completed successfully');
           resolve(true);
         } else {
-          console.error(`Setup script failed with code ${code}`);
+          console.error('Setup script failed with code %s', code);
           resolve(false); // Resolve with false instead of rejecting
         }
       });
       
       process.on('error', (err) => {
-        console.error(`Error running setup script: ${err.message}`);
+        console.error('Error running setup script: %s', err.message);
         resolve(false);
       });
     });
   } catch (error) {
-    console.error(`Error installing model dependencies: ${error.message}`);
+    console.error('Error installing model dependencies: %s', error.message);
     return false;
   }
 }

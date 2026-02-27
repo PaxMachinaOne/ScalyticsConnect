@@ -10,7 +10,8 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const fileUpload = require('express-fileupload');
-const { blockSuspiciousRequests } = require('../middleware/requestBlocker'); 
+const rateLimit = require('express-rate-limit');
+const { blockSuspiciousRequests } = require('../middleware/requestBlocker');
 
 /**
  * Configure all Express middleware
@@ -45,7 +46,7 @@ function setupMiddleware(app) {
           if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
           } else {
-            console.warn(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+            console.warn('CORS blocked origin: %s. Allowed: %s', origin, allowedOrigins.join(', '));
             callback(new Error(`Origin ${origin} not allowed by CORS`));
           }
         },
@@ -62,6 +63,19 @@ function setupMiddleware(app) {
   app.use(cors(corsOptions));
 
   app.use(blockSuspiciousRequests);
+
+  // General API rate limiter — applies to all /api/ routes
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200, // limit each IP to 200 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: 'Too many requests, please try again later.'
+    },
+  });
+  app.use('/api/', apiLimiter);
 
   if (process.env.NODE_ENV !== 'production') {
     app.use((req, res, next) => {
@@ -91,19 +105,19 @@ function setupMiddleware(app) {
   const uploadDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
-    console.log(`Created uploads directory at ${uploadDir}`);
+    console.log('Created uploads directory at %s', uploadDir);
   }
 
   // Serve uploads directory with specific headers
   app.use('/uploads', (req, res, next) => {
     if (process.env.DEBUG_MODE === 'true') {
-      console.log(`[WARN] Uploads request: ${req.path}`);
+      console.log("[WARN] Uploads request: %s",  String(req.path).replace(/\n|\r/g, ''));
     }
     next();
   }, express.static(path.join(process.cwd(), 'uploads'), {
     setHeaders: (res, filePath) => {
       if (process.env.DEBUG_MODE === 'true') {
-        console.log(`[WARN] Serving file: ${filePath}`);
+        console.log('[WARN] Serving file: %s', filePath);
       }
       
       // Set Cache-Control for different file types

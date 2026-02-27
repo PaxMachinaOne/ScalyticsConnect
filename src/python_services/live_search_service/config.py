@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from pydantic import Field 
 from pydantic_settings import BaseSettings
 from typing import Optional, Dict, List, Any 
+import logging
 
 project_root_config = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 dotenv_path = os.path.join(project_root_config, '.env')
@@ -21,7 +22,7 @@ def _get_active_embedding_model_from_db(db_path: str) -> Optional[str]:
     model_identifier: Optional[str] = None
     try:
         if not os.path.exists(db_path):
-            print(f"[Config] Warning: SQLite DB not found at {db_path}. No embedding model configured.", file=sys.stderr)
+            logging.info(f"[Config] Warning: SQLite DB not found at {db_path}. No embedding model configured.", file=sys.stderr)
             return None
 
         conn = sqlite3.connect(db_path)
@@ -40,7 +41,7 @@ def _get_active_embedding_model_from_db(db_path: str) -> Optional[str]:
         pref_row = cursor.fetchone()
         if pref_row and pref_row[0]:
             preferred_model_id_str = str(pref_row[0])
-            print(f"[Config] Found preferred_local_embedding_model_id: {preferred_model_id_str}", file=sys.stderr)
+            logging.info(f"[Config] Found preferred_local_embedding_model_id: {preferred_model_id_str}", file=sys.stderr)
             
             if preferred_model_id_str.isdigit():
                 cursor.execute("""
@@ -57,11 +58,11 @@ def _get_active_embedding_model_from_db(db_path: str) -> Optional[str]:
                         model_identifier = hf_repo.strip()
                     elif model_p and model_p.strip():
                         model_identifier = model_p.strip()
-                    print(f"[Config] Loaded preferred active embedding model (ID: {preferred_model_id_str}) from DB: {model_identifier}", file=sys.stderr)
+                    logging.info(f"[Config] Loaded preferred active embedding model (ID: {preferred_model_id_str}) from DB: {model_identifier}", file=sys.stderr)
                 else:
-                    print(f"[Config] Warning: Preferred embedding model ID {preferred_model_id_str} not found, not active, or not an embedding model. Checking fallback.", file=sys.stderr)
+                    logging.info(f"[Config] Warning: Preferred embedding model ID {preferred_model_id_str} not found, not active, or not an embedding model. Checking fallback.", file=sys.stderr)
             else:
-                print(f"[Config] Warning: preferred_local_embedding_model_id '{preferred_model_id_str}' is not a valid ID. Checking fallback.", file=sys.stderr)
+                logging.info(f"[Config] Warning: preferred_local_embedding_model_id '{preferred_model_id_str}' is not a valid ID. Checking fallback.", file=sys.stderr)
 
         conn.close() 
 
@@ -74,15 +75,15 @@ def _get_active_embedding_model_from_db(db_path: str) -> Optional[str]:
                 model_identifier = hf_repo.strip()
             elif model_p and model_p.strip():
                 model_identifier = model_p.strip()
-            print(f"[Config] Loaded fallback active embedding model from DB: {model_identifier}", file=sys.stderr)
+            logging.info(f"[Config] Loaded fallback active embedding model from DB: {model_identifier}", file=sys.stderr)
         else:
-            print(f"[Config] Warning: No active embedding model found in DB (neither preferred nor fallback). Embedding model not configured.", file=sys.stderr)
+            logging.info(f"[Config] Warning: No active embedding model found in DB (neither preferred nor fallback). Embedding model not configured.", file=sys.stderr)
             
     except sqlite3.Error as e:
-        print(f"[Config] SQLite error fetching embedding model: {e}. Embedding model not configured.", file=sys.stderr)
+        logging.info(f"[Config] SQLite error fetching embedding model: {e}. Embedding model not configured.", file=sys.stderr)
         if 'conn' in locals() and conn: conn.close() 
     except Exception as e_global: 
-        print(f"[Config] Unexpected error fetching embedding model: {e_global}. Embedding model not configured.", file=sys.stderr)
+        logging.info(f"[Config] Unexpected error fetching embedding model: {e_global}. Embedding model not configured.", file=sys.stderr)
     
     return model_identifier
 
@@ -95,7 +96,7 @@ def _get_global_provider_config_from_db(db_path: str, provider_name_in_db: str) 
     conn = None
     try:
         if not os.path.exists(db_path):
-            print(f"[Config] Warning: SQLite DB not found at {db_path} for provider config.", file=sys.stderr)
+            logging.info(f"[Config] Warning: SQLite DB not found at {db_path} for provider config.", file=sys.stderr)
             return {}
 
         conn = sqlite3.connect(db_path)
@@ -111,7 +112,7 @@ def _get_global_provider_config_from_db(db_path: str, provider_name_in_db: str) 
         provider_row = cursor.fetchone()
 
         if not provider_row:
-            print(f"[Config] No active provider found in DB for name: {provider_name_in_db}", file=sys.stderr)
+            logging.info(f"[Config] No active provider found in DB for name: {provider_name_in_db}", file=sys.stderr)
             return {} 
 
         provider_id, endpoints_json_str = provider_row
@@ -122,7 +123,7 @@ def _get_global_provider_config_from_db(db_path: str, provider_name_in_db: str) 
                 if isinstance(endpoints_data, dict):
                     config_data.update(endpoints_data) 
             except json.JSONDecodeError:
-                print(f"[Config] Warning: Could not parse endpoints JSON for {provider_name_in_db}: {endpoints_json_str}", file=sys.stderr)
+                logging.info(f"[Config] Warning: Could not parse endpoints JSON for {provider_name_in_db}: {endpoints_json_str}", file=sys.stderr)
 
         # Step 2: Get the global API key from api_keys table using provider_id
         cursor.execute("""
@@ -136,15 +137,15 @@ def _get_global_provider_config_from_db(db_path: str, provider_name_in_db: str) 
         if key_row and key_row[0]:
             config_data['api_key'] = key_row[0]
         else:
-            print(f"[Config] No active global API key found in DB for provider: {provider_name_in_db} (ID: {provider_id})", file=sys.stderr)
+            logging.info(f"[Config] No active global API key found in DB for provider: {provider_name_in_db} (ID: {provider_id})", file=sys.stderr)
         
         if config_data: 
-             print(f"[Config] Loaded global config for {provider_name_in_db} from DB", file=sys.stderr)
+             logging.info(f"[Config] Loaded global config for {provider_name_in_db} from DB", file=sys.stderr)
             
     except sqlite3.Error as e:
-        print(f"[Config] SQLite error fetching config for {provider_name_in_db}: {e}", file=sys.stderr)
+        logging.info(f"[Config] SQLite error fetching config for {provider_name_in_db}: {e}", file=sys.stderr)
     except Exception as e_global:
-        print(f"[Config] Unexpected error fetching config for {provider_name_in_db}: {e_global}", file=sys.stderr)
+        logging.info(f"[Config] Unexpected error fetching config for {provider_name_in_db}: {e_global}", file=sys.stderr)
     finally:
         if conn:
             conn.close()
@@ -351,6 +352,6 @@ if os.getenv("PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY"):
     try:
         settings.PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY = int(os.getenv("PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY"))
     except ValueError:
-        print(f"[Config] Warning: Invalid value for PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY env var. Using default: {settings.PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY}", file=sys.stderr)
+        logging.info(f"[Config] Warning: Invalid value for PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY env var. Using default: {settings.PYTHON_LIVE_SEARCH_SCRAPE_CONCURRENCY}", file=sys.stderr)
 
-print(f"[Config] Effective LIVE_SEARCH_SCRAPE_CONCURRENCY: {settings.LIVE_SEARCH_SCRAPE_CONCURRENCY}", file=sys.stderr)
+logging.info(f"[Config] Effective LIVE_SEARCH_SCRAPE_CONCURRENCY: {settings.LIVE_SEARCH_SCRAPE_CONCURRENCY}", file=sys.stderr)

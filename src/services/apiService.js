@@ -23,15 +23,13 @@ async function validateApiKey(providerName, apiKey) {
     }
 
     // Get the provider module
-    const provider = providerManager.getProvider(providerName);
-    
     const providerModule = providerManager.getProvider(providerName);
     
     if (providerModule && typeof providerModule.validateApiKey === 'function') {
       // Use the provider-specific validation if available
       
       // Fetch the provider's DB record to pass as config
-      const { db } = require('../models/db'); 
+      const { db } = require('../models/db');
       const providerDbRecord = await db.getAsync('SELECT * FROM api_providers WHERE name = ?', [providerName]);
 
       if (!providerDbRecord) {
@@ -81,7 +79,7 @@ async function validateApiKey(providerName, apiKey) {
             modelsEndpoint = parsedEndpoints.models;
           }
         } catch (e) {
-          console.error(`[apiService.validateApiKey] Failed to parse endpoints for ${providerName}, using default /v1/models. Error: ${e.message}`);
+          console.error("[apiService.validateApiKey] Failed to parse endpoints for %s, using default /v1/models. Error: %s", String(providerName).replace(/\n|\r/g, ''), e.message);
         }
       }
       
@@ -101,38 +99,12 @@ async function validateApiKey(providerName, apiKey) {
             errorMessage = `API key for ${providerName} is invalid or not authorized (generic test connection).`;
           }
         }
-        console.error(errorMessage);
+        console.error('%s', String(errorMessage).replace(/\n|\r/g, ''));
         return { isValid: false, message: errorMessage };
       }
     }
-
-    // Fallback - should not be reached if logic above is complete
-    // const validationResult = await provider.validateApiKey(apiKey);
-    
-    // If the validation result is an object with isValid property, use that
-    // Handle both old format (boolean) and new format (object with isValid and errorMessage)
-    const validationResult = await provider.validateApiKey(apiKey);
-    
-    // If the validation result is an object with isValid property, use that
-    if (typeof validationResult === 'object' && validationResult !== null && 'isValid' in validationResult) {
-      return {
-        isValid: validationResult.isValid,
-        message: validationResult.isValid 
-          ? `API key for ${providerName} is valid` 
-          : validationResult.errorMessage || `API key for ${providerName} is invalid or expired`
-      };
-    } 
-    
-    // Otherwise, handle the legacy boolean return format
-    const isValid = Boolean(validationResult);
-    return {
-      isValid,
-      message: isValid 
-        ? `API key for ${providerName} is valid` 
-        : `API key for ${providerName} is invalid or expired`
-    };
   } catch (error) {
-    console.error(`Error validating API key for ${providerName}:`, error);
+    console.error("Error validating API key for %s:", String(providerName).replace(/\n|\r/g, ''), error);
     return {
       isValid: false,
       message: `Error validating API key: ${error.message}`

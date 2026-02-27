@@ -36,7 +36,7 @@ exports.getUserToolConfig = async (req, res) => {
     try {
       configData = JSON.parse(row.config);
     } catch (parseError) {
-      console.error(`Error parsing tool config JSON for user ${userId}, tool ${toolName}:`, parseError);
+      console.error('Error parsing tool config JSON for user %s, tool %s:', String(userId).replace(/\n|\r/g, ''), String(toolName).replace(/\n|\r/g, ''), parseError);
       // Return the raw string if parsing fails? Or return error? Let's return null.
       return res.status(200).json({ success: true, data: null, warning: 'Stored config is not valid JSON.' });
     }
@@ -44,7 +44,7 @@ exports.getUserToolConfig = async (req, res) => {
     res.status(200).json({ success: true, data: configData });
 
   } catch (error) {
-    console.error(`Error fetching tool config for user ${userId}, tool ${toolName}:`, error);
+    console.error('Error fetching tool config for user %s, tool %s:', String(userId).replace(/\n|\r/g, ''), String(toolName).replace(/\n|\r/g, ''), error);
     res.status(500).json({ success: false, message: 'Error fetching tool configuration.' });
   }
 };
@@ -72,14 +72,14 @@ exports.saveUserToolConfig = async (req, res) => {
     // Ensure the config is stored as a JSON string
     configString = JSON.stringify(config);
   } catch (stringifyError) {
-    console.error(`Error stringifying tool config for user ${userId}, tool ${toolName}:`, stringifyError);
+    console.error('Error stringifying tool config for user %s, tool %s:', String(userId).replace(/\n|\r/g, ''), String(toolName).replace(/\n|\r/g, ''), stringifyError);
     return res.status(400).json({ success: false, message: 'Invalid config object provided.' });
   }
 
   try {
     // Use INSERT OR REPLACE (SQLite specific) or similar logic for upsert
     // This relies on the UNIQUE(user_id, tool_name) constraint
-    const result = await db.runAsync(`
+    await db.runAsync(`
       INSERT INTO user_tool_configs (user_id, tool_name, config)
       VALUES (?, ?, ?)
       ON CONFLICT(user_id, tool_name) DO UPDATE SET
@@ -104,7 +104,7 @@ exports.saveUserToolConfig = async (req, res) => {
     res.status(200).json({ success: true, message: 'Configuration saved successfully.', data: updatedConfigData });
 
   } catch (error) {
-    console.error(`Error saving tool config for user ${userId}, tool ${toolName}:`, error);
+    console.error('Error saving tool config for user %s, tool %s:', String(userId).replace(/\n|\r/g, ''), String(toolName).replace(/\n|\r/g, ''), error);
     res.status(500).json({ success: false, message: 'Error saving tool configuration.' });
   }
 };

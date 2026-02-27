@@ -32,39 +32,32 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 from typing import Dict, Optional, List, Any
-from contextlib import asynccontextmanager
 import json
 
 from . import models
 from . import config
-from .sub_workers.content_vector import get_content_vector, ContentVector
+from .sub_workers.content_vector import get_content_vector
 from .sub_workers.llm_reasoning import LLMReasoning
 from .sub_workers.search_scrape import SearchScrape
 from .sub_workers.document_processor import analyze_document_content 
 from .utils import setup_logger
-from .utils.rate_limit_manager import get_rate_limit_manager, RateLimitManager
-from .research_graph import create_research_graph 
+from .research_graph import create_research_graph
 from .sub_workers.research_comptroller import ResearchComptroller
-from langgraph.checkpoint.memory import MemorySaver 
 
+pdfplumber = None
+docx = None
+pd = None
 try:
-    import PyPDF2
+    import pdfplumber
 except ImportError:
-    PyPDF2 = None
-try:
-    import pdfplumber 
-except ImportError:
-    pdfplumber = None
     print("[main.py] Warning: pdfplumber not installed. Advanced PDF text and table extraction will not be available.")
 try:
     import docx
 except ImportError:
-    docx = None
     print("[main.py] Warning: python-docx not installed. DOCX text extraction will not be available for uploaded files.")
 try:
     import pandas as pd
 except ImportError:
-    pd = None
     print("[main.py] Warning: pandas not installed. Excel text extraction will not be available for uploaded files.")
 
 class HealthCheckFilter(logging.Filter):
@@ -116,7 +109,7 @@ async def shutdown_event():
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     error_details = exc.errors()
-    logger.error(f"FastAPI Request Validation Error: {error_details}")
+    logger.error("FastAPI Request Validation Error: %s", error_details)
     return JSONResponse(status_code=422, content={"detail": error_details})
 
 @app.get("/health", status_code=200)
@@ -151,7 +144,7 @@ def _extract_text_and_tables_from_pdf_with_pdfplumber(file_path: str) -> tuple[s
                 if page_text: full_text.append(page_text)
                 tables_on_page = page.extract_tables()
                 if tables_on_page: extracted_tables_data.extend(tables_on_page)
-    except Exception as e: logger.error(f"Error pdfplumber PDF {file_path}: {e}", exc_info=True)
+    except Exception as e: logger.error("Error pdfplumber PDF %s: %s", file_path, e, exc_info=True)
     return "\n".join(full_text), extracted_tables_data
 
 def _extract_text_from_docx(file_path: str) -> str:
@@ -160,7 +153,7 @@ def _extract_text_from_docx(file_path: str) -> str:
     try:
         doc = docx.Document(file_path)
         for para in doc.paragraphs: text += para.text + "\n"
-    except Exception as e: logger.error(f"Error DOCX {file_path}: {e}")
+    except Exception as e: logger.error("Error DOCX %s: %s", file_path, e)
     return text
 
 def _extract_text_from_excel(file_path: str) -> str:
@@ -171,7 +164,7 @@ def _extract_text_from_excel(file_path: str) -> str:
         for sheet_name in excel_file.sheet_names:
             df = excel_file.parse(sheet_name)
             text += f"Sheet: {sheet_name}\n{df.to_string(index=False, header=True)}\n\n"
-    except Exception as e: logger.error(f"Error Excel {file_path}: {e}")
+    except Exception as e: logger.error("Error Excel %s: %s", file_path, e)
     return text.strip()
 
 @app.post("/research_tasks", response_model=models.TaskCreationResponse, status_code=202)
@@ -196,25 +189,25 @@ async def create_research_task(request_params: models.DeepSearchRequest, request
     graph_config = {"recursion_limit": 150, "configurable": {"thread_id": task_id}}
 
     async def run_graph_and_process_events():
-        logger.info(f"[{task_id}] run_graph_and_process_events: Task starting.")
+        logger.info("[%s] run_graph_and_process_events: Task starting.", task_id)
         try:
-            logger.info(f"[{task_id}] run_graph_and_process_events: About to call research_graph_compiled.astream_log.")
+            logger.info("[%s] run_graph_and_process_events: About to call research_graph_compiled.astream_log.", task_id)
             async for _event_chunk in research_graph_compiled.astream_log(initial_graph_state_dict, config=graph_config, include_types=["llm", "chain", "tool", "retriever"]):
                 pass 
-            logger.info(f"[{task_id}] run_graph_and_process_events: research_graph_compiled.astream_log finished normally.")
+            logger.info("[%s] run_graph_and_process_events: research_graph_compiled.astream_log finished normally.", task_id)
         except asyncio.CancelledError:
-            logger.warning(f"[{task_id}] run_graph_and_process_events: Graph task was EXPLICITLY CANCELLED (asyncio.CancelledError).")
+            logger.warning("[%s] run_graph_and_process_events: Graph task was EXPLICITLY CANCELLED (asyncio.CancelledError).", task_id)
             if not output_queue.full():
-                logger.info(f"[{task_id}] run_graph_and_process_events: Queuing 'cancelled' event due to explicit graph cancellation.")
+                logger.info("[%s] run_graph_and_process_events: Queuing 'cancelled' event due to explicit graph cancellation.", task_id)
                 await output_queue.put(models.SSEEvent(task_id=task_id, event_type="cancelled", payload=models.SSECancelledData(message="Task explicitly cancelled during graph execution.")))
         except Exception as e_graph:
-            logger.error(f"[{task_id}] run_graph_and_process_events: UNHANDLED EXCEPTION during graph execution: {type(e_graph).__name__} - {e_graph}", exc_info=True)
+            logger.error("[%s] run_graph_and_process_events: UNHANDLED EXCEPTION during graph execution: %s - %s", task_id, type(e_graph).__name__, e_graph, exc_info=True)
             if not output_queue.full():
-                logger.info(f"[{task_id}] run_graph_and_process_events: Queuing 'error' event due to unhandled graph exception.")
+                logger.info("[%s] run_graph_and_process_events: Queuing 'error' event due to unhandled graph exception.", task_id)
                 user_friendly_error = "The research process encountered an unexpected issue and had to stop. This could be due to a problem with an external service or an internal error. Please try your query again later."
                 await output_queue.put(models.SSEEvent(task_id=task_id, event_type="error", payload=models.SSEErrorData(error_message=user_friendly_error, stage="graph_runtime_error", is_fatal=True)))
         finally:
-            logger.info(f"[{task_id}] run_graph_and_process_events: FINALLY block reached. Task finished, errored, or cancelled.")
+            logger.info("[%s] run_graph_and_process_events: FINALLY block reached. Task finished, errored, or cancelled.", task_id)
             if task_id in task_output_queues:
                 await task_output_queues[task_id].put(None)
 
@@ -226,13 +219,13 @@ async def create_research_task(request_params: models.DeepSearchRequest, request
         try:
             await task_future 
         except asyncio.CancelledError:
-            logger.info(f"Task {current_task_id} (in done_callback) was properly cancelled.")
+            logger.info("Task %s (in done_callback) was properly cancelled.", current_task_id)
         except Exception as e_task_done:
-            logger.error(f"Task {current_task_id} (in done_callback) completed with an unhandled exception: {e_task_done}", exc_info=True)
+            logger.error("Task %s (in done_callback) completed with an unhandled exception: %s", current_task_id, e_task_done, exc_info=True)
         finally:
             await asyncio.sleep(getattr(config.settings, "TASK_CLEANUP_DELAY_SECONDS", 2.0)) 
             active_tasks.pop(current_task_id, None)
-            logger.debug(f"Task {current_task_id} removed from active_tasks.")
+            logger.debug("Task %s removed from active_tasks.", current_task_id)
 
     research_task.add_done_callback(lambda fut: asyncio.create_task(_task_done_callback_async(task_id, fut)))
     
@@ -241,6 +234,7 @@ async def create_research_task(request_params: models.DeepSearchRequest, request
 
 @app.post("/tasks/{task_id}/ingest_documents", response_model=models.GeneralVectorResponse, tags=["Research Tasks"])
 async def ingest_documents_for_task(task_id: str, request_body: models.IngestDocumentsRequest, services: Dict[str, Any] = Depends(get_services)):
+    task_id = task_id.replace('\n', '').replace('\r', '')
     cv_service = await get_content_vector()
     processed_docs_for_vector_store: List[models.GenericDocumentItem] = []
     base_upload_path = config.settings.UPLOAD_DIR_PYTHON_CAN_ACCESS
@@ -265,7 +259,7 @@ async def ingest_documents_for_task(task_id: str, request_body: models.IngestDoc
             else:
                 try: 
                     with open(full_file_path, 'r', encoding='utf-8', errors='replace') as f: text_content = f.read()
-                except: files_failed += 1; continue
+                except (IOError, OSError, UnicodeDecodeError): files_failed += 1; continue
             if text_content and text_content.strip():
                 doc_metadata_base = {"original_name": item.original_name, "source_type": "uploaded_file", "original_file_id_from_node": str(item.file_id_from_node), "file_type_provided": item.file_type, "is_from_uploaded_doc": True, "original_document_id": str(item.file_id_from_node), "original_document_name": item.original_name, **(item.metadata or {})}
                 if request_body.reasoning_model_info and request_body.api_config:
@@ -284,14 +278,14 @@ async def ingest_documents_for_task(task_id: str, request_body: models.IngestDoc
                                 elif c_type == "table_analysis": chunk_meta.update({k:v for k,v in chunk_res.items() if k in ["table_summary","key_insights_from_table","potential_entities_in_table","llm_analysis_error_table"] and v is not None})
                                 processed_docs_for_vector_store.append(models.GenericDocumentItem(id=f"file_{item.file_id_from_node}_{c_type}_{c_idx}", text_content=content, metadata=chunk_meta))
                     except Exception as e_llm_doc: 
-                        logger.error(f"Error during LLM analysis for document {item.original_name}: {e_llm_doc}", exc_info=True)
+                        logger.error("Error during LLM analysis for document %s: %s", item.original_name, e_llm_doc, exc_info=True)
                         processed_docs_for_vector_store.append(models.GenericDocumentItem(id=f"file_{item.file_id_from_node}_error", text_content=text_content.strip(), metadata={**doc_metadata_base, "llm_analysis_status": "error_processing", "llm_analysis_error": str(e_llm_doc)}))
                 else: 
                     processed_docs_for_vector_store.append(models.GenericDocumentItem(id=f"file_{item.file_id_from_node}_raw", text_content=text_content.strip(), metadata={**doc_metadata_base, "llm_analysis_status": "skipped_no_config"}))
                 files_processed += 1
             else: files_failed += 1
         except Exception as e_file_proc: 
-            logger.error(f"Error processing file item {item.original_name}: {e_file_proc}", exc_info=True)
+            logger.error("Error processing file item %s: %s", item.original_name, e_file_proc, exc_info=True)
             files_failed += 1
     if processed_docs_for_vector_store:
         try: await cv_service.add_documents(group_id=task_id, documents=processed_docs_for_vector_store)
@@ -299,28 +293,29 @@ async def ingest_documents_for_task(task_id: str, request_body: models.IngestDoc
     return models.GeneralVectorResponse(success=True, message=f"Ingestion complete. Processed: {files_processed}, Failed/Skipped: {files_failed}.", details={"files_processed": files_processed, "files_failed_or_skipped": files_failed, "items_added_to_vector_store": len(processed_docs_for_vector_store)})
 
 @app.get("/research_tasks/{task_id}/stream")
-async def stream_task_updates(task_id: str, request: Request): 
+async def stream_task_updates(task_id: str, request: Request):
+    task_id = task_id.replace('\n', '').replace('\r', '')
     output_queue = task_output_queues.get(task_id)
     task_instance = active_tasks.get(task_id)
     if not output_queue:
         if not task_instance or task_instance.done(): 
-            logger.info(f"Stream request for task {task_id}: Not found or completed.")
+            logger.info("Stream request for task %s: Not found or completed.", task_id)
             raise HTTPException(status_code=404, detail=f"Task {task_id} not found or completed.")
-        logger.error(f"Inconsistent state for task {task_id}: output queue missing but task active.")
+        logger.error("Inconsistent state for task %s: output queue missing but task active.", task_id)
         raise HTTPException(status_code=500, detail=f"Inconsistent state for task {task_id}.")
     if not task_instance: 
         task_output_queues.pop(task_id, None) 
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found (inconsistent state).")
 
     async def event_generator():
-        logger.info(f"[{task_id}] event_generator: SSE Stream event_generator starting.")
+        logger.info("[%s] event_generator: SSE Stream event_generator starting.", task_id)
         queue_getter = None
         heartbeat_waiter = None
         try:
             yield {"event": "heartbeat", "data": json.dumps({"message": "SSE stream initializing", "timestamp": asyncio.get_event_loop().time()}), "id": str(uuid.uuid4())}
             yield {"event": "progress", "data": models.SSEProgressData(stage="stream_start", message="SSE stream connected.").model_dump_json(), "id": str(uuid.uuid4())}
             
-            logger.info(f"[{task_id}] event_generator: Entering main event loop with 2s heartbeat.")
+            logger.info("[%s] event_generator: Entering main event loop with 2s heartbeat.", task_id)
 
             queue_getter = asyncio.create_task(output_queue.get())
             heartbeat_waiter = asyncio.create_task(asyncio.sleep(2.0))
@@ -334,38 +329,38 @@ async def stream_task_updates(task_id: str, request: Request):
                 if queue_getter in done:
                     sse_event = queue_getter.result()
                     if sse_event is None:
-                        logger.info(f"[{task_id}] event_generator: Received None sentinel, signaling end of stream.")
+                        logger.info("[%s] event_generator: Received None sentinel, signaling end of stream.", task_id)
                         break
 
                     yield {"event": sse_event.event_type, "data": sse_event.payload.model_dump_json() if sse_event.payload else "{}", "id": str(uuid.uuid4())}
                     
                     if sse_event.event_type in ["complete", "error", "cancelled"]:
-                        logger.info(f"[{task_id}] event_generator: Received terminal event '{sse_event.event_type}', exiting loop.")
+                        logger.info("[%s] event_generator: Received terminal event '%s', exiting loop.", task_id, sse_event.event_type)
                         break
                     
                     queue_getter = asyncio.create_task(output_queue.get())
 
                 if heartbeat_waiter in done:
-                    logger.debug(f"[{task_id}] event_generator: Sending 2s heartbeat.")
+                    logger.debug("[%s] event_generator: Sending 2s heartbeat.", task_id)
                     yield {"event": "heartbeat", "data": json.dumps({"timestamp": asyncio.get_event_loop().time()}), "id": str(uuid.uuid4())}
                     heartbeat_waiter = asyncio.create_task(asyncio.sleep(2.0))
 
         except asyncio.CancelledError:
-            logger.warning(f"[{task_id}] event_generator: EXPLICITLY CANCELLED (asyncio.CancelledError caught). This usually means client disconnected or server shut down stream response.")
+            logger.warning("[%s] event_generator: EXPLICITLY CANCELLED (asyncio.CancelledError caught). This usually means client disconnected or server shut down stream response.", task_id)
         except Exception as e_sse_gen:
-            logger.error(f"[{task_id}] event_generator: UNHANDLED EXCEPTION in SSE event_generator: {type(e_sse_gen).__name__} - {e_sse_gen}", exc_info=True)
+            logger.error("[%s] event_generator: UNHANDLED EXCEPTION in SSE event_generator: %s - %s", task_id, type(e_sse_gen).__name__, e_sse_gen, exc_info=True)
             try:
                 error_payload = models.SSEErrorData(error_message=f"SSE stream error: {type(e_sse_gen).__name__} - {str(e_sse_gen)}", is_fatal=True, stage="sse_generator_exception")
                 yield {"event": "error", "data": error_payload.model_dump_json(), "id": str(uuid.uuid4())}
             except Exception as e_report_err:
-                logger.error(f"[{task_id}] event_generator: Failed to send error event during exception handling: {e_report_err}", exc_info=True)
+                logger.error("[%s] event_generator: Failed to send error event during exception handling: %s", task_id, e_report_err, exc_info=True)
         finally:
             if queue_getter and not queue_getter.done():
                 queue_getter.cancel()
             if heartbeat_waiter and not heartbeat_waiter.done():
                 heartbeat_waiter.cancel()
             task_output_queues.pop(task_id, None)
-            logger.info(f"[{task_id}] event_generator: FINALLY block. SSE event_generator for task {task_id} finished/cancelled and queue removed.")
+            logger.info("[%s] event_generator: FINALLY block. SSE event_generator for task %s finished/cancelled and queue removed.", task_id, task_id)
             
     return EventSourceResponse(event_generator())
 
@@ -398,7 +393,7 @@ async def add_vector_documents(req_data: models.AddDocumentsRequest):
         if res.get("success"): return models.GeneralVectorResponse(success=True, message=res.get("message","Docs processed."), details=res)
         raise HTTPException(status_code=500, detail=res.get("message", "Failed to add docs."))
     except Exception as e: 
-        logger.error(f"Error in add_vector_documents: {e}", exc_info=True)
+        logger.error("Error in add_vector_documents: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/vector/search", response_model=models.VectorSearchResponse, tags=["Vector Service"])
@@ -411,7 +406,7 @@ async def search_vector_documents(req_data: models.VectorSearchRequest):
         results = await cv.search_vectors(query_vector=q_emb_list[0], limit=req_data.top_k, group_id=req_data.group_id)
         return models.VectorSearchResponse(success=True, message=f"Found {len(results)} results.", results=results)
     except Exception as e: 
-        logger.error(f"Error in search_vector_documents: {e}", exc_info=True)
+        logger.error("Error in search_vector_documents: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/vector/delete_by_group", response_model=models.GeneralVectorResponse, tags=["Vector Service"])
@@ -422,7 +417,7 @@ async def delete_vectors_by_group(req_data: models.DeleteByGroupIdRequest):
         if res.get("success"): return models.GeneralVectorResponse(success=True, message=res.get("message", f"Docs for group {req_data.group_id} deleted."))
         raise HTTPException(status_code=500, detail=res.get("message", "Failed to delete by group."))
     except Exception as e: 
-        logger.error(f"Error in delete_vectors_by_group: {e}", exc_info=True)
+        logger.error("Error in delete_vectors_by_group: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/vector/embed-texts", response_model=models.EmbedTextsResponse, tags=["Vector Service"])
@@ -440,7 +435,7 @@ async def embed_texts_endpoint(req_data: models.EmbedTextsRequest):
             raise HTTPException(status_code=500, detail="Embedding generation failed or returned unexpected format.")
         return models.EmbedTextsResponse(embeddings=embs, model_used=cv.model_id_or_path, dimension=cv.embedding_dim)
     except Exception as e: 
-        logger.error(f"Error in embed_texts_endpoint: {e}", exc_info=True)
+        logger.error("Error in embed_texts_endpoint: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

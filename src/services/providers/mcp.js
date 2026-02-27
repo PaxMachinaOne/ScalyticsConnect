@@ -2,7 +2,6 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 // Use the wrapper instead of direct import
 const mcpWrapper = require('./mcpWrapper');
-const { getProviderConfig } = require('../../utils/providerConfig');
 
 /**
  * Scalytics MCP Provider Definition

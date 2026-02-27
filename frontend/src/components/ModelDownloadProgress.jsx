@@ -305,7 +305,7 @@ const ModelDownloadProgress = ({
       case -1: return 'text-red-600 dark:text-red-400';
       default: return 'text-blue-600 dark:text-dark-link'; 
     }
-  }
+  };
 
   const getRemainingTime = () => {
     if (!speed || speed === 0 || !totalBytes || !bytesDownloaded || bytesDownloaded >= totalBytes) {

@@ -85,15 +85,15 @@ const userService = {
           subject: `Your Scalytics Copilot Registration Link`,
           body: `Hello ${userData.username},
 
-Hi, I’m Auri.
-You’ve been invited to join Scalytics Copilot — your private AI Agent System for secure, intelligent collaboration. 
+Hi, I'm Auri.
+You've been invited to join Scalytics Copilot — your private AI Agent System for secure, intelligent collaboration. 
 Please click the link below to set your password and activate your account:
 
 ${response.data.registrationLink}
 
 This link will expire in 24 hours for security reasons.
 
-If you have any questions, feel free to reach out to your administrator — they’ll be happy to help.
+If you have any questions, feel free to reach out to your administrator — they'll be happy to help.
 
 Looking forward to working together,
 Auri, your enterprise assistant`

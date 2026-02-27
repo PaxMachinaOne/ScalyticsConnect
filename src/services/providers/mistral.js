@@ -26,7 +26,7 @@ async function discoverModels(options = {}) {
     const validationResult = await validateApiKey(apiKey);
     
     if (!validationResult.isValid) {
-      console.error(`Invalid API key provided for Mistral model discovery: ${validationResult.errorMessage}`);
+      console.error('Invalid API key provided for Mistral model discovery: %s', validationResult.errorMessage);
       return { models: [], error: validationResult.errorMessage };
     }
     
@@ -49,7 +49,7 @@ async function discoverModels(options = {}) {
       context_window: getContextWindow(model.id)
     }));
     
-    console.log(`Discovered ${models.length} Mistral models with valid API key`);
+    console.log('Discovered %s Mistral models with valid API key', models.length);
     return { models, error: null };
   } catch (error) {
     console.error('Error discovering Mistral models:', error.message);
@@ -183,7 +183,6 @@ async function streamCompletion(options) {
     apiKey,
     modelId,
     messages,
-    streamingContext,
     abortSignal, // Accept abortSignal
     onToken // Accept onToken callback
   } = options;

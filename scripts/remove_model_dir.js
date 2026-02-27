@@ -7,11 +7,10 @@
  */
 
 const fs = require('fs');
-const fsPromises = fs.promises;
 const path = require('path');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const util = require('util');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 // Check arguments
 if (process.argv.length !== 3) {
@@ -33,28 +32,22 @@ async function removeConfigJson() {
   const configPath = path.join(targetDir, 'config.json');
   
   try {
-    // Check if file exists first
-    const exists = fs.existsSync(configPath);
-    if (!exists) {
-      console.log('config.json does not exist, skipping');
-      return;
-    }
-    
-    console.log(`Found config.json at ${configPath}, attempting to remove it directly`);
-    
+    console.log('Attempting to remove config.json at %s', configPath);
+
     // Try several methods to delete the file
     let deleted = false;
-    
+
     // Method 1: Node.js fs.unlinkSync
     try {
       console.log('Method 1: Using fs.unlinkSync');
       fs.unlinkSync(configPath);
-      deleted = !fs.existsSync(configPath);
-      if (deleted) {
-        console.log('  Success: Deleted with unlinkSync');
-        return true;
-      }
+      console.log('  Success: Deleted with unlinkSync');
+      return true;
     } catch (e) {
+      if (e.code === 'ENOENT') {
+        console.log('config.json does not exist, skipping');
+        return;
+      }
       console.log(`  Failed: ${e.message}`);
     }
     
@@ -75,7 +68,7 @@ async function removeConfigJson() {
     // Method 3: Using rm command
     try {
       console.log('Method 3: Using rm -f command');
-      await execPromise(`rm -f "${configPath}"`);
+      await execFilePromise('rm', ['-f', configPath]);
       deleted = !fs.existsSync(configPath);
       if (deleted) {
         console.log('  Success: Deleted with rm -f command');
@@ -88,7 +81,7 @@ async function removeConfigJson() {
     // Method 4: Using rm with sudo
     try {
       console.log('Method 4: Using sudo rm -f command');
-      await execPromise(`sudo rm -f "${configPath}"`);
+      await execFilePromise('sudo', ['rm', '-f', configPath]);
       deleted = !fs.existsSync(configPath);
       if (deleted) {
         console.log('  Success: Deleted with sudo rm -f command');
@@ -138,7 +131,7 @@ async function removeDirectory() {
     // Method 2: Using child_process 
     try {
       console.log('Method 2: Using rm -rf command');
-      await execPromise(`rm -rf "${targetDir}"`);
+      await execFilePromise('rm', ['-rf', targetDir]);
       if (!fs.existsSync(targetDir)) {
         console.log('Success: Directory deleted with rm -rf command');
         return true;
@@ -150,7 +143,7 @@ async function removeDirectory() {
     // Method 3: Using sudo
     try {
       console.log('Method 3: Using sudo rm -rf command');
-      await execPromise(`sudo rm -rf "${targetDir}"`);
+      await execFilePromise('sudo', ['rm', '-rf', targetDir]);
       if (!fs.existsSync(targetDir)) {
         console.log('Success: Directory deleted with sudo rm -rf command');
         return true;

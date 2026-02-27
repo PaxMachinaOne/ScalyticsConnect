@@ -180,13 +180,13 @@ const ServiceIntegrationsPanel = () => {
         </div>
       )}
       
-      {/* Empty State or Form */}
-      {(isCreating || selectedIntegration) ? (
+      {/* Form */}
+      {(isCreating || selectedIntegration) && (
         <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-4">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary mb-4">
             {isCreating ? 'Add New Integration' : 'Edit Integration'}
           </h2>
-          
+
           <IntegrationForm
             integration={selectedIntegration}
             onSave={handleSaveIntegration}
@@ -194,7 +194,9 @@ const ServiceIntegrationsPanel = () => {
             isLoading={isLoading}
           />
         </div>
-      ) : (!isCreating && !selectedIntegration && integrations.length === 0) && (
+      )}
+      {/* Empty State */}
+      {!isCreating && !selectedIntegration && integrations.length === 0 && (
         <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6">
           <div className="text-center">
             <svg 

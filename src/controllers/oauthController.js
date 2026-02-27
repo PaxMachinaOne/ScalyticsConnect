@@ -3,7 +3,6 @@
 const jwt = require('jsonwebtoken');
 const { db } = require('../models/db');
 const User = require('../models/User');
-const Integration = require('../models/Integration');
 const authProviderService = require('../services/authProviderService');
 
 /**
@@ -14,64 +13,67 @@ const authProviderService = require('../services/authProviderService');
 // Process OAuth callback from external providers
 exports.handleOAuthCallback = async (req, res) => {
   try {
-    const { provider, code, state } = req.body;
-    
-    if (!provider || !code) {
+    const { provider, code } = req.body;
+
+    // Map to hardcoded provider names to break taint chain from req.body
+    const providerMap = { google: 'google', github: 'github', microsoft: 'microsoft', azure_ad: 'azure_ad', okta: 'okta', 'api-provider': 'api-provider' };
+    const safeProvider = provider ? providerMap[provider] : undefined;
+    if (!safeProvider) {
       return res.status(400).json({
         success: false,
-        message: 'Provider and authorization code are required'
+        message: 'Unsupported or missing authentication provider'
       });
     }
-    
+
     // Get provider configuration from database or environment
-    const providerConfig = await authProviderService.getProviderConfig(provider);
+    const providerConfig = await authProviderService.getProviderConfig(safeProvider);
     if (!providerConfig) {
       return res.status(400).json({
         success: false,
-        message: `Provider ${provider} is not configured`
+        message: `Provider ${safeProvider} is not configured`
       });
     }
-    
+
     // Exchange code for token with provider
     let tokenData;
     try {
-      tokenData = await exchangeCodeForToken(code, providerConfig, provider);
+      tokenData = await exchangeCodeForToken(code || '', providerConfig, safeProvider);
     } catch (error) {
-      console.error(`Error exchanging code for token with ${provider}:`, error);
+      console.error('Error exchanging code for token with %s:', String(safeProvider).replace(/\n|\r/g, ''), error);
       return res.status(401).json({
         success: false,
-        message: `Authentication failed with ${provider}`
+        message: `Authentication failed with ${safeProvider}`
       });
     }
-    
+
     // Get user profile from provider
     let userProfile;
     try {
-      userProfile = await getUserProfile(tokenData.access_token, provider, providerConfig);
+      userProfile = await getUserProfile(tokenData.access_token, safeProvider, providerConfig);
     } catch (error) {
-      console.error(`Error getting user profile from ${provider}:`, error);
+      console.error('Error getting user profile from %s:', String(safeProvider).replace(/\n|\r/g, ''), error);
       return res.status(401).json({
         success: false,
-        message: `Failed to retrieve user profile from ${provider}`
+        message: `Failed to retrieve user profile from ${safeProvider}`
       });
     }
-    
+
     // Find or create a user based on the provider profile
-    const user = await findOrCreateUser(userProfile, provider);
-    
+    const user = await findOrCreateUser(userProfile, safeProvider);
+
     // Generate a token that includes the auth method
-    const token = generateOAuthToken(user.id, provider);
-    
+    const token = generateOAuthToken(user.id, safeProvider);
+
     // Log the successful login
     await db.runAsync(
       'INSERT INTO access_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)',
-      [user.id, 'oauth_login', `Authenticated via ${provider}`, req.ip]
+      [user.id, 'oauth_login', `Authenticated via ${safeProvider}`, req.ip]
     );
-    
+
     // Return the user and token
     res.status(200).json({
       success: true,
-      message: `Login via ${provider} successful`,
+      message: `Login via ${safeProvider} successful`,
       token,
       user: {
         id: user.id,
@@ -125,7 +127,17 @@ exports.unlinkProvider = async (req, res) => {
   try {
     const { provider } = req.params;
     const userId = req.user.id;
-    
+
+    // Map to hardcoded provider names to break taint chain from req.params
+    const providerMap = { google: 'google', github: 'github', microsoft: 'microsoft', azure_ad: 'azure_ad', okta: 'okta', 'api-provider': 'api-provider' };
+    const safeProvider = providerMap[provider];
+    if (!safeProvider) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported authentication provider'
+      });
+    }
+
     // Ensure user has a password set before unlinking (avoid lockout)
     const user = await User.findById(userId);
     if (!user.password) {
@@ -134,16 +146,16 @@ exports.unlinkProvider = async (req, res) => {
         message: 'Cannot unlink provider: You must set a password first to avoid being locked out'
       });
     }
-    
+
     // Remove the provider link
     await db.runAsync(
       'DELETE FROM user_oauth_providers WHERE user_id = ? AND provider = ?',
-      [userId, provider]
+      [userId, safeProvider]
     );
-    
+
     res.status(200).json({
       success: true,
-      message: `Successfully unlinked ${provider} from your account`
+      message: `Successfully unlinked ${safeProvider} from your account`
     });
   } catch (error) {
     console.error('Error unlinking provider:', error);

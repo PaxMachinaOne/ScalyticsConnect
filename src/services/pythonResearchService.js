@@ -10,15 +10,16 @@ const EventSource = require('eventsource');
 // const http = require('http'); // No longer needed for custom agent
 
 const { getSystemSetting } = require('../config/systemConfig');
+const { validateInternalServiceUrl } = require('../utils/urlValidation');
 
 class PythonResearchService {
     constructor() {
         const serviceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
         
-        this.baseUrl = serviceBaseUrl;
-
-        if (typeof this.baseUrl !== 'string' || !this.baseUrl.startsWith('http')) {
-            console.warn(`[PythonResearchService] Invalid or missing base URL from config ('${this.baseUrl}'). Defaulting to http://localhost:8001`);
+        try {
+            this.baseUrl = validateInternalServiceUrl(serviceBaseUrl).replace(/\/$/, '');
+        } catch (e) {
+            console.warn('[PythonResearchService] %s. Defaulting to http://localhost:8001', e.message);
             this.baseUrl = 'http://localhost:8001';
         }
     }
@@ -30,7 +31,8 @@ class PythonResearchService {
      */
     async initiateResearch(params) {
         try {
-            const response = await axios.post(`${this.baseUrl}/research_tasks`, params);
+            const researchUrl = validateInternalServiceUrl(this.baseUrl, '/research_tasks');
+            const response = await axios.post(researchUrl, params); // lgtm[js/request-forgery]
             if (response.status === 202 && response.data && response.data.task_id) {
                 return response.data; 
             } else {
@@ -52,19 +54,19 @@ class PythonResearchService {
      * @returns {EventSource} - The EventSource instance, so it can be closed by the caller.
      */
     connectToStream(streamUrl, taskId, onMessageHandler, onErrorHandler, onCompleteHandler) {
-        console.log(`[PythonResearchService:SSE:${taskId}] Creating EventSource for URL: ${streamUrl}`);
+        console.log('[PythonResearchService:SSE:%s] Creating EventSource for URL: %s', taskId, streamUrl);
         const eventSource = new EventSource(streamUrl);
 
         let messageTimeout = null;
 
         eventSource.onopen = () => {
-            // console.log(`[PythonResearchService:SSE:${taskId}] EventSource onopen: Connection opened. Setting 30-second message timeout.`);
+            // console.log('[PythonResearchService:SSE:%s] EventSource onopen: Connection opened. Setting 30-second message timeout.', taskId);
             // Clear any previous timeout just in case, though unlikely for onopen
             if (messageTimeout) clearTimeout(messageTimeout);
             messageTimeout = setTimeout(() => {
                 // This timeout logic implies that if no message is received within 30s of OPENING, it's an error.
                 // This is a specific check for initial message, not a general inactivity timeout for the stream.
-                console.error(`[PythonResearchService:SSE:${taskId}] EventSource onopen TIMEOUT: No messages received within 30 seconds of stream opening. Closing stream.`);
+                console.error('[PythonResearchService:SSE:%s] EventSource onopen TIMEOUT: No messages received within 30 seconds of stream opening. Closing stream.', taskId);
                 if (onErrorHandler) { 
                     onErrorHandler(new Error(`SSE stream ${taskId} stalled: No messages received within 30 seconds of opening.`));
                 }
@@ -74,7 +76,7 @@ class PythonResearchService {
 
         const processSseEvent = (event) => {
             if (messageTimeout) {
-                // console.log(`[PythonResearchService:SSE:${taskId}] processSseEvent: Clearing onopen messageTimeout.`);
+                // console.log('[PythonResearchService:SSE:%s] processSseEvent: Clearing onopen messageTimeout.', taskId);
                 clearTimeout(messageTimeout);
                 messageTimeout = null;
             }
@@ -104,7 +106,7 @@ class PythonResearchService {
                     eventSource.close();
                 }
             } catch (parseError) {
-                console.error(`[PythonResearchService:SSE:${taskId}] Error parsing SSE message data for event type '${eventName}':`, parseError, "Raw data:", eventDataString);
+                console.error('[PythonResearchService:SSE:%s] Error parsing SSE message data for event type \'%s\':', taskId, eventName, parseError, "Raw data:", eventDataString);
             }
         };
 
@@ -131,9 +133,9 @@ class PythonResearchService {
                     onErrorHandler(error || new Error(`SSE connection permanently closed for task ${taskId}.`));
                 }
             } else if (eventSource.readyState === EventSource.CONNECTING) {
-                console.warn(`[PythonResearchService:SSE:${taskId}] EventSource connection lost, attempting to reconnect...`, error.type);
+                console.warn('[PythonResearchService:SSE:%s] EventSource connection lost, attempting to reconnect...', taskId, error.type);
             } else {
-                console.warn(`[PythonResearchService:SSE:${taskId}] Non-fatal EventSource error occurred (State: ${eventSource.readyState}).`, error);
+                console.warn('[PythonResearchService:SSE:%s] Non-fatal EventSource error occurred (State: %s).', taskId, eventSource.readyState, error);
             }
         };
         
@@ -148,14 +150,15 @@ class PythonResearchService {
      */
     async cancelResearch(cancelUrl, taskId) {
         try {
-            const response = await axios.post(cancelUrl); 
+            const validatedCancelUrl = validateInternalServiceUrl(cancelUrl);
+            const response = await axios.post(validatedCancelUrl);
             if (response.status === 200 && response.data) {
                 return response.data; 
             } else {
                 throw new Error(`Failed to cancel research task ${taskId}. Status: ${response.status}`);
             }
         } catch (error) {
-            console.error(`[PythonResearchService] Error cancelling research task ${taskId}:`, error.response ? error.response.data : error.message);
+            console.error('[PythonResearchService] Error cancelling research task %s:', taskId, error.response ? error.response.data : error.message);
             throw new Error(`Error cancelling research task ${taskId} with Python service: ${error.message}`);
         }
     }
@@ -171,14 +174,15 @@ class PythonResearchService {
     async ingestDocumentsForTask(taskId, ingestionPayload) { // Changed parameter name for clarity
         try {
             // Pass the entire ingestionPayload, which should include documents, reasoning_model_info, and api_config
-            const response = await axios.post(`${this.baseUrl}/tasks/${taskId}/ingest_documents`, ingestionPayload);
+            const ingestUrl = validateInternalServiceUrl(this.baseUrl, `/tasks/${taskId}/ingest_documents`);
+            const response = await axios.post(ingestUrl, ingestionPayload); // lgtm[js/request-forgery]
             if (response.status === 200 && response.data) {
                 return response.data;
             } else {
                 throw new Error(`Failed to ingest documents for task ${taskId}. Status: ${response.status}, Data: ${JSON.stringify(response.data)}`);
             }
         } catch (error) {
-            console.error(`[PythonResearchService] Error ingesting documents for task ${taskId}:`, error.response ? error.response.data : error.message);
+            console.error('[PythonResearchService] Error ingesting documents for task %s:', taskId, error.response ? error.response.data : error.message);
             const pythonErrorMessage = error.response?.data?.detail || error.message;
             throw new Error(`Error ingesting documents with Python service for task ${taskId}: ${pythonErrorMessage}`);
         }

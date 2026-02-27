@@ -2,9 +2,8 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const huggingFaceService = require('../services/huggingFaceService');
 const axios = require('axios');
-const { spawn } = require('child_process');
+const { sanitizePathSegment } = require('../utils/urlValidation');
 const path = require('path');
-const fs = require('fs');
 const db = require('../models/db');
 const { encryptionHelpers } = require('../utils/encryptionUtils');
 /**
@@ -44,7 +43,7 @@ exports.searchModels = async (req, res) => {
 
         const modelInfoPromises = curatedEmbeddingModels.map(modelId =>
             huggingFaceService.getModelInfo(modelId).catch(err => {
-                console.error(`[HF Controller] Failed to fetch info for curated model ${modelId}: ${err.message}`);
+                console.error('[HF Controller] Failed to fetch info for curated model %s: %s', modelId, err.message);
                 return null;
             })
         );
@@ -96,7 +95,7 @@ exports.searchModels = async (req, res) => {
                   description: detailedInfo.description || model.description
                 };
               } catch (err) {
-                console.warn(`Failed to get detailed info for ${model.modelId}:`, err.message);
+                console.warn('Failed to get detailed info for %s:', model.modelId, err.message);
                 return model; // Return original if detailed fetch fails
               }
             })
@@ -382,7 +381,7 @@ exports.listModelFiles = async (req, res) => {
     }
     
     // API endpoint for HF files API
-    const apiUrl = `https://huggingface.co/api/models/${modelId}/tree/main`;
+    const apiUrl = `https://huggingface.co/api/models/${sanitizePathSegment(modelId)}/tree/main`;
     const headers = {};
     if (process.env.HUGGINGFACE_API_KEY) {
       headers.Authorization = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;

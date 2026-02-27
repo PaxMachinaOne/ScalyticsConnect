@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const path = require('path');
-const fs = require('fs').promises;
 const { db } = require('../models/db');
-const apiKeyController = require('../controllers/apiKeyController');
-const { getProviderConfig, getProviderEndpoint, getProviderApiVersion } = require('../utils/providerConfig');
 const { handleExternalApiRequest } = require('./providers/handler');
 const Message = require('../models/Message');
 const Chat = require('../models/Chat'); 
@@ -64,7 +60,7 @@ exports.createChatCompletion = async (options) => {
             timestamp: new Date().toISOString()
         });
       } catch (updateError) {
-        console.error(`[chatService] Failed to update placeholder for tool ${toolName}:`, updateError);
+        console.error('[chatService] Failed to update placeholder for tool %s:', toolName, updateError);
       }
     }
 
@@ -101,7 +97,7 @@ exports.createChatCompletion = async (options) => {
         .then(toolResult => {
         })
         .catch(toolError => {
-          console.error(`[chatService] Error executing internal tool '${toolName}' (invoked via command):`, toolError);
+          console.error('[chatService] Error executing internal tool \'%s\' (invoked via command):', toolName, toolError);
           // The tool itself should ideally post an error message to the chat if it fails during its run.
           // For now, just log. A more robust error handling might involve another system message.
            Message.create({
@@ -116,7 +112,7 @@ exports.createChatCompletion = async (options) => {
       return { internalToolExecuted: true, toolName: toolName, statusMessage: "Tool process initiated." };
 
     } catch (toolSetupError) {
-      console.error(`[chatService] Error setting up or calling internal tool '${toolName}':`, toolSetupError);
+      console.error('[chatService] Error setting up or calling internal tool \'%s\':', toolName, toolSetupError);
       if (placeholderAssistantMessageId && streamingContext && streamingContext.chatId) {
         await Message.update(placeholderAssistantMessageId, { content: `Error starting tool ${toolName}: ${toolSetupError.message}`, isLoading: false });
         eventBus.publish('chat:error', { 
@@ -213,7 +209,7 @@ exports.createChatCompletion = async (options) => {
           [lastAssistantMessage.id, userId]
         );
         if (feedback && feedback.rating === -1) {
-          console.log(`[chatService] Applying grounding prompt due to negative feedback on message ${lastAssistantMessage.id}`);
+          console.log('[chatService] Applying grounding prompt due to negative feedback on message %s', lastAssistantMessage.id);
           const groundingInstruction = "[System Note: Previous response was rated negatively for grounding/accuracy. Please ensure this response is factually accurate and directly supported by the provided context.]\n";
           combinedUserMessage = groundingInstruction + combinedUserMessage;
         }
@@ -224,7 +220,6 @@ exports.createChatCompletion = async (options) => {
     // --- End Feedback Integration ---
 
     // Call the InferenceRouter (which handles formatting and worker pool)
-    const streamProvider = require('./providers/stream'); 
 
     function getDefaultStopTokens(model, isJsonGeneration = false) {
       // For JSON generation, use more aggressive stop tokens to prevent repetitive loops
@@ -282,12 +277,12 @@ exports.createChatCompletion = async (options) => {
         if (userSettings && userSettings.custom_system_prompt && userSettings.custom_system_prompt.trim() !== '') {
           userCustomPromptText = userSettings.custom_system_prompt.trim();
           finalSystemPrompt = userCustomPromptText; // Start with user prompt
-          console.log(`[chatService] Using user custom prompt for user ${userId}.`);
+          console.log('[chatService] Using user custom prompt for user %s.', userId);
         } else {
-           console.log(`[chatService] No user custom prompt found for user ${userId}.`);
+           console.log('[chatService] No user custom prompt found for user %s.', userId);
         }
       } catch (userSettingsError) {
-        console.error(`[chatService] Error fetching user settings for user ${userId}:`, userSettingsError);
+        console.error('[chatService] Error fetching user settings for user %s:', userId, userSettingsError);
         console.log(`[chatService] Proceeding without user custom prompt due to error.`);
       }
     } else {
@@ -298,10 +293,10 @@ exports.createChatCompletion = async (options) => {
     if (model.enable_scala_prompt) {
       if (finalSystemPrompt) {
         finalSystemPrompt += `\n\n${SCALA_SYSTEM_PROMPT}`;
-        console.log(`[chatService] Appending enforced Scala System Prompt for model ${model.id} after user prompt.`);
+        console.log('[chatService] Appending enforced Scala System Prompt for model %s after user prompt.', model.id);
       } else {
         finalSystemPrompt = SCALA_SYSTEM_PROMPT;
-        console.log(`[chatService] Using enforced Scala System Prompt for model ${model.id} (no user prompt found).`);
+        console.log('[chatService] Using enforced Scala System Prompt for model %s (no user prompt found).', model.id);
       }
     } else {
        if (finalSystemPrompt) {
@@ -359,7 +354,7 @@ exports.createChatCompletion = async (options) => {
     try {
       await Message.update(placeholderAssistantMessageId, { content: `Error: ${error.message}`, isLoading: false });
     } catch (dbError) {
-      console.error(`[createChatCompletion] Failed to update placeholder message ${placeholderAssistantMessageId} with error:`, dbError);
+      console.error('[createChatCompletion] Failed to update placeholder message %s with error:', placeholderAssistantMessageId, dbError);
     }
     throw error; 
   }
@@ -388,9 +383,9 @@ exports.replaceChatHistory = async (chatId, newMessages) => {
       });
     }
     await Chat.update(chatId, { updated_at: new Date().toISOString() });
-    console.log(`[ChatService] Replaced history for chat ${chatId}.`);
+    console.log("[ChatService] Replaced history for chat %s.", String(chatId).replace(/\n|\r/g, ''));
   } catch (error) {
-    console.error(`[ChatService] Error replacing chat history for chat ${chatId}:`, error);
+    console.error("[ChatService] Error replacing chat history for chat %s:", String(chatId).replace(/\n|\r/g, ''), error);
     throw error;
   }
 };
@@ -414,7 +409,7 @@ async function processFilesForContext(fileIds, userId) {
           // Format file content for inclusion in AI prompt
           return `--- File: ${fileData.filename} (${fileData.type}) ---\n${fileData.contents}\n`;
         } catch (error) {
-          console.error(`Error processing file ${fileId}:`, error);
+          console.error("Error processing file %s: %s", String(fileId).replace(/\n|\r/g, ''), (error instanceof Error ? error.message : String(error)).replace(/\n|\r/g, ''));
           return `[Error processing file]`;
         }
       })

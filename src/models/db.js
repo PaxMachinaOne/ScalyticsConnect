@@ -145,7 +145,7 @@ async function initializeDatabase() {
                   WHERE name = ?
                 `, [site.website, site.name]);
               } catch (updateErr) {
-                console.warn(`=== DATABASE: Could not update website for ${site.name}: ${updateErr.message} ===`);
+                console.warn('=== DATABASE: Could not update website for %s: %s ===', site.name, updateErr.message);
               }
             }
           }
@@ -169,7 +169,7 @@ async function initializeDatabase() {
     try {
       await db.execAsync(schemaSql);
     } catch (execError) {
-       console.error(`=== DATABASE: Error executing schema: ${execError.message} ===`);
+       console.error('=== DATABASE: Error executing schema: %s ===', execError.message);
        console.warn('=== DATABASE: Continuing initialization despite schema execution error ===');
     }
     
@@ -196,7 +196,6 @@ async function ensureAdminUser() {
                             process.env.NEVER_RESET_ADMIN_PASSWORD === 'true';
     
     let adminPasswordProtected = false;
-    let systemSettingsExist = false;
     
     try {
       const tableExists = await db.getAsync(`
@@ -205,8 +204,7 @@ async function ensureAdminUser() {
       `);
       
       if (tableExists) {
-        systemSettingsExist = true;
-        const setting = await db.getAsync(`
+          const setting = await db.getAsync(`
           SELECT value FROM system_settings
           WHERE key = 'admin_password_protected'
         `);
@@ -233,11 +231,11 @@ async function ensureAdminUser() {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash('admin123', salt);
       
-      const result = await db.runAsync(
+      await db.runAsync(
         'INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)',
         ['admin', 'admin@mcp.local', hashedPassword, 1]
       );
-      
+
       const createdAdmin = await db.getAsync('SELECT * FROM users WHERE username = ?', ['admin']);
       
       if (createdAdmin) {
@@ -346,16 +344,14 @@ async function ensureAdminUser() {
  */
 async function validateGroupTables() {
   try {
-    const tables = await db.allAsync(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' 
+    await db.allAsync(`
+      SELECT name FROM sqlite_master
+      WHERE type='table'
       AND name IN ('groups', 'user_groups', 'group_model_access')
     `);
-    
-    const existingTables = tables.map(t => t.name);
+
 
     await db.execAsync('PRAGMA foreign_keys = ON');
-    const fkEnabled = await db.getAsync('PRAGMA foreign_keys');
 
     const orphanedGroups = await db.allAsync(`
       SELECT ug.* FROM user_groups ug

@@ -71,13 +71,15 @@ function validateAndFixMessageSequence(messages) {
     }
     
     fixed.push(msg);
-    expectedNextRole = msg.role === 'user' ? 'assistant' : 'user';
+    // Update expected role for the next iteration
+    if (i < conversationMessages.length - 1) {
+      expectedNextRole = msg.role === 'user' ? 'assistant' : 'user';
+    }
   }
-  
+
   return fixed;
 }
 
-const CONTEXT_WARNING_THRESHOLD_PERCENT = 85;
 const SUMMARIZATION_THRESHOLD_PERCENT = 90;
 
 /**
@@ -158,7 +160,7 @@ async function routeInferenceRequest(options) {
         let validation = await validateContextForModel(modelId, processed);
         if (validation.isTooLong) {
           if (autoTruncate) {
-            console.log(`[InferenceRouter] History is too long (${validation.estimatedTokens} >= ${validation.contextSize}). Truncating...`);
+            console.log('[InferenceRouter] History is too long (%s >= %s). Truncating...', validation.estimatedTokens, validation.contextSize);
             
             const originalMessageCount = processed.length;
             processed = await truncateHistoryForModel(modelId, processed);
@@ -178,7 +180,7 @@ async function routeInferenceRequest(options) {
             if (validation.isTooLong) {
               throw new Error(`History still exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) even after truncation.`);
             }
-            console.log(`[InferenceRouter] History truncated. New token count: ${validation.estimatedTokens}`);
+            console.log('[InferenceRouter] History truncated. New token count: %s', validation.estimatedTokens);
           } else {
             throw new Error(`History exceeds context window (${validation.estimatedTokens} >= ${validation.contextSize}) and auto-truncate is disabled.`);
           }
@@ -202,7 +204,7 @@ async function routeInferenceRequest(options) {
       messagesForFmt.push(...processed.slice(sysIdx + 1));
     } else messagesForFmt.push(...processed);
 
-    const formatted = await formatPromptForModel(
+    await formatPromptForModel(
       modelId,
       messagesForFmt,
       systemContent

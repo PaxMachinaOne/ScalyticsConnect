@@ -2,7 +2,8 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
 const { getSystemSetting } = require('../config/systemConfig');
-const { APIError } = require('../utils/errorUtils'); // Assuming errorUtils is in ../utils/
+const { APIError } = require('../utils/errorUtils');
+const { validateInternalServiceUrl } = require('../utils/urlValidation');
 
 /**
  * Handles requests to embed texts using the Python vector service.
@@ -16,16 +17,11 @@ exports.embedTextsHandler = async (req, res, next) => {
 
   try {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-    if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-      console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-      return next(new APIError("Python vector service URL is not configured correctly.", 503));
-    }
-
-    const embedApiUrl = `${pythonServiceBaseUrl}/vector/embed-texts`;
+    const embedApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/embed-texts');
     
-    console.log(`[VectorAPIController] Requesting embeddings for ${texts.length} texts from ${embedApiUrl}. Model hint: ${model_identifier || 'default'}`);
+    console.log("[VectorAPIController] Requesting embeddings for %d texts from %s. Model hint: %s", Number(texts.length), embedApiUrl, String(model_identifier || 'default').replace(/\n|\r/g, ''));
 
-    const apiResponse = await axios.post(embedApiUrl, { 
+    const apiResponse = await axios.post(embedApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       texts: texts,
       model_identifier: model_identifier // Pass it along, Python service might use it or its default
     });
@@ -44,7 +40,7 @@ exports.embedTextsHandler = async (req, res, next) => {
   } catch (error) {
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.detail || error.message || 'Failed to embed texts via Python service.';
-    console.error(`[VectorAPIController] Error calling Python embedding service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
+    console.error('[VectorAPIController] Error calling Python embedding service: Status %s, Message: %s', statusCode, message, error.response?.data || error);
     return next(new APIError(message, statusCode));
   }
 };
@@ -74,16 +70,11 @@ exports.addDocumentsHandler = async (req, res, next) => {
 
   try {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-    if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-      console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-      return next(new APIError("Python vector service URL is not configured correctly.", 503));
-    }
-
-    const addDocsApiUrl = `${pythonServiceBaseUrl}/vector/documents`;
+    const addDocsApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/documents');
     
-    console.log(`[VectorAPIController] Requesting to add ${documents.length} documents to group ${group_id} via ${addDocsApiUrl}.`);
+    console.log("[VectorAPIController] Requesting to add %d documents to group %s via %s.", Number(documents.length), String(group_id).replace(/\n|\r/g, ''), addDocsApiUrl);
 
-    const apiResponse = await axios.post(addDocsApiUrl, { 
+    const apiResponse = await axios.post(addDocsApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       documents: documents, // These should match Python's GenericDocumentItem structure
       group_id: group_id
     });
@@ -99,7 +90,7 @@ exports.addDocumentsHandler = async (req, res, next) => {
   } catch (error) {
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to add documents via Python service.';
-    console.error(`[VectorAPIController] Error calling Python add documents service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
+    console.error('[VectorAPIController] Error calling Python add documents service: Status %s, Message: %s', statusCode, message, error.response?.data || error);
     return next(new APIError(message, statusCode));
   }
 };
@@ -122,20 +113,15 @@ exports.searchVectorsHandler = async (req, res, next) => {
 
   try {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-    if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-      console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-      return next(new APIError("Python vector service URL is not configured correctly.", 503));
-    }
-
-    const searchApiUrl = `${pythonServiceBaseUrl}/vector/search`;
+    const searchApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/search');
     
     const payload = { query_text };
     if (group_id) payload.group_id = group_id;
     if (top_k) payload.top_k = top_k;
 
-    console.log(`[VectorAPIController] Requesting vector search via ${searchApiUrl} with query "${query_text}".`);
+    console.log("[VectorAPIController] Requesting vector search via %s with query '%s'.", searchApiUrl, String(query_text).replace(/\n|\r/g, ''));
 
-    const apiResponse = await axios.post(searchApiUrl, payload);
+    const apiResponse = await axios.post(searchApiUrl, payload); // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
 
     // Python service returns VectorSearchResponse: { success: bool, message: str, results: List[VectorSearchResultItem] }
     if (typeof apiResponse.data?.success !== 'boolean' || 
@@ -150,7 +136,7 @@ exports.searchVectorsHandler = async (req, res, next) => {
   } catch (error) {
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to search vectors via Python service.';
-    console.error(`[VectorAPIController] Error calling Python vector search service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
+    console.error('[VectorAPIController] Error calling Python vector search service: Status %s, Message: %s', statusCode, message, error.response?.data || error);
     return next(new APIError(message, statusCode));
   }
 };
@@ -167,16 +153,11 @@ exports.deleteVectorGroupHandler = async (req, res, next) => {
 
   try {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-    if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-      console.error(`[VectorAPIController] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-      return next(new APIError("Python vector service URL is not configured correctly.", 503));
-    }
-
-    const deleteGroupApiUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
+    const deleteGroupApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
     
-    console.log(`[VectorAPIController] Requesting to delete vector documents for group ${group_id} via ${deleteGroupApiUrl}.`);
+    console.log("[VectorAPIController] Requesting to delete vector documents for group %s via %s.", String(group_id).replace(/\n|\r/g, ''), deleteGroupApiUrl);
 
-    const apiResponse = await axios.post(deleteGroupApiUrl, { 
+    const apiResponse = await axios.post(deleteGroupApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       group_id: group_id
     });
 
@@ -191,7 +172,7 @@ exports.deleteVectorGroupHandler = async (req, res, next) => {
   } catch (error) {
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to delete vector group via Python service.';
-    console.error(`[VectorAPIController] Error calling Python delete_by_group service: Status ${statusCode}, Message: ${message}`, error.response?.data || error);
+    console.error('[VectorAPIController] Error calling Python delete_by_group service: Status %s, Message: %s', statusCode, message, error.response?.data || error);
     return next(new APIError(message, statusCode));
   }
 };

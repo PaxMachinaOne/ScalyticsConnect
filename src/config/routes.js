@@ -4,13 +4,21 @@
  * API routes configuration
  */
 const path = require('path');
-const express = require('express'); 
+const rateLimit = require('express-rate-limit');
 
 /**
  * Set up all API routes
  * @param {Object} app - Express application instance
  * @param {Object} middleware - Middleware functions
  */
+
+// Rate limiter for static file serving routes
+const staticLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 function setupRoutes(app, middleware) {
 
@@ -22,7 +30,6 @@ function setupRoutes(app, middleware) {
   const apiKeyRoutes = require('../routes/apiKeyRoutes');
   const agentRoutes = require('../routes/agentRoutes');
   const fileRoutes = require('../routes/fileRoutes');
-  const githubRoutes = require('../routes/githubRoutes');
   const systemMaintenanceRoutes = require('../routes/systemMaintenanceRoutes');
   const documentationRoutes = require('../routes/documentationRoutes');
   const integrationRoutes = require('../routes/integrationRoutes');
@@ -31,7 +38,6 @@ function setupRoutes(app, middleware) {
   const shareRoutes = require('../routes/shareRoutes');
   const userRoutes = require('../routes/userRoutes');
   const mcpRoutes = require('../routes/mcpRoutes'); 
-  const userController = require('../controllers/userController');
   const scalyticsApiRoutes = require('../routes/scalyticsApiRoutes');
   const adminFilteringRoutes = require('../routes/adminFilteringRoutes'); 
   const filterDataRoutes = require('../routes/filterDataRoutes');
@@ -62,7 +68,7 @@ function setupRoutes(app, middleware) {
 
   // --- Serve Static API Docs (Redoc HTML) ---
   const apiDocsPath = path.join(__dirname, '../../docs/api-docs.html');
-  app.get('/api-docs', (req, res, next) => {
+  app.get('/api-docs', staticLimiter, (req, res, next) => {
     res.sendFile(apiDocsPath, (err) => {
       // Optional: Handle error if sendFile fails (e.g., file not found)
       if (err) {
@@ -101,7 +107,7 @@ function setupRoutes(app, middleware) {
     app.use(require('express').static(path.join(process.cwd(), 'frontend/build')));
     
     // All remaining requests go to index.html for client-side routing, EXCLUDING /api-docs (which serves HTML)
-    app.get('*', (req, res, next) => {
+    app.get('*', staticLimiter, (req, res, next) => {
       if (req.path.startsWith('/api-docs')) { 
         return next();
       }

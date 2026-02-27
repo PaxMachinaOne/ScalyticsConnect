@@ -3,7 +3,7 @@
 import re
 import random
 from urllib.parse import urlparse
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 import asyncio 
 
 from ..utils import setup_logger 
@@ -113,7 +113,7 @@ class AcademicSiteHandler:
             if netloc.startswith('www.'):
                 return netloc[4:]
             return netloc
-        except:
+        except (KeyError, IndexError, TypeError):
             return ""
 
     def is_academic_site(self, url: str) -> bool:
@@ -192,7 +192,7 @@ class AcademicSiteHandler:
             return await scraper_instance.scrape_url_with_custom_headers(url, headers, is_cancelled_flag)
             
         except Exception as e:
-            logger.warning(f"Normal scraping attempt failed for {url}: {e}")
+            logger.warning("Normal scraping attempt failed for %s: %s", url, e)
             return {"content": None, "links": [], "source_info": {}, "title": None, "error": str(e)}
     
     async def _attempt_abstract_extraction(self, url: str, scraper_instance, is_cancelled_flag: asyncio.Event) -> Optional[str]:
@@ -202,7 +202,7 @@ class AcademicSiteHandler:
             html_content = result.get('content_html_for_parsing') 
             
             if not html_content:
-                logger.warning(f"No HTML content returned from scraping {url} for abstract extraction.")
+                logger.warning("No HTML content returned from scraping %s for abstract extraction.", url)
                 return None
             
             abstract_patterns = [
@@ -225,14 +225,14 @@ class AcademicSiteHandler:
                     abstract_text = re.sub(r'\s+', ' ', abstract_text).strip() 
                     
                     if len(abstract_text) > 50 and len(abstract_text) < 5000:  
-                        logger.info(f"Extracted abstract for {url} using pattern: {pattern.pattern[:50]}")
+                        logger.info("Extracted abstract for %s using pattern: %s", url, pattern.pattern[:200])
                         return abstract_text
             
-            logger.warning(f"Could not find a clear abstract for {url} using regex patterns.")
+            logger.warning("Could not find a clear abstract for %s using regex patterns.", url)
             return None
             
         except Exception as e:
-            logger.warning(f"Abstract extraction attempt failed for {url}: {e}")
+            logger.warning("Abstract extraction attempt failed for %s: %s", url, e)
             return None
     
     def _create_snippet_based_result(

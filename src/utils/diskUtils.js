@@ -7,10 +7,10 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const util = require('util');
 const os = require('os');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 /**
  * Check if a path exists
@@ -46,7 +46,7 @@ const getDiskSpace = async (targetPath) => {
       return await getDiskSpaceUnix(absolutePath);
     }
   } catch (error) {
-    console.error(`[diskUtils] getDiskSpace failed for "${targetPath}": ${error.message}`);
+    console.error('[diskUtils] getDiskSpace failed for "%s": %s', targetPath, error.message);
     return {
       total: 0, 
       used: 0, 
@@ -67,8 +67,7 @@ const getDiskSpace = async (targetPath) => {
 const getDiskSpaceUnix = async (absolutePath) => {
   try {
     // Use df with POSIX output format for consistency
-    const command = `df -P "${absolutePath}"`;
-    const { stdout } = await execPromise(command);
+    const { stdout } = await execFilePromise('df', ['-P', absolutePath]);
     
     const lines = stdout.trim().split('\n');
     if (lines.length < 2) {
@@ -120,9 +119,8 @@ const getDiskSpaceWindows = async (absolutePath) => {
   try {
     // Get the drive letter from the path
     const drive = path.parse(absolutePath).root;
-    const command = `wmic logicaldisk where caption="${drive.replace('\\', '')}" get size,freespace /format:csv`;
-    
-    const { stdout } = await execPromise(command);
+    const driveLetter = drive.replaceAll('\\', '');
+    const { stdout } = await execFilePromise('wmic', ['logicaldisk', 'where', `caption="${driveLetter}"`, 'get', 'size,freespace', '/format:csv']);
     const lines = stdout.trim().split('\n');
     
     for (const line of lines) {
@@ -161,7 +159,7 @@ const getDiskSpaceWindows = async (absolutePath) => {
 const getDiskSpaceNodeFallback = async (absolutePath) => {
   try {
     // This is a very basic fallback - it won't give us disk space but at least won't fail
-    const stats = await fs.promises.stat(absolutePath);
+    await fs.promises.stat(absolutePath);
     
     // We can't get actual disk space with pure Node.js, so return a "unknown" result
     return {
@@ -193,7 +191,8 @@ const getDiskSpaceNodeFallback = async (absolutePath) => {
  */
 const getDirectorySize = async (directoryPath) => {
   try {
-    const { stdout } = await execPromise(`du -sk "${directoryPath}" | cut -f1`);
+    const { stdout: duOut } = await execFilePromise('du', ['-sk', directoryPath]);
+    const stdout = duOut.split('\t')[0];
     const sizeInKB = parseInt(stdout.trim(), 10);
     if (!isNaN(sizeInKB)) {
       return sizeInKB * 1024;
@@ -224,7 +223,7 @@ const calculateSizeRecursively = async (dirPath) => {
     try {
       stats = await fs.promises.lstat(currentPath);
     } catch (error) {
-      console.error(`Error getting stats for ${currentPath}: ${error.message}`);
+      console.error('Error getting stats for %s: %s', currentPath, error.message);
       return 0;
     }
 
@@ -244,7 +243,7 @@ const calculateSizeRecursively = async (dirPath) => {
         const fileSizes = await Promise.all(sizePromises);
         directorySize = fileSizes.reduce((acc, size) => acc + size, 0);
       } catch (error) {
-        console.error(`Error reading directory ${currentPath}: ${error.message}`);
+        console.error('Error reading directory %s: %s', currentPath, error.message);
       }
       return directorySize;
     }
@@ -263,8 +262,7 @@ const calculateSizeRecursively = async (dirPath) => {
  */
 const removeDirectory = async (directoryPath) => {
   try {
-    const command = `rm -rf "${directoryPath}"`;
-    await execPromise(command);
+    await fs.promises.rm(directoryPath, { recursive: true, force: true });
     const exists = await pathExists(directoryPath);
     if (!exists) {
       return true;

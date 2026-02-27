@@ -376,7 +376,6 @@ const ModelEditForm = ({
 
 
               {/* vLLM GPU Configuration */}
-          {!isExternalModel && (
             <div className="sm:col-span-6 pt-4 border-t border-gray-200 dark:border-dark-border">
               <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-4">GPU Configuration</h4>
               
@@ -536,7 +535,6 @@ const ModelEditForm = ({
                 </div>
               )}
             </div>
-          )}
 
           </div>
         )}

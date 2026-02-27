@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const modelController = require('../controllers/modelController');
-const { protect, admin, checkModelAccess, standardAuth } = require('../middleware/authMiddleware');
+const { protect, admin, standardAuth } = require('../middleware/authMiddleware');
 
 // Get all models - public for authenticated users
 router.get('/', protect, modelController.getModels);

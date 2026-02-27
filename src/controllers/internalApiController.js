@@ -36,7 +36,7 @@ exports.handleInternalLocalCompletion = async (req, res) => {
   const isLocalhost = requestIp === '127.0.0.1' || requestIp === '::1' || requestIp === 'localhost' || requestIp === '::ffff:127.0.0.1';
 
   if (!isLocalhost) {
-    console.warn(`[InternalAPI] Forbidden request to /api/internal/v1/local_completion from non-localhost IP: ${requestIp}`);
+    console.warn('[InternalAPI] Forbidden request to /api/internal/v1/local_completion from non-localhost IP: %s', requestIp);
     return res.status(403).json({ error: { message: 'Access forbidden.', type: 'forbidden_access' } });
   }
 
@@ -48,7 +48,7 @@ exports.handleInternalLocalCompletion = async (req, res) => {
   }
 
   const { messages, stream, user_id, ...inferenceParams } = value;
-  const requestStartTime = Date.now();
+  
   let modelForServiceCall;
 
   try {
@@ -61,12 +61,12 @@ exports.handleInternalLocalCompletion = async (req, res) => {
 
     modelForServiceCall = await Model.findById(activeModelId);
     if (!modelForServiceCall) {
-      console.error(`[InternalAPI] Active local model ID ${activeModelId} not found in database.`);
+      console.error('[InternalAPI] Active local model ID %s not found in database.', activeModelId);
       return res.status(500).json({ error: { message: `Active local model (ID: ${activeModelId}) not found.`, type: 'api_error', code: 'active_model_not_found' } });
     }
     
     const modelNameForLog = modelForServiceCall.name || `model_id_${activeModelId}`;
-    console.log(`[InternalAPI] Request for user ${user_id} using active local model: ${modelNameForLog}`);
+    console.log('[InternalAPI] Request for user %s using active local model: %s', user_id, modelNameForLog);
 
     // Prepare options for chatService.createChatCompletion
     // The Python side currently sends a simple messages array (e.g., [{"role": "user", "content": prompt}])
@@ -117,7 +117,7 @@ exports.handleInternalLocalCompletion = async (req, res) => {
       let completionTokens = 0;
       let streamEnded = false;
 
-      console.log(`[InternalAPI] Starting SSE stream for user ${user_id}`);
+      console.log('[InternalAPI] Starting SSE stream for user %s', user_id);
 
       const handleTokenCallback = (token) => {
         try {

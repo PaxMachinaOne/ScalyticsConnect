@@ -23,14 +23,17 @@ const fixJwtSecrets = (envFilePath) => {
   console.log(`Checking JWT secrets in ${envFilePath}...`);
   
   try {
-    // Check if file exists
-    if (!fs.existsSync(envFilePath)) {
-      console.error(`File not found: ${envFilePath}`);
-      return false;
+    // Read and parse the env file (will throw if file doesn't exist)
+    let envContent;
+    try {
+      envContent = fs.readFileSync(envFilePath, 'utf8');
+    } catch (readErr) {
+      if (readErr.code === 'ENOENT') {
+        console.error('File not found: %s', envFilePath);
+        return false;
+      }
+      throw readErr;
     }
-    
-    // Read and parse the env file
-    const envContent = fs.readFileSync(envFilePath, 'utf8');
     const envVars = dotenv.parse(envContent);
     
     let updated = false;

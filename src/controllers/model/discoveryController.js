@@ -5,7 +5,6 @@ const fs = require('fs').promises;
 const { db } = require('../../models/db');
 const Model = require('../../models/Model');
 const glob = require('glob').glob;  // For file discovery
-const { MODELS_DIR } = require('../../utils/modelFileUtils');
 
 /**
  * Discover models for a provider

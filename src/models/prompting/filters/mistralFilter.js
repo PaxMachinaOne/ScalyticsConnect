@@ -5,46 +5,6 @@
 const defaultFilter = require('./defaultFilter');
 
 /**
- * Fix code blocks where language is attached to first line
- * Finds patterns like ```pythonimport random and fixes them
- * @param {string} content - Content to fix
- * @returns {string} Fixed content
- */
-function fixCodeBlocks(content) {
-  if (!content || !content.includes('```')) return content;
-  
-  // Find code blocks and fix them - handle various patterns
-  let fixed = content;
-  
-  // Fix standard triple backtick code blocks with language tag attached to code
-  fixed = fixed.replace(/```([a-zA-Z0-9_+#]+)([^\n])/g, function(match, language, firstChar) {
-    return "```" + language + "\n" + firstChar;
-  });
-  
-  // Fix Python code specifically (common pattern in Mistral models)
-  fixed = fixed.replace(/(```python|```py)(import|from|def|class)/g, "$1\n$2");
-  
-  // Fix indentation in Python code - properly indent code after control statements
-  fixed = fixed.replace(/(if|for|while|def|class)([^:]+):([^\n])/g, "$1$2:$3\n    ");
-  
-  // Fix section headers that commonly have code blocks
-  const sectionHeaders = ['Script:', 'Skript:', 'Code:', 'Example:', 'Beispiel:'];
-  
-  // Process each section header
-  for (const header of sectionHeaders) {
-    // Create pattern for headers followed by code blocks - ensure only one newline
-    const headerPattern = new RegExp(header + "\\s*(```[a-z]*)", "g");
-    fixed = fixed.replace(headerPattern, header + "\n$1"); // Use \n instead of \n\n
-    
-    // Create pattern for headers followed by content without code blocks - ensure only one newline
-    const contentPattern = new RegExp(header + "([^\\s\\n`].*)", "g");
-    fixed = fixed.replace(contentPattern, header + "\n```\n$1"); // Use \n instead of \n\n
-  }
-  
-  return fixed;
-}
-
-/**
  * Sanitizes a Mistral model response with enhanced markdown handling.
  * @param {string} response - Raw response from the model
  * @param {object} [options] - Additional options

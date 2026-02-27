@@ -26,7 +26,7 @@ async function discoverModels(options = {}) {
     const validationResult = await validateApiKey(apiKey);
     
     if (!validationResult.isValid) {
-      console.error(`Invalid API key provided for Cohere model discovery: ${validationResult.errorMessage}`);
+      console.error('Invalid API key provided for Cohere model discovery: %s', validationResult.errorMessage);
       return { models: [], error: validationResult.errorMessage };
     }
     
@@ -71,7 +71,7 @@ async function discoverModels(options = {}) {
       }
     ];
     
-    console.log(`Discovered ${models.length} Cohere models with valid API key`);
+    console.log('Discovered %s Cohere models with valid API key', models.length);
     return { models, error: null };
   } catch (error) {
     console.error('Error discovering Cohere models:', error.message);
@@ -169,7 +169,6 @@ async function streamChat(options) {
     modelId,
     message,
     chatHistory,
-    streamingContext,
     abortSignal, // Accept abortSignal
     onToken // Accept onToken callback
   } = options;
@@ -259,7 +258,7 @@ async function chat(options) {
     chatHistory,
     abortSignal // Accept abortSignal
   } = options;
-  
+
   const response = await axios.post(
     'https://api.cohere.ai/v1/chat',
     {

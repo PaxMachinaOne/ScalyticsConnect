@@ -12,7 +12,6 @@ const { rateLimiterMiddleware } = require('../middleware/rateLimitMiddleware');
 const scalyticsApiController = require('../controllers/scalyticsApiController');
 const deepSearchApiController = require('../controllers/deepSearchApiController');
 const vectorApiController = require('../controllers/vectorApiController'); 
-const { protect } = require('../middleware/authMiddleware'); 
 
 /**
  * @swagger

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { spawn } = require('child_process');
-const path = require('path');
 const { db } = require('../models/db');
 const Model = require('../models/Model');
 const eventBus = require('../utils/eventBus');
@@ -54,15 +53,15 @@ class ModelPoolManager {
         }
 
         if (model.is_embedding_model) {
-            console.log(`[ModelPoolManager] Model ${modelId} is an embedding model, bypassing VRAM check.`);
+            console.log('[ModelPoolManager] Model %s is an embedding model, bypassing VRAM check.', modelId);
         } else {
             const modelConfig = readModelConfig(model.model_path);
         const totalEstimatedVram = estimateVram(modelConfig, 'fp16');
         const perGpuVramRequired = Math.ceil(totalEstimatedVram / tensorParallelSize);
 
-        console.log(`[ModelPoolManager] VRAM Check for Model ${modelId} across ${tensorParallelSize} GPUs:`);
-        console.log(`  - Total Estimated VRAM required: ${totalEstimatedVram} MiB`);
-        console.log(`  - Per-GPU VRAM required: ${perGpuVramRequired} MiB`);
+        console.log('[ModelPoolManager] VRAM Check for Model %s across %s GPUs:', modelId, tensorParallelSize);
+        console.log('  - Total Estimated VRAM required: %s MiB', totalEstimatedVram);
+        console.log('  - Per-GPU VRAM required: %s MiB', perGpuVramRequired);
 
         const allGpuStats = gpuManager.getStats();
         if (!allGpuStats || allGpuStats.length === 0) {
@@ -72,7 +71,7 @@ class ModelPoolManager {
                 const currentGpuId = gpuId + i;
                 const availableVram = gpuManager.getAvailableVram(currentGpuId);
                 
-                console.log(`  - Checking GPU ${currentGpuId}: Available VRAM is ${availableVram} MiB`);
+                console.log('  - Checking GPU %s: Available VRAM is %s MiB', currentGpuId, availableVram);
 
                 if (availableVram === null) {
                     throw new Error(`Could not retrieve VRAM information for GPU ${currentGpuId}, but other GPUs were detected.`);
@@ -88,7 +87,7 @@ class ModelPoolManager {
             throw new Error('No available ports to start a new model process.');
         }
 
-        console.log(`[ModelPoolManager] Starting model ${modelId} on GPU ${gpuId} on port ${port}`);
+        console.log('[ModelPoolManager] Starting model %s on GPU %s on port %s', modelId, gpuId, port);
         
         const finalArgs = [...args, '--port', String(port)];
 
@@ -98,9 +97,9 @@ class ModelPoolManager {
             const gpuIndices = Array.from({ length: tensorParallelSize }, (_, i) => gpuId + i);
             const cudaVisibleDevices = gpuIndices.join(',');
             env.CUDA_VISIBLE_DEVICES = cudaVisibleDevices;
-            console.log(`[ModelPoolManager] Spawning process for model ${modelId} on NVIDIA GPUs [${cudaVisibleDevices}]...`);
+            console.log('[ModelPoolManager] Spawning process for model %s on NVIDIA GPUs [%s]...', modelId, cudaVisibleDevices);
         } else {
-            console.log(`[ModelPoolManager] Spawning process for model ${modelId} on non-NVIDIA accelerator (e.g., Apple Metal)...`);
+            console.log('[ModelPoolManager] Spawning process for model %s on non-NVIDIA accelerator (e.g., Apple Metal)...', modelId);
         }
 
         const modelProcess = spawn(command, finalArgs, {
@@ -138,7 +137,7 @@ class ModelPoolManager {
                 try {
                     const response = await fetch(healthCheckUrl);
                     if (response.ok) {
-                        console.log(`[ModelPoolManager] Model on port ${port} is ready.`);
+                        console.log('[ModelPoolManager] Model on port %s is ready.', port);
                         return resolve();
                     }
                 } catch (error) {
@@ -155,13 +154,13 @@ class ModelPoolManager {
                     this._broadcastPoolUpdate();
                     
                     await db.runAsync('UPDATE models SET is_active = 1, assigned_gpu_id = ? WHERE id = ?', [0, modelId]);
-                    console.log(`[ModelPoolManager] Model ${modelId} marked as active in database.`);
+                    console.log('[ModelPoolManager] Model %s marked as active in database.', modelId);
                     
                     eventBus.publish('activation:complete', finalActivationId, { modelId, modelName: model.name });
                 }
             })
             .catch(err => {
-                console.error(`[ModelPoolManager] Error waiting for model ${modelId} to become ready:`, err);
+                console.error('[ModelPoolManager] Error waiting for model %s to become ready:', modelId, err);
                 eventBus.publish('activation:error', finalActivationId, { modelId, modelName: model.name, error: err.message });
                 if (this.modelProcesses[processKey]) {
                     this.modelProcesses[processKey].status = 'failed';
@@ -171,25 +170,25 @@ class ModelPoolManager {
 
         modelProcess.stdout.on('data', (data) => {
             const logLine = data.toString().trim();
-            console.log(`[vLLM-stdout-${modelId}]: ${logLine}`);
+            console.log('[vLLM-stdout-%s]: %s', modelId, logLine);
             eventBus.publish('activation:debug', finalActivationId, { modelId, log: logLine });
         });
 
         modelProcess.stderr.on('data', (data) => {
             const logLine = data.toString().trim();
-            console.error(`[vLLM-stderr-${modelId}]: ${logLine}`);
+            console.error('[vLLM-stderr-%s]: %s', modelId, logLine);
             eventBus.publish('activation:debug', finalActivationId, { modelId, log: logLine, isError: true });
         });
 
         modelProcess.on('exit', (code, signal) => {
-            console.log(`[ModelPoolManager] Process for model ${modelId} (PID: ${modelProcess.pid}) exited with code ${code}, signal ${signal}.`);
+            console.log('[ModelPoolManager] Process for model %s (PID: %s) exited with code %s, signal %s.', modelId, modelProcess.pid, code, signal);
             this.releasePort(port);
             delete this.modelProcesses[processKey];
             this._broadcastPoolUpdate();
         });
         
         modelProcess.on('error', (err) => {
-            console.error(`[ModelPoolManager] Failed to start process for model ${modelId}:`, err);
+            console.error('[ModelPoolManager] Failed to start process for model %s:', modelId, err);
             this.releasePort(port);
             delete this.modelProcesses[processKey];
         });
@@ -202,7 +201,7 @@ class ModelPoolManager {
         const processInfo = this.modelProcesses[processKey];
 
         if (!processInfo || !processInfo.process) {
-            console.warn(`[ModelPoolManager] No process found for model ${modelId} on GPU ${gpuId} to stop.`);
+            console.warn("[ModelPoolManager] No process found for model %s on GPU %s to stop.", String(modelId).replace(/\n|\r/g, ''), gpuId);
             if (processInfo) {
                 this.releasePort(processInfo.port);
                 delete this.modelProcesses[processKey];
@@ -210,12 +209,12 @@ class ModelPoolManager {
             return;
         }
 
-        console.log(`[ModelPoolManager] Stopping model ${modelId} (PID: ${processInfo.pid}) on port ${processInfo.port}`);
+        console.log("[ModelPoolManager] Stopping model %s (PID: %s) on port %s", String(modelId).replace(/\n|\r/g, ''), processInfo.pid, processInfo.port);
 
         try {
             processInfo.process.kill('SIGTERM');
         } catch (e) {
-            console.error(`[ModelPoolManager] Error sending SIGTERM to process ${processInfo.pid}:`, e);
+            console.error('[ModelPoolManager] Error sending SIGTERM to process %s:', processInfo.pid, e);
             this.releasePort(processInfo.port);
             delete this.modelProcesses[processKey];
         }

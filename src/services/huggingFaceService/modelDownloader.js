@@ -7,9 +7,9 @@
 const fsPromises = require('fs').promises;
 const fs = require('fs');
 const path = require('path');
-const { spawn, exec } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const util = require('util');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 const eventBus = require('../../utils/eventBus');
 const db = require('../../models/db');
 const Model = require('../../models/Model');
@@ -39,8 +39,8 @@ function determinePromptFormatType(modelId, modelName) {
  */
 async function checkCommandExists(command) {
   try {
-    if (process.platform === 'win32') { await execPromise(`where ${command}`); }
-    else { await execPromise(`which ${command}`); }
+    if (process.platform === 'win32') { await execFilePromise('where', [command]); }
+    else { await execFilePromise('which', [command]); }
     return true;
   } catch (error) { return false; }
 }
@@ -65,7 +65,12 @@ async function downloadModel(modelId, config = {}) {
     const modelsDir = process.env.MODELS_PATH || path.join(process.cwd(), 'models');
     try { await fsPromises.access(modelsDir); } catch (err) { await fsPromises.mkdir(modelsDir, { recursive: true }); }
     const modelName = config.name || modelId.split('/').pop();
-    const modelDir = path.join(modelsDir, modelName);
+    const modelDir = path.resolve(modelsDir, modelName);
+    // Validate that the resolved model directory stays within the models directory
+    const resolvedModelsDir = path.resolve(modelsDir);
+    if (!modelDir.startsWith(resolvedModelsDir + path.sep)) {
+      throw new Error('Invalid model name: path traversal detected');
+    }
     try { await fsPromises.access(modelDir); } catch (err) { await fsPromises.mkdir(modelDir, { recursive: true }); }
 
     // Set initial download info
@@ -92,12 +97,11 @@ async function downloadModel(modelId, config = {}) {
     const scriptsDir = path.join(process.cwd(), 'scripts');
     const downloadScriptPath = path.join(scriptsDir, 'download_hf_model.py');
     if (!fs.existsSync(downloadScriptPath)) throw new Error(`Download script not found at: ${downloadScriptPath}`);
-    try { await execPromise(`chmod +x "${downloadScriptPath}"`); } catch (chmodError) { console.warn(`Warning: Could not make script executable: ${chmodError.message}`); }
+    try { await execFilePromise('chmod', ['+x', downloadScriptPath]); } catch (chmodError) { console.warn('Warning: Could not make script executable: %s', chmodError.message); }
     
     const pythonWrapperScript = path.join(scriptsDir, 'python-wrapper.sh');
-    let commandToRun = downloadScriptPath;
-    const useAuth = !!config.hfToken;
-    const commandArgs = [
+    let commandToRun;
+        const commandArgs = [
         '--model_id', modelId,
         '--output_dir', modelDir,
     ];
@@ -110,7 +114,7 @@ async function downloadModel(modelId, config = {}) {
         commandToRun = pythonWrapperScript; 
         commandArgs.unshift(downloadScriptPath); 
     } else { 
-        console.warn(`Python wrapper script not found at ${pythonWrapperScript}. Attempting direct execution.`); 
+        console.warn('Python wrapper script not found at %s. Attempting direct execution.', pythonWrapperScript); 
         if (await checkCommandExists('python3')) { 
             commandToRun = 'python3'; 
             commandArgs.unshift(downloadScriptPath); 
@@ -127,13 +131,13 @@ async function downloadModel(modelId, config = {}) {
         commandArgs.push('--download_id', downloadId);
         downloadProcess = spawn(commandToRun, commandArgs);
     } catch (spawnError) {
-        console.error(`Failed to spawn download process: ${spawnError.message}`);
+        console.error('Failed to spawn download process: %s', spawnError.message);
         throw spawnError;
     }
 
     const stdoutHandler = (data) => {
       const dataStr = data.toString();
-      console.log(`[Python stdout]: ${dataStr}`);
+      console.log('[Python stdout]: %s', dataStr);
       const lines = dataStr.split('\n');
       for (const line of lines) {
         if (!line.trim()) continue;
@@ -150,20 +154,20 @@ async function downloadModel(modelId, config = {}) {
               activeDownloads.set(downloadId, { ...currentInfo, status: 'failed', error: errorMessage, modelId: message.model_id, requiresLicense: true });
               eventBus.publish('download:error', downloadId, { error: 'gated_repo', modelId: message.model_id });
             } else {
-              console.error(`[Python Script Error] ${JSON.stringify(message)}`); 
+              console.error('[Python Script Error] %s', JSON.stringify(message)); 
               const currentInfo = activeDownloads.get(downloadId) || {}; 
               activeDownloads.set(downloadId, { ...currentInfo, status: 'failed', error: message.error || 'Python script reported failure.' }); 
               eventBus.publish('download:error', downloadId, { error: message.error || 'Python script reported failure.' });
             }
           }
         } catch (e) {
-          console.log(`[Python stdout non-JSON]: ${line}`);
+          console.log('[Python stdout non-JSON]: %s', line);
         }
       }
     };
     const stderrHandler = (data) => { 
       const dataStr = data.toString();
-      console.error(`[Download stderr]: ${dataStr}`); 
+      console.error('[Download stderr]: %s', dataStr); 
     };
 
     activeDownloads.set(downloadId, { ...activeDownloads.get(downloadId), process: downloadProcess });
@@ -171,7 +175,6 @@ async function downloadModel(modelId, config = {}) {
     let stderrData = '';
     downloadProcess.stdout.on('data', (data) => { stdoutData += data.toString(); stdoutHandler(data); });
     downloadProcess.stderr.on('data', (data) => { stderrData += data.toString(); stderrHandler(data); });
-    const modelUtils = require('../../utils/modelUtils');
 
     downloadProcess.on('close', async (code) => {
       const downloadInfo = activeDownloads.get(downloadId);
@@ -227,7 +230,7 @@ async function downloadModel(modelId, config = {}) {
                                    'fp16';
 
           if (existingModel) {
-            console.warn(`[DB Registration] Model with name "${targetModelName}" already exists (ID: ${existingModel.id}). Updating path and config.`);
+            console.warn("[DB Registration] Model with name '%s' already exists (ID: %s). Updating path and config.", String(targetModelName).replace(/\n|\r/g, ''), existingModel.id);
             let existingConfig = {};
             try {
                 if (typeof existingModel.config === 'string') existingConfig = JSON.parse(existingModel.config);
@@ -302,7 +305,7 @@ async function downloadModel(modelId, config = {}) {
         }
         
         if (!foundGatedError) {
-          console.error(`Download failed with code ${code}: ${stderrData}`);
+          console.error('Download failed with code %s: %s', code, stderrData);
           activeDownloads.set(downloadId, { ...downloadInfo, status: 'failed', error: stderrData || `Process exited with code ${code}` });
           eventBus.publish('download:error', downloadId, { error: stderrData || `Process exited with code ${code}` });
         }

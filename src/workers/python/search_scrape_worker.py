@@ -6,13 +6,10 @@ Search Scrape Worker (Field Scout)
 Handles direct interactions with web search engines and webpage/document scraping.
 Performs source vetting.
 """
-import json
 import sys
 import asyncio
-import time
 from typing import Dict, List, Optional, Any
 from fake_useragent import UserAgent
-import re 
 
 from duckduckgo_search import DDGS 
 from googleapiclient.discovery import build as build_google_service
@@ -30,6 +27,7 @@ from datetime import datetime, timedelta
 import sqlite3 
 import os
 import traceback
+import logging
 
 # --- Environment Setup ---
 project_root_ssw = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')) 
@@ -80,8 +78,7 @@ class SearchScrapeWorker:
                 age = (datetime.now() - cd).days
                 self.whois_cache_ssw[domain] = {'age_days': age, 'timestamp': datetime.now()}
                 return age
-        except Exception as e:
-            pass
+        except Exception as e: logging.debug("Suppressed %s: %s", type(e).__name__, e)
         self.whois_cache_ssw[domain] = {'age_days': None, 'timestamp': datetime.now()}
         return None
 
@@ -162,10 +159,10 @@ class SearchScrapeWorker:
                 if downloaded:
                     content_extracted = trafilatura.extract(downloaded, include_comments=False, include_tables=True, no_fallback=True, favor_precision=True)
                     if content_extracted: scraped_content_text = content_extracted.strip()
-            except Exception: pass
+            except Exception as e_scrape: logging.debug("Suppressed scrape error: %s", e_scrape)
         try: await loop.run_in_executor(None, sync_scrape)
-        except Exception: pass
-        
+        except Exception as e_executor: logging.debug("Suppressed executor error during scrape: %s", e_executor)
+
         final_content = scraped_content_text if scraped_content_text else source_info.get("description")
         return {"content": final_content, "source_info": source_info}
 
@@ -173,7 +170,7 @@ class SearchScrapeWorker:
     async def _scrape_pdf_url_internal(self, target_url: str, source_info: Dict) -> Dict[str, Any]:
         loop = asyncio.get_event_loop()
         pdf_content_text = None
-        def sync_scrape_pdf(): 
+        def sync_scrape_pdf():
             nonlocal pdf_content_text
             try:
                 r = requests.get(target_url, headers={"User-Agent": self.ua.random}, timeout=20, stream=True)
@@ -184,9 +181,9 @@ class SearchScrapeWorker:
                 extract_text_to_fp(bio, sio, laparams=LAParams(), output_type='text', codec='utf-8')
                 content = sio.getvalue(); sio.close(); bio.close()
                 if content: pdf_content_text = content.strip()
-            except Exception: pass
+            except Exception as e_pdf: logging.debug("Suppressed PDF scrape error: %s", e_pdf)
         try: await loop.run_in_executor(None, sync_scrape_pdf)
-        except Exception: pass
+        except Exception as e_executor: logging.debug("Suppressed executor error during PDF scrape: %s", e_executor)
         return {"content": pdf_content_text, "source_info": source_info}
 
     def _get_scholar_pub_url_ssw(self, pub: Dict) -> Optional[str]:

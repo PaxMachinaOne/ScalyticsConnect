@@ -2,7 +2,6 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const { db } = require('../models/db');
 const User = require('../models/User');
 const Permission = require('../models/Permission'); // Import Permission model
@@ -68,7 +67,7 @@ exports.register = async (req, res) => {
            'INSERT OR IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)',
            [userId, userGroup.id]
          );
-         console.log(`[Register] Added user ${userId} to group 'User' (ID: ${userGroup.id})`);
+         console.log('[Register] Added user %s to group \'User\' (ID: %s)', userId, userGroup.id);
        } else {
          console.warn("[Register] Could not find default 'User' group to assign new user to.");
        }
@@ -213,7 +212,7 @@ exports.getProfile = async (req, res) => {
         groupIds
       );
       templatePerms.forEach(p => effectivePermissionsSet.add(p.permission_key));
-      // console.log(`[getProfile] Found ${templatePerms.length} permissions from templates for groups [${groupIds.join(', ')}].`); // Removed log
+      // console.log('[getProfile] Found %s permissions from templates for groups [%s].', templatePerms.length, groupIds.join(', ')); // Removed log
 
 
       // 2. Get permissions directly granted to the group via group_admin_permissions
@@ -227,13 +226,13 @@ exports.getProfile = async (req, res) => {
         groupIds
       );
       directPerms.forEach(p => effectivePermissionsSet.add(p.permission_key));
-      // console.log(`[getProfile] Found ${directPerms.length} permissions directly granted to groups [${groupIds.join(', ')}].`); // Removed log
+      // console.log('[getProfile] Found %s permissions directly granted to groups [%s].', directPerms.length, groupIds.join(', ')); // Removed log
 
     }
 
     // Convert Set back to array
     const effectivePermissions = Array.from(effectivePermissionsSet);
-    // console.log(`[getProfile] User ${user.id} final effective permissions:`, effectivePermissions); // Removed log
+    // console.log('[getProfile] User %s final effective permissions:', user.id, effectivePermissions); // Removed log
 
     // Check for specific permission to generate API keys
     const canGenerateApiKeys = await Permission.userHasPermission(user.id, 'api-keys:generate');
@@ -484,7 +483,7 @@ exports.verifyRegistrationToken = async (req, res) => {
       });
     }
 
-    // console.log(`[verifyRegistrationToken] Token validated successfully for user: ${user.username}`); // Removed debug log
+    // console.log('[verifyRegistrationToken] Token validated successfully for user: %s', user.username); // Removed debug log
 
     res.status(200).json({
       success: true,
@@ -565,7 +564,7 @@ exports.setPassword = async (req, res) => {
       // Continue as if OAuth is not enabled if there's an error checking
     }
     
-    // console.log(`[setPassword] Token validated successfully for user: ${user.username}`); // Removed debug log
+    // console.log('[setPassword] Token validated successfully for user: %s', user.username); // Removed debug log
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
@@ -630,7 +629,7 @@ exports.handleRegisterRedirect = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid or expired registration token.' });
     }
 
-    // console.log(`[handleRegisterRedirect] Token validated for user: ${user.username}. Redirecting to set password page.`); // Removed debug log
+    // console.log('[handleRegisterRedirect] Token validated for user: %s. Redirecting to set password page.', user.username); // Removed debug log
 
     // Construct the frontend URL, defaulting to localhost:3001 if FRONTEND_URL is not set in the current .env
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';

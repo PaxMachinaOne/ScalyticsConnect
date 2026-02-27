@@ -51,7 +51,7 @@ const chatService = {
 
       return chatData || null;
     } catch (error) {
-      console.error(`Error getting chat ${chatId}:`, error);
+      console.error('Error getting chat %s:', chatId, error);
       throw error;
     }
   },
@@ -146,7 +146,7 @@ const chatService = {
       const response = await chatApiService.post(CHAT_ENDPOINTS.MESSAGES(chatId), payload);
       return response || null;
     } catch (error) {
-      console.error(`Error sending message to chat ${chatId}:`, error);
+      console.error('Error sending message to chat %s:', chatId, error);
       throw error;
     }
   },
@@ -280,7 +280,7 @@ const chatService = {
       const response = await apiService.post(endpoint, payload);
       return response.data; 
     } catch (error) {
-      console.error(`Error running tool ${toolName} in chat ${chatId}:`, error);
+      console.error('Error running tool %s in chat %s:', toolName, chatId, error);
       throw error;
     }
   },

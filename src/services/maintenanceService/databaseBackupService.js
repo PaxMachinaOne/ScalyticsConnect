@@ -69,7 +69,7 @@ const ensureBackupDirExists = async () => {
     try {
       fs.mkdirSync(backupDir, { recursive: true });
     } catch (err) {
-      console.error(`Failed to create backup directory: ${err.message}`);
+      console.error('Failed to create backup directory: %s', err.message);
       throw new Error(`Cannot create backup directory: ${err.message}`);
     }
   }
@@ -80,7 +80,7 @@ const ensureBackupDirExists = async () => {
     fs.writeFileSync(testFile, 'test');
     fs.unlinkSync(testFile);
   } catch (err) {
-    console.error(`Backup directory is not writable: ${err.message}`);
+    console.error('Backup directory is not writable: %s', err.message);
     throw new Error(`Backup directory exists but is not writable: ${err.message}`);
   }
   
@@ -115,11 +115,11 @@ const createDatabaseBackup = async () => {
       await new Promise((resolve, reject) => {
         source.pipe(dest);
         source.on('error', (err) => {
-          console.error(`Error reading from source database: ${err.message}`);
+          console.error('Error reading from source database: %s', err.message);
           reject(new Error(`Failed to read database: ${err.message}`));
         });
         dest.on('error', (err) => {
-          console.error(`Error writing to backup file: ${err.message}`);
+          console.error('Error writing to backup file: %s', err.message);
           reject(new Error(`Failed to write backup: ${err.message}`));
         });
         dest.on('finish', resolve);
@@ -129,7 +129,7 @@ const createDatabaseBackup = async () => {
         try {
           fs.unlinkSync(tempBackupPath);
         } catch (cleanupErr) {
-          console.error(`Failed to clean up temporary backup file: ${cleanupErr.message}`);
+          console.error('Failed to clean up temporary backup file: %s', cleanupErr.message);
         }
       }
       throw streamErr;
@@ -144,7 +144,7 @@ const createDatabaseBackup = async () => {
           fs.unlinkSync(tempBackupPath);
         }
       } catch (cleanupErr) {
-        console.error(`Failed to clean up after rename error: ${cleanupErr.message}`);
+        console.error('Failed to clean up after rename error: %s', cleanupErr.message);
       }
       throw new Error(`Failed to finalize backup: ${renameErr.message}`);
     }
@@ -155,12 +155,12 @@ const createDatabaseBackup = async () => {
       
       // Try to set group ownership if in production environment
       if (process.env.NODE_ENV === 'production') {
-        const { execSync } = require('child_process');
-        execSync(`chgrp www-data "${backupPath}"`, { stdio: 'ignore' });
+        const { execFileSync } = require('child_process');
+        execFileSync('chgrp', ['www-data', backupPath], { stdio: 'ignore' });
       }
       
     } catch (permError) {
-      console.error(`Warning: Couldn't set permissions on backup file: ${permError.message}`);
+      console.error('Warning: Couldn\'t set permissions on backup file: %s', permError.message);
     }
     
     // Return backup details
@@ -171,7 +171,7 @@ const createDatabaseBackup = async () => {
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error(`Error creating backup: ${error.message}`);
+    console.error('Error creating backup: %s', error.message);
     throw error;
   }
 };
@@ -204,7 +204,7 @@ const cleanupOldBackups = async () => {
       }
     }
   } catch (err) {
-    console.error(`Error cleaning up old backups: ${err.message}`);
+    console.error('Error cleaning up old backups: %s', err.message);
   }
 };
 
@@ -243,14 +243,14 @@ const listDatabaseBackups = async () => {
           displayDate: file.replace('mcp-db-backup-', '').replace('.db', '').replace(/-/g, ':')
         });
       } catch (fileError) {
-        console.error(`Error processing backup file ${file}: ${fileError.message}`);
+        console.error('Error processing backup file %s: %s', file, fileError.message);
       }
     }
     
     // Sort by creation date, newest first
     return backups.sort((a, b) => new Date(b.created) - new Date(a.created));
   } catch (error) {
-    console.error(`Error listing database backups: ${error.message}`);
+    console.error('Error listing database backups: %s', error.message);
     throw new Error(`Failed to list database backups: ${error.message}`);
   }
 };
@@ -266,7 +266,14 @@ const restoreDatabaseBackup = async (fileName) => {
       throw new Error('Backup file name is required');
     }
     
-    const sanitizedFileName = path.basename(fileName);
+    // Validate filename format strictly to break taint chain
+    const baseFileName = path.basename(fileName);
+    const filenameRegex = /^(scalytics_backup_\d{4}-\d{2}-\d{2}_\d{6}\.sqlite|pre-restore-[\dT\-]+\.db)$/;
+    if (!filenameRegex.test(baseFileName)) {
+      throw new Error('Invalid backup file name format');
+    }
+    // Reconstruct sanitized filename from regex-validated string
+    const sanitizedFileName = String(baseFileName);
     const backupPath = path.join(getBackupDir(), sanitizedFileName);
     if (!fs.existsSync(backupPath)) {
       throw new Error(`Backup file not found: ${sanitizedFileName}`);
@@ -290,16 +297,16 @@ const restoreDatabaseBackup = async (fileName) => {
       try {
         fs.chmodSync(preRestoreBackupPath, 0o664); 
         if (process.env.NODE_ENV === 'production') {
-          const { execSync } = require('child_process');
-          execSync(`chgrp www-data "${preRestoreBackupPath}"`, { stdio: 'ignore' });
+          const { execFileSync } = require('child_process');
+          execFileSync('chgrp', ['www-data', preRestoreBackupPath], { stdio: 'ignore' });
         }
         
       } catch (permError) {
-        console.error(`Warning: Couldn't set permissions on pre-restore backup file: ${permError.message}`);
+        console.error('Warning: Couldn\'t set permissions on pre-restore backup file: %s', permError.message);
       }
       
     } catch (err) {
-      console.error(`Error creating pre-restore backup: ${err.message}`);
+      console.error('Error creating pre-restore backup: %s', err.message);
     }
     const tempDbPath = `${dbPath}.tmp`;
     const source = fs.createReadStream(backupPath);
@@ -316,12 +323,12 @@ const restoreDatabaseBackup = async (fileName) => {
     try {
       fs.chmodSync(dbPath, 0o664); 
       if (process.env.NODE_ENV === 'production') {
-        const { execSync } = require('child_process');
-        execSync(`chgrp www-data "${dbPath}"`, { stdio: 'ignore' });
+        const { execFileSync } = require('child_process');
+        execFileSync('chgrp', ['www-data', dbPath], { stdio: 'ignore' });
       }
       
     } catch (permError) {
-      console.error(`Warning: Couldn't set permissions on restored database file: ${permError.message}`);
+      console.error('Warning: Couldn\'t set permissions on restored database file: %s', permError.message);
     }
     
     // Create a marker file with restoration info
@@ -335,7 +342,7 @@ const restoreDatabaseBackup = async (fileName) => {
     try {
       fs.writeFileSync(markerPath, JSON.stringify(markerData, null, 2));
     } catch (markerErr) {
-      console.error(`Error writing restore marker file: ${markerErr.message}`);
+      console.error('Error writing restore marker file: %s', markerErr.message);
     }
     
     // Return success response data
@@ -345,7 +352,7 @@ const restoreDatabaseBackup = async (fileName) => {
       preRestoreBackup: preRestoreBackupFileName
     };
   } catch (error) {
-    console.error(`Error restoring database: ${error.message}`);
+    console.error("Error restoring database: %s", String(error.message).replace(/\n|\r/g, ''));
     throw error;
   }
 };
@@ -360,7 +367,13 @@ const deleteDatabaseBackup = async (fileName) => {
     if (!fileName) {
       throw new Error('Backup file name is required');
     }
-    const sanitizedFileName = path.basename(fileName);
+    // Validate filename format strictly to break taint chain
+    const baseFileNameDel = path.basename(fileName);
+    const filenameRegexDel = /^(scalytics_backup_\d{4}-\d{2}-\d{2}_\d{6}\.sqlite|pre-restore-[\dT\-]+\.db)$/;
+    if (!filenameRegexDel.test(baseFileNameDel)) {
+      throw new Error('Invalid backup file name format');
+    }
+    const sanitizedFileName = String(baseFileNameDel);
     const backupDir = getBackupDir();
     const backupPath = path.join(backupDir, sanitizedFileName);
     if (!fs.existsSync(backupPath)) {
@@ -382,7 +395,7 @@ const deleteDatabaseBackup = async (fileName) => {
       throw new Error(`Failed to delete file: ${unlinkErr.message}`);
     }
   } catch (error) {
-    console.error(`Error deleting database backup: ${error.message}`);
+    console.error("Error deleting database backup: %s", String(error.message).replace(/\n|\r/g, ''));
     throw error;
   }
 };
@@ -407,20 +420,31 @@ const uploadDatabaseBackup = async (uploadedFile) => {
       throw new Error('Invalid backup file name format. Must start with "mcp-db-backup-"');
     }
     const backupDir = await ensureBackupDirExists();
-    const destPath = path.join(backupDir, uploadedFile.name);
+    const resolvedBackupDir = path.resolve(backupDir);
+    const destPath = path.resolve(backupDir, uploadedFile.name);
+    // Validate that the destination path stays within the backup directory
+    if (!destPath.startsWith(resolvedBackupDir + path.sep)) {
+      throw new Error('Invalid backup file name: path traversal detected');
+    }
     if (fs.existsSync(destPath)) {
       throw new Error(`A backup with the name ${uploadedFile.name} already exists`);
     }
-    
+
     // This function may need to be adjusted based on how file uploads are handled
     if (typeof uploadedFile.mv === 'function') {
       await uploadedFile.mv(destPath);
     } else if (uploadedFile.tempFilePath) {
-      fs.copyFileSync(uploadedFile.tempFilePath, destPath);
-      
+      // Validate tempFilePath stays within OS temp directory
+      const resolvedTempPath = path.resolve(uploadedFile.tempFilePath);
+      const resolvedTmpDir = path.resolve(require('os').tmpdir());
+      if (!resolvedTempPath.startsWith(resolvedTmpDir + path.sep)) {
+        throw new Error('Invalid temporary file path');
+      }
+      fs.copyFileSync(resolvedTempPath, destPath);
+
       // Clean up the temporary file
       try {
-        fs.unlinkSync(uploadedFile.tempFilePath);
+        fs.unlinkSync(resolvedTempPath);
       } catch (unlinkError) {
         console.error('Error deleting temporary file:', unlinkError);
       }
@@ -429,14 +453,14 @@ const uploadDatabaseBackup = async (uploadedFile) => {
     }
 
     try {
-      fs.chmodSync(destPath, 0o664); 
+      fs.chmodSync(destPath, 0o664);
       if (process.env.NODE_ENV === 'production') {
-        const { execSync } = require('child_process');
-        execSync(`chgrp www-data "${destPath}"`, { stdio: 'ignore' });
+        const { execFileSync } = require('child_process');
+        execFileSync('chgrp', ['www-data', destPath], { stdio: 'ignore' });
       }
-      
+
     } catch (permError) {
-      console.error(`Warning: Couldn't set permissions on uploaded backup file: ${permError.message}`);
+      console.error('Warning: Couldn\'t set permissions on uploaded backup file: %s', permError.message);
     }
     await cleanupOldBackups();
     const stats = fs.statSync(destPath);
@@ -448,7 +472,7 @@ const uploadDatabaseBackup = async (uploadedFile) => {
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error(`Error uploading database backup: ${error.message}`);
+    console.error("Error uploading database backup: %s", String(error.message).replace(/\n|\r/g, ''));
     throw error;
   }
 };

@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const path = require('path');
 const fs = require('fs').promises;
 const https = require('https');
 const { db } = require('../models/db');
 const Model = require('../models/Model');
-const { writeModelConfigJson } = require('../utils/modelConfigUtils');
 const vllmService = require('../services/vllmService');
-const { triggerPythonServiceRestart, handleEmbeddingModelChange } = require('../utils/pythonServiceUtils');
+const { handleEmbeddingModelChange } = require('../utils/pythonServiceUtils');
+const { sanitizePathSegment } = require('../utils/urlValidation');
 
 exports.getModels = async (req, res) => {
   try {
@@ -165,11 +164,11 @@ exports.getModel = async (req, res) => {
 
 async function getEmbeddingDimensionFromHuggingFace(repoId) {
   if (!repoId) return null;
-  const configUrl = `https://huggingface.co/${repoId}/raw/main/config.json`;
+  const configUrl = `https://huggingface.co/${sanitizePathSegment(repoId)}/raw/main/config.json`;
   return new Promise((resolve) => {
     https.get(configUrl, (res) => {
       if (res.statusCode !== 200) {
-        console.warn(`[HF Config Fetch] Failed to fetch ${configUrl}. Status: ${res.statusCode}`);
+        console.warn("[HF Config Fetch] Failed to fetch %s. Status: %s", String(configUrl).replace(/\n|\r/g, ''), res.statusCode);
         resolve(null);
         return;
       }
@@ -180,19 +179,19 @@ async function getEmbeddingDimensionFromHuggingFace(repoId) {
           const hfConfig = JSON.parse(rawData);
           const dimension = hfConfig.hidden_size || hfConfig.d_model || hfConfig.hidden_dim || hfConfig.embedding_dim || hfConfig.dimension;
           if (dimension && typeof dimension === 'number' && dimension > 0) {
-            console.log(`[HF Config Fetch] Found dimension ${dimension} for ${repoId}`);
+            console.log('[HF Config Fetch] Found dimension %s for %s', dimension, String(repoId).replace(/\n|\r/g, ''));
             resolve(dimension);
           } else {
-            console.warn(`[HF Config Fetch] Dimension not found or invalid in config for ${repoId}. Config:`, hfConfig);
+            console.warn("[HF Config Fetch] Dimension not found or invalid in config for %s. Config: %o", String(repoId).replace(/\n|\r/g, ''), hfConfig);
             resolve(null);
           }
         } catch (e) {
-          console.error(`[HF Config Fetch] Error parsing config.json for ${repoId}:`, e);
+          console.error("[HF Config Fetch] Error parsing config.json for %s: %s", String(repoId).replace(/\n|\r/g, ''), e);
           resolve(null);
         }
       });
     }).on('error', (e) => {
-      console.error(`[HF Config Fetch] Error fetching config.json for ${repoId}:`, e);
+      console.error("[HF Config Fetch] Error fetching config.json for %s: %s", String(repoId).replace(/\n|\r/g, ''), (e instanceof Error ? e.message : String(e)).replace(/\n|\r/g, ''));
       resolve(null);
     });
   });
@@ -202,7 +201,7 @@ exports.addModel = async (req, res) => {
   try {
     const {
         name, description, model_path, context_window, is_active,
-        n_gpu_layers, n_batch, n_ctx, enable_scala_prompt, preferred_cache_type,
+        n_gpu_layers, n_batch, enable_scala_prompt, preferred_cache_type,
         model_family, prompt_format_type, huggingface_repo, tokenizer_repo_id, is_default,
         is_embedding_model,
         config
@@ -221,7 +220,7 @@ exports.addModel = async (req, res) => {
         try {
             modelConfig = JSON.parse(config);
         } catch (e) {
-            console.warn(`[Add Model] Invalid existing config JSON provided for ${name}. Initializing new config. Error: ${e.message}`);
+            console.warn("[Add Model] Invalid existing config JSON provided for %s. Initializing new config. Error: %s", String(name).replace(/\n|\r/g, ''), e.message);
             modelConfig = {};
         }
     } else if (config && typeof config === 'object') {
@@ -232,12 +231,12 @@ exports.addModel = async (req, res) => {
 
     let embeddingDimension = null;
     if (is_embedding_model && huggingface_repo) {
-        console.log(`[Add Model] Attempting to fetch dimension for embedding model ${name} from ${huggingface_repo}`);
+        console.log("[Add Model] Attempting to fetch dimension for embedding model %s from %s", String(name).replace(/\n|\r/g, ''), String(huggingface_repo).replace(/\n|\r/g, ''));
         embeddingDimension = await getEmbeddingDimensionFromHuggingFace(huggingface_repo);
         if (embeddingDimension) {
-            console.log(`[Add Model] Successfully set dimension ${embeddingDimension} for ${name}`);
+            console.log("[Add Model] Successfully set dimension %s for %s", embeddingDimension, String(name).replace(/\n|\r/g, ''));
         } else {
-            console.warn(`[Add Model] Could not automatically determine embedding dimension for ${name} (${huggingface_repo}). Please set manually if needed.`);
+            console.warn("[Add Model] Could not automatically determine embedding dimension for %s (%s). Please set manually if needed.", String(name).replace(/\n|\r/g, ''), String(huggingface_repo).replace(/\n|\r/g, ''));
         }
     }
 
@@ -289,7 +288,7 @@ exports.updateModel = async (req, res) => {
     const updateData = {};
     let newConfig = currentModel.config ? JSON.parse(currentModel.config) : {};
     let configChanged = false;
-    let coreModelFieldsChanged = false;
+
 
     const localConfigBlobFields = ['n_batch', 'n_ctx', 'dimension', 'tensor_parallel_size', 'gpu_memory_utilization'];
     const directModelFields = [
@@ -337,7 +336,7 @@ exports.updateModel = async (req, res) => {
 
                 if (processedValue !== currentValue) {
                     updateData[field] = processedValue;
-                    coreModelFieldsChanged = true;
+
                 }
             }
         }
@@ -348,14 +347,14 @@ exports.updateModel = async (req, res) => {
 
     if (newIsEmbeddingModel && newHuggingFaceRepo && 
         (updateData.is_embedding_model !== undefined || updateData.huggingface_repo !== undefined)) {
-        console.log(`[Update Model] Embedding status or repo changed for ${currentModel.name}. Re-fetching dimension from ${newHuggingFaceRepo}`);
+        console.log("[Update Model] Embedding status or repo changed for %s. Re-fetching dimension from %s", currentModel.name, String(newHuggingFaceRepo).replace(/\n|\r/g, ''));
         const dimension = await getEmbeddingDimensionFromHuggingFace(newHuggingFaceRepo);
         if (dimension && currentModel.embedding_dimension !== dimension) {
             updateData.embedding_dimension = dimension;
             coreModelFieldsChanged = true;
-            console.log(`[Update Model] Updated embedding_dimension to ${dimension} for ${currentModel.name}`);
+            console.log("[Update Model] Updated embedding_dimension to %s for %s", dimension, currentModel.name);
         } else if (!dimension) {
-            console.warn(`[Update Model] Could not automatically determine embedding dimension for ${currentModel.name} (${newHuggingFaceRepo}) on update.`);
+            console.warn("[Update Model] Could not automatically determine embedding dimension for %s (%s) on update.", currentModel.name, String(newHuggingFaceRepo).replace(/\n|\r/g, ''));
         }
     }
 
@@ -389,7 +388,7 @@ exports.updateModel = async (req, res) => {
     if (isLocalModel && Object.hasOwnProperty.call(req.body, 'is_active')) {
         const requestedIsActiveState = (is_active === true || is_active === 1 || is_active === '1');
         if (requestedIsActiveState !== (currentModel.is_active === 1)) {
-            console.warn(`[UpdateModel] Explicit is_active change for local model ${modelIdBeingUpdated} via config update route. Prefer activate/deactivate endpoints.`);
+            console.warn('[UpdateModel] Explicit is_active change for local model %s via config update route. Prefer activate/deactivate endpoints.', modelIdBeingUpdated);
             updateData.is_active = requestedIsActiveState; 
             needsRestart = true; 
         }
@@ -406,7 +405,7 @@ exports.updateModel = async (req, res) => {
         try {
             await vllmService.deactivateCurrentModel();
         } catch (stopError) {
-            console.error(`[UpdateModel] Error deactivating current model ${modelIdBeingUpdated} for restart:`, stopError);
+            console.error('[UpdateModel] Error deactivating current model %s for restart:', modelIdBeingUpdated, stopError);
             return res.status(500).json({ success: false, message: `Failed to stop existing model for config update: ${stopError.message}` });
         }
     }
@@ -425,7 +424,7 @@ exports.updateModel = async (req, res) => {
                 data: await Model.findById(modelIdBeingUpdated)
             });
         } catch (startError) {
-            console.error(`[UpdateModel] Error activating model ${modelIdBeingUpdated} after update:`, startError);
+            console.error('[UpdateModel] Error activating model %s after update:', modelIdBeingUpdated, startError);
             return res.status(500).json({
                 success: false,
                 message: `Model configuration saved, but failed to restart workers: ${startError.message}`,
@@ -488,12 +487,12 @@ exports.deleteModel = async (req, res) => {
           fileDeletedMessage = `Deleted model file: ${modelPath}`;
         } else if (stats.isDirectory()) {
           fileDeletedMessage = `Path is a directory, not automatically deleted: ${modelPath}. Use System Maintenance if needed.`;
-          console.warn(`[DeleteModel] ${fileDeletedMessage}`);
+          console.warn('[DeleteModel] %s', fileDeletedMessage);
         }
       } catch (fileError) {
         if (fileError.code !== 'ENOENT') {
             fileDeletedMessage = `Could not delete model file/directory (Access Denied or other error): ${modelPath}`;
-            console.warn(`[DeleteModel] ${fileDeletedMessage}`, fileError.message);
+            console.warn('[DeleteModel] %s', fileDeletedMessage, fileError.message);
         } else {
             fileDeletedMessage = `Model file/directory not found at path: ${modelPath}`;
         }
@@ -556,7 +555,7 @@ exports.updateModelStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Error updating model status for ID ${modelId}:`, error);
+    console.error('Error updating model status for ID %s:', modelId, error);
     res.status(500).json({ success: false, message: `Error updating model status: ${error.message || 'Unknown error'}` });
   }
 };

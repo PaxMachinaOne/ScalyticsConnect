@@ -5,7 +5,8 @@ const apiKeyService = require('../apiKeyService');
 const { getSystemSetting } = require('../../config/systemConfig'); 
 // const { embeddingWorkerService } = require('../embeddingWorkerService'); // Removed, service deleted
 const { db } = require('../../models/db'); 
-const axios = require('axios'); // For future Python API calls
+const axios = require('axios');
+const { validateInternalServiceUrl } = require('../../utils/urlValidation');
 
 /**
  * Selects the appropriate embedding model and its dimension based on system settings and availability.
@@ -22,7 +23,7 @@ async function selectEmbeddingModel(userId) {
     try {
         userGroups = (await db.allAsync('SELECT group_id FROM user_groups WHERE user_id = ?', [userId])).map(g => g.group_id);
     } catch (groupError) {
-        console.error(`[EmbeddingService] Error fetching groups for user ${userId}:`, groupError);
+        console.error('[EmbeddingService] Error fetching groups for user %s:', userId, groupError);
     }
 
     const checkGroupAccess = async (modelId) => {
@@ -47,13 +48,13 @@ async function selectEmbeddingModel(userId) {
                      const dimension = localModel.embedding_dimension || 768; 
                      return { model: localModel, dimension };
                  } else {
-                      console.warn(`[EmbeddingService] User ${userId} lacks group access to preferred local embedding model ${preferredLocalId}.`);
+                      console.warn('[EmbeddingService] User %s lacks group access to preferred local embedding model %s.', userId, preferredLocalId);
                  }
             } else {
-                 console.warn(`[EmbeddingService] Preferred local embedding model (ID: ${preferredLocalId}) not found, inactive, not local, or not marked as embedding model.`);
+                 console.warn('[EmbeddingService] Preferred local embedding model (ID: %s) not found, inactive, not local, or not marked as embedding model.', preferredLocalId);
             }
         } catch (error) {
-            console.error(`[EmbeddingService] Error fetching/checking preferred local model (ID: ${preferredLocalId}):`, error);
+            console.error('[EmbeddingService] Error fetching/checking preferred local model (ID: %s):', preferredLocalId, error);
         }
     }
 
@@ -68,13 +69,13 @@ async function selectEmbeddingModel(userId) {
                     return { model: externalModel, dimension };
                 } else {
                      const provider = await db.getAsync('SELECT name FROM api_providers WHERE id = ?', [externalModel.external_provider_id]);
-                     console.warn(`[EmbeddingService] Fallback external model (ID: ${fallbackExternalId}) found, but user ${userId} lacks a valid API key for provider ${provider?.name || externalModel.external_provider_id}.`);
+                     console.warn('[EmbeddingService] Fallback external model (ID: %s) found, but user %s lacks a valid API key for provider %s.', fallbackExternalId, userId, provider?.name || externalModel.external_provider_id);
                 }
             } else {
-                 console.warn(`[EmbeddingService] Fallback external embedding model (ID: ${fallbackExternalId}) not found, inactive, not external, or not marked as embedding model.`);
+                 console.warn('[EmbeddingService] Fallback external embedding model (ID: %s) not found, inactive, not external, or not marked as embedding model.', fallbackExternalId);
             }
         } catch (error) {
-            console.error(`[EmbeddingService] Error fetching fallback external model (ID: ${fallbackExternalId}):`, error);
+            console.error('[EmbeddingService] Error fetching fallback external model (ID: %s):', fallbackExternalId, error);
         }
     } else if (isAirGapped) {
     } else {
@@ -102,7 +103,7 @@ async function selectEmbeddingModel(userId) {
      }
 
 
-    console.error(`[EmbeddingService] No suitable embedding model found for user ${userId}.`);
+    console.error('[EmbeddingService] No suitable embedding model found for user %s.', userId);
     return null; 
 }
 
@@ -127,23 +128,18 @@ async function generateEmbeddings(chunks, userId) {
 
     if (selectedModel.external_provider_id) {
          // This service is for local embedding models. External models should be handled elsewhere.
-         console.error(`[EmbeddingService] Attempted to use external model ${selectedModel.id} (${selectedModel.name}) for local embedding generation.`);
+         console.error('[EmbeddingService] Attempted to use external model %s (%s) for local embedding generation.', selectedModel.id, selectedModel.name);
          throw new Error("Configuration error: This EmbeddingService is for local models. External models cannot be used for local embedding generation via this service.");
     }
 
     // Call the Python FastAPI service for local embedding generation
     try {
         const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-        if (!pythonServiceBaseUrl || !pythonServiceBaseUrl.startsWith('http')) {
-            console.error(`[EmbeddingService] Python service URL is not configured or invalid: '${pythonServiceBaseUrl}'`);
-            throw new Error("Python embedding service URL is not configured correctly.");
-        }
-
-        const embedApiUrl = `${pythonServiceBaseUrl}/vector/embed-texts`;
+        const embedApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/embed-texts');
         
-        console.log(`[EmbeddingService] Requesting embeddings for ${chunks.length} chunks from ${embedApiUrl} using model (expected by Node): ${selectedModel.name || selectedModel.id}`);
+        console.log('[EmbeddingService] Requesting embeddings for %s chunks from %s using model (expected by Node): %s', chunks.length, embedApiUrl, selectedModel.name || selectedModel.id);
 
-        const apiResponse = await axios.post(embedApiUrl, { texts: chunks });
+        const apiResponse = await axios.post(embedApiUrl, { texts: chunks }); // lgtm[js/request-forgery]
 
         if (!apiResponse.data || !Array.isArray(apiResponse.data.embeddings) || typeof apiResponse.data.dimension !== 'number' || !apiResponse.data.model_used) {
             console.error("[EmbeddingService] Invalid response structure from Python embedding service:", apiResponse.data);
@@ -153,22 +149,22 @@ async function generateEmbeddings(chunks, userId) {
         const { embeddings: apiEmbeddings, dimension: apiDimension, model_used: modelUsedByApi } = apiResponse.data;
 
         if (apiEmbeddings.length !== chunks.length) {
-            console.error(`[EmbeddingService] Mismatch in returned embeddings count. Expected ${chunks.length}, got ${apiEmbeddings.length}. Model used by API: ${modelUsedByApi}`);
+            console.error('[EmbeddingService] Mismatch in returned embeddings count. Expected %s, got %s. Model used by API: %s', chunks.length, apiEmbeddings.length, modelUsedByApi);
             throw new Error('Embedding generation returned mismatched number of embeddings.');
         }
 
         if (modelUsedByApi !== (selectedModel.id_or_path || selectedModel.name || selectedModel.id.toString())) {
-             console.warn(`[EmbeddingService] Model mismatch: Node expected '${selectedModel.name || selectedModel.id}', Python API used '${modelUsedByApi}'.`);
+             console.warn('[EmbeddingService] Model mismatch: Node expected \'%s\', Python API used \'%s\'.', selectedModel.name || selectedModel.id, modelUsedByApi);
         }
         
         if (apiDimension !== expectedDimension) {
-            console.warn(`[EmbeddingService] Dimension mismatch for model ${modelUsedByApi}: Node expected ${expectedDimension}, Python API returned ${apiDimension}. Using API dimension.`);
+            console.warn('[EmbeddingService] Dimension mismatch for model %s: Node expected %s, Python API returned %s. Using API dimension.', modelUsedByApi, expectedDimension, apiDimension);
         }
         
         return { embeddings: apiEmbeddings, dimension: apiDimension };
 
     } catch (error) {
-        console.error(`[EmbeddingService] Error calling Python embedding service for model ${selectedModel.name || selectedModel.id}:`, error.response ? error.response.data : error.message);
+        console.error('[EmbeddingService] Error calling Python embedding service for model %s:', selectedModel.name || selectedModel.id, error.response ? error.response.data : error.message);
         throw new Error(`Failed to generate embeddings via Python service: ${error.message}`);
     }
     
@@ -182,20 +178,20 @@ async function generateEmbeddings(chunks, userId) {
     //     // const embeddings = response.data.embeddings;
 
     //     if (!Array.isArray(embeddings) || embeddings.length !== chunks.length) {
-    //         console.error(`[EmbeddingService] Invalid response from embedding service for model ${selectedModel.id}. Expected ${chunks.length} embeddings, got:`, embeddings);
+    //         console.error('[EmbeddingService] Invalid response from embedding service for model %s. Expected %s embeddings, got:', selectedModel.id, chunks.length, embeddings);
     //         throw new Error('Embedding generation failed or returned unexpected format.');
     //     }
 
     //     // Verify embedding dimension matches expected
     //     const actualDimension = embeddings[0]?.length || 0;
     //     if (actualDimension > 0 && actualDimension !== dimension) {
-    //          console.warn(`[EmbeddingService] Warning: Returned embedding dimension (${actualDimension}) does not match expected dimension (${dimension}) for model ${selectedModel.id}. Using actual dimension.`);
+    //          console.warn('[EmbeddingService] Warning: Returned embedding dimension (%s) does not match expected dimension (%s) for model %s. Using actual dimension.', actualDimension, dimension, selectedModel.id);
     //          return { embeddings: embeddings, dimension: actualDimension };
     //     }
     //     return { embeddings: embeddings, dimension }; 
 
     // } catch (error) {
-    //     console.error(`[EmbeddingService] Error generating embeddings with model ${selectedModel.id}:`, error);
+    //     console.error('[EmbeddingService] Error generating embeddings with model %s:', selectedModel.id, error);
     //     // if (error.message.includes('Embedding worker not ready')) { // OLD CODE
     //     //      const workerStatus = embeddingWorkerService.getStatus(); // OLD CODE
     //     //      throw new Error(`Embedding worker not ready. Status: ${workerStatus.status}. Last Error: ${workerStatus.lastError || 'None'}`); // OLD CODE

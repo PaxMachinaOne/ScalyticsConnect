@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-import asyncio
-import time
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
@@ -123,7 +121,7 @@ class BotTrapDetector:
             await conn.commit()
         except Exception as e:
             await conn.rollback()
-            self.logger.error(f"Database error in record_timeout_failure for {domain}: {e}", exc_info=True)
+            self.logger.error("Database error in record_timeout_failure for %s: %s", domain, e, exc_info=True)
         finally:
             await conn.close()
 
@@ -165,14 +163,14 @@ class BotTrapDetector:
             """,
             (domain,)
         )
-        self.logger.info(f"Temporary blacklist expired for domain: {domain}")
+        self.logger.info("Temporary blacklist expired for domain: %s", domain)
 
     def _log_timeout_warning(self, url: str, timeout_type: str, duration: float):
         domain = self._extract_domain(url)
-        self.logger.warning(f"⚠️ TIMEOUT ({timeout_type}): {domain} - {duration:.1f}s")
+        self.logger.warning("⚠️ TIMEOUT (%s): %s - %ss", timeout_type, domain, duration)
     
     def _log_bot_trap_detection(self, domain: str, failure_count: int):
-        self.logger.warning(f"🤖 BOT_TRAP_DETECTED: {domain} - {failure_count} failures - Auto-blacklisted for {self.BLACKLIST_DURATION_HOURS}h")
+        self.logger.warning("🤖 BOT_TRAP_DETECTED: %s - %s failures - Auto-blacklisted for %sh", domain, failure_count, self.BLACKLIST_DURATION_HOURS)
     
     def _log_blacklist_hit(self, domain: str, reason: str):
-        self.logger.info(f"⛔ BLACKLIST_SKIP: {domain} - Reason: {reason}")
+        self.logger.info("⛔ BLACKLIST_SKIP: %s - Reason: %s", domain, reason)

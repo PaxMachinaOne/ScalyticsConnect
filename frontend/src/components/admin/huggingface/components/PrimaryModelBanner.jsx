@@ -12,7 +12,7 @@ const PrimaryModelBanner = () => {
   const [primaryModel, setPrimaryModel] = useState(null);
   const [loading, setLoading] = useState(true);
   // eslint-disable-next-line no-unused-vars
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   
   const isMounted = useRef(true);
   const [visible, setVisible] = useState(false);

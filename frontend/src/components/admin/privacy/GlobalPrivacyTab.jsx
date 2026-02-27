@@ -112,10 +112,10 @@ const GlobalPrivacyTab = ({ onSettingChange }) => {
              {/* Standard Button Toggle */}
              <button
                 onClick={handleToggleGlobalPrivacy}
-                disabled={processingToggle || loading}
+                disabled={processingToggle}
                 className={`px-5 py-2.5 rounded font-medium text-white text-sm transition-colors duration-150 ${
                   globalPrivacyEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-                } ${processingToggle || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${processingToggle ? 'opacity-50 cursor-not-allowed' : ''}`}
                 id="global-privacy-toggle-button"
               >
                 {processingToggle ? 'Processing...' : (globalPrivacyEnabled ? 'Disable Privacy Mode' : 'Enable Privacy Mode')}

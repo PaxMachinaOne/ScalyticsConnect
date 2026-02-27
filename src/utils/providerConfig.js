@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db');
-const fs = require('fs').promises;
-const path = require('path');
 
 /**
  * Initialize default API provider configurations
@@ -118,7 +116,7 @@ async function initializeProviderConfigs() {
             existingProvider.id
           ]
         );
-        console.log(`Updated configuration for provider: ${provider.name}`);
+        console.log('Updated configuration for provider: %s', provider.name);
       } else {
         // Insert new provider
         await db.runAsync(
@@ -133,7 +131,7 @@ async function initializeProviderConfigs() {
             provider.requires_api_key === false ? 0 : 1
           ]
         );
-        console.log(`Added new provider: ${provider.name}`);
+        console.log('Added new provider: %s', provider.name);
       }
     }
   } catch (error) {
@@ -163,7 +161,7 @@ async function getProviderConfig(providerName) {
       try {
         endpoints = JSON.parse(provider.endpoints);
       } catch (e) {
-        console.error(`Error parsing endpoints for ${providerName}:`, e);
+        console.error('Error parsing endpoints for %s:', providerName, e);
       }
     }
 
@@ -177,7 +175,7 @@ async function getProviderConfig(providerName) {
       isActive: Boolean(provider.is_active)
     };
   } catch (error) {
-    console.error(`Error getting provider config for ${providerName}:`, error);
+    console.error('Error getting provider config for %s:', providerName, error);
     throw error;
   }
 }
@@ -198,7 +196,7 @@ async function getProviderEndpoint(providerName, endpointType) {
 
     return `${config.apiUrl}${config.endpoints[endpointType]}`;
   } catch (error) {
-    console.error(`Error getting endpoint for ${providerName}/${endpointType}:`, error);
+    console.error('Error getting endpoint for %s/%s:', providerName, endpointType, error);
     throw error;
   }
 }
@@ -213,7 +211,7 @@ async function getProviderApiVersion(providerName) {
     const config = await getProviderConfig(providerName);
     return config.apiVersion || null;
   } catch (error) {
-    console.error(`Error getting API version for ${providerName}:`, error);
+    console.error('Error getting API version for %s:', providerName, error);
     return null;
   }
 }

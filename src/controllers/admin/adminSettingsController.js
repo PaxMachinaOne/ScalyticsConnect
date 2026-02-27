@@ -36,7 +36,6 @@ exports.updateAirGappedMode = async (req, res) => {
     }
 
     const valueToSetForAirGapped = airGapped ? 'true' : 'false';
-    let newGlobalPrivacyState = getSystemSetting('global_privacy_mode', 'false') === 'true';
 
     // --- Dependency Logic Start ---
     // If enabling air-gapped mode, also enable global privacy mode
@@ -45,12 +44,9 @@ exports.updateAirGappedMode = async (req, res) => {
       if (!currentPrivacyMode) {
         try {
           await updateSystemSetting('global_privacy_mode', 'true');
-          newGlobalPrivacyState = true; // Update our tracked state
         } catch (directUpdateError) {
           console.error('[AdminSettingsController] Failed to automatically update global_privacy_mode directly:', directUpdateError);
         }
-      } else {
-        newGlobalPrivacyState = true; // Already true
       }
     }
     // Note: If airGapped is being disabled, global_privacy_mode is handled by privacyController's dependency logic
@@ -173,19 +169,17 @@ exports.getPreferredEmbeddingModel = async (req, res) => {
     res.setHeader('Expires', '0');
 
     // Fetch the actual model details if an ID is set
-    let modelName = null;
     let modelDetails = null;
     if (modelId) {
       const model = await Model.findById(modelId);
       if (model) {
-        modelName = model.name;
         modelDetails = {
           id: model.id,
           name: model.name,
           is_embedding_model: model.is_embedding_model,
         };
       } else {
-        console.warn(`[Admin Settings] Preferred embedding model ID ${modelId} set, but model not found in DB.`);
+        console.warn('[Admin Settings] Preferred embedding model ID %s set, but model not found in DB.', modelId);
       }
     }
 
@@ -287,7 +281,7 @@ exports.updatePreferredEmbeddingModel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[Admin Settings] Error setting preferred embedding model to ${numericModelId}:`, error);
+    console.error('[Admin Settings] Error setting preferred embedding model to %s:', numericModelId, error);
     res.status(500).json({ success: false, message: 'Failed to set preferred embedding model.' });
   }
 };
@@ -300,7 +294,7 @@ exports.updatePreferredEmbeddingModel = async (req, res) => {
 exports.getActiveFilterLanguages = async (req, res) => {
   try {
     const langSetting = getSystemSetting('active_filter_languages', '["en"]');
-    let languages = ['en'];
+    let languages;
     try {
       languages = JSON.parse(langSetting);
       if (!Array.isArray(languages)) languages = ['en'];
@@ -394,25 +388,22 @@ exports.updateChatArchivalSetting = async (req, res) => {
         const archivedChats = await db.allAsync('SELECT id FROM chats WHERE is_archived = 1');
         
         if (archivedChats.length > 0) {
+          const { validateInternalServiceUrl } = require('../../utils/urlValidation');
           const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
-          const deleteVectorDocsUrl = `${pythonServiceBaseUrl}/vector/delete_by_group`;
+          const deleteVectorDocsUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
 
           for (const chat of archivedChats) {
             try {
-              if (pythonServiceBaseUrl && pythonServiceBaseUrl.startsWith('http')) {
-                await axios.post(deleteVectorDocsUrl, { group_id: chat.id.toString() });
-                console.log(`[AdminSettingsController] Successfully requested deletion of vector documents for archived chat group ${chat.id}.`);
-              } else {
-                console.warn(`[AdminSettingsController] Python service URL not configured. Skipping vector deletion for chat ${chat.id}.`);
-              }
+              await axios.post(deleteVectorDocsUrl, { group_id: chat.id.toString() }); // lgtm[js/request-forgery]
+              console.log('[AdminSettingsController] Successfully requested deletion of vector documents for archived chat group %s.', chat.id);
             } catch (vectorError) {
-              console.error(`[AdminSettingsController] Error deleting vector documents for archived chat ${chat.id}:`, vectorError.response ? vectorError.response.data : vectorError.message);
+              console.error('[AdminSettingsController] Error deleting vector documents for archived chat %s:', chat.id, vectorError.response ? vectorError.response.data : vectorError.message);
               // Continue deletion of other chats even if one fails
             }
           }
           
           const result = await db.runAsync('DELETE FROM chats WHERE is_archived = 1');
-          console.log(`[AdminSettingsController] Deleted ${result.changes} archived chats from the database.`);
+          console.log('[AdminSettingsController] Deleted %s archived chats from the database.', result.changes);
           message += ` All ${result.changes} archived chats and associated data have been deleted.`;
         } else {
           console.log('[AdminSettingsController] No archived chats found to delete.');

@@ -101,7 +101,7 @@ exports.createIntegration = async (req, res) => {
         });
       }
       
-      console.log(`API key validation passed for ${provider}`);
+      console.log("API key validation passed for %s", String(provider).replace(/\n|\r/g, ''));
     }
     
     // Create integration
@@ -164,7 +164,7 @@ exports.updateIntegration = async (req, res) => {
         });
       }
       
-      console.log(`API key validation passed for ${providerName}`);
+      console.log("API key validation passed for %s", String(providerName).replace(/\n|\r/g, ''));
     }
     
     // Handle a case where client_secret is not provided (keep existing)

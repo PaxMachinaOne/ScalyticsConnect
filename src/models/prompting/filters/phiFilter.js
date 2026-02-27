@@ -11,29 +11,6 @@ const defaultFilter = require('./defaultFilter');
  * @param {string} content - Content to fix
  * @returns {string} Fixed content
  */
-function fixCodeBlocks(content) {
-  if (!content || !content.includes('```')) return content;
-  
-  // Find code blocks and fix them - handle various patterns
-  let fixed = content;
-  
-  // Fix standard triple backtick code blocks with language tag attached to code
-  fixed = fixed.replace(/```([a-zA-Z0-9_+#]+)([^\n])/g, (match, language, firstChar) => {
-    // Separate language from code with a newline
-    return "```" + language + "\n" + firstChar;
-  });
-  
-  // Fix quoted triple backtick blocks (sometimes occurs in raw responses)
-  fixed = fixed.replace(/\|```([a-zA-Z0-9_+#]+)([^\n])/g, (match, language, firstChar) => {
-    // Separate language from code with a newline
-    return "|```" + language + "\n" + firstChar;
-  });
-  
-  // Fix Go code specifically (common pattern in Phi models)
-  fixed = fixed.replace(/(```go|```golang)package\s+main/g, "$1\npackage main");
-  
-  return fixed;
-}
 
 /**
  * Enhanced sanitizer for Phi model responses (Phi-3 and Phi-4).

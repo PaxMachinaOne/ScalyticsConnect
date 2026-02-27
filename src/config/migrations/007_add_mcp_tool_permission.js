@@ -23,7 +23,6 @@ async function up() {
     if (!permission) {
       throw new Error(`Failed to find or create permission '${permissionName}'`);
     }
-    const permissionId = permission.id;
 
     await db.runAsync(`
       INSERT OR IGNORE INTO permission_templates (permission_key, group_id, default_value, description) VALUES (?, ?, ?, ?)

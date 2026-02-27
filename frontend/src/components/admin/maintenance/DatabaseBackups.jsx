@@ -60,7 +60,7 @@ const DatabaseBackups = ({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-dark-primary divide-y divide-gray-200 dark:divide-dark-border">
-            {backups && Array.isArray(backups) && backups.map((backup) => (
+            {backups.map((backup) => (
               <tr key={backup.fileName} className="hover:bg-gray-50 dark:hover:bg-dark-secondary">
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-dark-text-primary">
                   <span className="font-medium">{backup.fileName}</span>

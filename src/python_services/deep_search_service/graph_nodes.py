@@ -5,7 +5,6 @@ from typing import Dict, List, Any, Optional, Set, Tuple
 import uuid
 import random 
 from datetime import datetime, timezone
-import time 
 import heapq 
 import re 
 import numpy as np 
@@ -17,8 +16,8 @@ from .sub_workers.llm_reasoning import LLMReasoning
 from .sub_workers.content_vector import get_content_vector, ContentVector
 from .sub_workers.search_scrape import SearchScrape
 from .sub_workers.research_comptroller import ResearchComptroller
-from .sub_workers.document_processor import analyze_document_content
 from .utils import setup_logger, agent_dialogue, citations 
+import logging
 
 logger = setup_logger(__name__, level="WARNING")
 
@@ -193,18 +192,14 @@ async def initialize_task_node(state: models.OverallState, services: Dict[str, A
     request_params = state.request_params
     api_config = state.api_config
     llm_reasoner: LLMReasoning = services["llm_reasoner"]
-    content_vector = await get_content_vector()
+    await get_content_vector()  # Initialize singleton; result used by other nodes
     search_scraper: SearchScrape = services["search_scraper"]
     settings: app_config.Settings = services["settings"]
-
-    detected_language = "en"
-    query_in_english = request_params.initial_query
-    processing_language = "en"
 
     try:
         detected_language = detect(request_params.initial_query)
     except LangDetectException:
-        logger.warning(f"[{task_id}] Could not detect language for query. Defaulting to 'en'.")
+        logger.warning("[%s] Could not detect language for query. Defaulting to 'en'.", task_id)
         detected_language = "en"
 
     if detected_language != "en" and not settings.DEEP_SEARCH_EMBEDDING_MODEL_IS_MULTILINGUAL:
@@ -221,7 +216,7 @@ async def initialize_task_node(state: models.OverallState, services: Dict[str, A
         if translation_result.get("translated_text") and not translation_result.get("error"):
             query_in_english = translation_result["translated_text"]
         else:
-            logger.error(f"[{task_id}] Failed to translate initial query to English. Proceeding with original query, but results may be poor.")
+            logger.error("[%s] Failed to translate initial query to English. Proceeding with original query, but results may be poor.", task_id)
             query_in_english = request_params.initial_query
     elif detected_language != "en":
         processing_language = detected_language
@@ -306,8 +301,7 @@ async def initialize_task_node(state: models.OverallState, services: Dict[str, A
                 await output_queue.put(models.SSEEvent(task_id=task_id, event_type="progress", payload=models.SSEProgressData(stage="pre_flight_answer_generated", message="Now I have a good overview.")))
             else:
                 pass
-        except Exception as e_preflight:
-            pass
+        except Exception as e_preflight: logging.debug("Suppressed %s: %s", type(e_preflight).__name__, e_preflight)
     initial_state_updates["pre_flight_llm_answer"] = pre_flight_llm_answer
     
     if pre_flight_llm_answer:
@@ -470,7 +464,6 @@ async def web_search_node(state: models.OverallState, services: Dict[str, Any], 
     hop_successful_queries: List[str] = []
     total_queries_attempted_this_hop: int = 0
     
-    is_comptroller_retry_hop = state.is_comptroller_review_failed and bool(getattr(state, "force_reexecute_queries_this_hop", set()))
 
     current_queries_original_actions = state.current_queries_for_hop 
     api_config = state.api_config
@@ -595,7 +588,7 @@ async def web_search_node(state: models.OverallState, services: Dict[str, Any], 
             for item_dict in s_list:
                 if item_dict.get('url') and isinstance(item_dict.get('url'), str) and item_dict.get('url').strip():
                     try: results_this_node.append(models.SearchResultItem(**item_dict))
-                    except Exception as e_model: pass
+                    except Exception as e_model: logging.debug("Suppressed %s: %s", type(e_model).__name__, e_model)
                 else: pass
 
             for p, e in errors.items(): 
@@ -796,8 +789,7 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
     # Natural reasoning message for analysis phase
     uncovered_topics = [step for step in state.all_reasoning_steps if step not in state.covered_reasoning_steps]
     analysis_reasoning_msg = agent_dialogue.CONTENT_ANALYSIS_REASONING.format(
-        findings_summary=f"content from {len(state.all_processed_chunks_this_task)} sources",
-        research_objectives=', '.join(uncovered_topics[:2]) if uncovered_topics else 'your research question'
+        findings_summary=f"content from {len(state.all_processed_chunks_this_task)} sources"
     )
     
     await output_queue.put(models.SSEEvent(
@@ -888,8 +880,6 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
     else:
         final_chunks = high_quality_chunks
     
-    chunks_for_librarian_llm = final_chunks
-    
     # Pre-rerank filtering layer
     pre_rerank_filtered_chunks = []
     query_keywords = set(re.findall(r'\b\w+\b', vector_query_text.lower()))
@@ -937,8 +927,7 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
                     english_chunks_to_translate.append(chunk.text_content)
                     chunk_indices_to_translate.append(i)
             except LangDetectException:
-                pass
-        
+                logging.debug("Suppressed exception")
         if english_chunks_to_translate:
             batch_translation_result = await llm_reasoner.translate_texts_batch_async(
                 texts_to_translate=english_chunks_to_translate,
@@ -964,7 +953,7 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
                         **batch_translation_result["usage"]
                     ))
             else:
-                logger.warning(f"[{task_id}] Batch translation failed, falling back to individual translations. Error: {batch_translation_result.get('error')}")
+                logger.warning("[%s] Batch translation failed, falling back to individual translations. Error: %s", task_id, batch_translation_result.get('error'))
                 for i in chunk_indices_to_translate:
                     chunk = chunks_for_librarian_llm[i]
                     try:
@@ -979,7 +968,7 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
                         if translation_result.get("translated_text"):
                             chunk.text_content = translation_result["translated_text"]
                     except Exception as e_fallback:
-                        logger.warning(f"[{task_id}] Individual translation fallback failed for chunk {chunk.chunk_id}: {e_fallback}")
+                        logger.warning("[%s] Individual translation fallback failed for chunk %s: %s", task_id, chunk.chunk_id, e_fallback)
 
     top_chunks_summary_for_sse: List[models.ChunkSummary] = [] 
     for chunk_obj_hop in chunks_for_librarian_llm: 
@@ -1053,7 +1042,7 @@ async def analyze_content_node(state: models.OverallState, services: Dict[str, A
             key_info_map = analysis_result_model.key_information_for_covered_steps or {}
             for step_name_from_librarian in analysis_result_model.covered_reasoning_steps:
                 if not isinstance(step_name_from_librarian, str):
-                    logger.warning(f"[{task_id}] Skipping non-string step name in covered_reasoning_steps: {step_name_from_librarian}")
+                    logger.warning("[%s] Skipping non-string step name in covered_reasoning_steps: %s", task_id, step_name_from_librarian)
                     continue
 
                 value_found_by_librarian = key_info_map.get(step_name_from_librarian)
@@ -1165,10 +1154,10 @@ async def extract_links_node(state: models.OverallState, services: Dict[str, Any
                 
                 links_for_llm_selection = [valid_new_links[i] for i in top_k_indices]
             else:
-                logger.warning(f"[{task_id}] Could not generate embeddings for pre-filtering links. Proceeding with truncated list.")
+                logger.warning("[%s] Could not generate embeddings for pre-filtering links. Proceeding with truncated list.", task_id)
                 links_for_llm_selection = valid_new_links[:pre_filter_threshold]
         except Exception as e_filter:
-            logger.error(f"[{task_id}] Error during vector pre-filtering of links: {e_filter}. Proceeding with truncated list.", exc_info=True)
+            logger.error("[%s] Error during vector pre-filtering of links: %s. Proceeding with truncated list.", task_id, e_filter, exc_info=True)
             links_for_llm_selection = valid_new_links[:pre_filter_threshold]
 
     prioritized_links_for_pq: List[models.CandidateLinkToExplore]
@@ -1317,8 +1306,9 @@ async def prepare_next_hop_node(state: models.OverallState, services: Dict[str, 
     queries_for_llm_input = standard_flow_queries_ok + generated_alternative_queries
     uncovered_reasoning_steps = [s for s in state.all_reasoning_steps if s not in state.covered_reasoning_steps]
     llm_generated_queries_next_hop: List[str] = []
+    model_info_next_hop_gen: Dict[str, Any] = {}
 
-    if uncovered_reasoning_steps or queries_for_llm_input: 
+    if uncovered_reasoning_steps or queries_for_llm_input:
         current_previous_queries = list(state.executed_search_queries) 
         
         model_info_next_hop_gen = state.request_params.reasoning_model_info or {}; 
@@ -1529,7 +1519,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
     search_scraper: SearchScrape = services.get("search_scraper") # Use .get for safety
     settings: app_config.Settings = services.get("settings") # Use .get for safety
     current_aggregated_tokens = list(state.aggregated_token_usage)
-    gathered_fact_check_snippets = [] # Add this line
+    gathered_fact_check_snippets: List[Dict[str, str]] = []
 
     if not all([llm_reasoner, content_vector, search_scraper, settings]):
         await output_queue.put(models.SSEEvent(task_id=task_id, event_type="error", payload=models.SSEErrorData(error_message="Critical service missing in synthesize_report_node.", stage="synthesis_service_check", is_fatal=True)))
@@ -1591,8 +1581,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
                         group_id=task_id
                     )
                     all_synthesis_results.extend(results)
-            except Exception as e:
-                pass
+            except Exception as e: logging.debug("Suppressed %s: %s", type(e).__name__, e)
         
         # Deduplicate and score
         synthesis_chunk_scores = {}
@@ -1616,12 +1605,6 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
         
         # Sort by quality and take top candidates
         synthesis_candidates.sort(key=lambda x: x[1], reverse=True)
-
-        # ADD DEBUG LOGGING
-        if synthesis_candidates:
-            top_scores = [score for _, score in synthesis_candidates[:10]]
-        else:
-            pass
 
         chunks_for_synthesis = [chunk for chunk, score in synthesis_candidates[:settings.DEEP_SEARCH_SYNTHESIS_MAX_CHUNKS]]
 
@@ -1779,7 +1762,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
 
         if fact_check_requests:
             await output_queue.put(models.SSEEvent(task_id=task_id, event_type="progress", payload=models.SSEProgressData(stage="fact_checking_queries_generated", message=f"Identified {len(fact_check_requests)} claims for fact-checking.")))
-            gathered_fact_check_snippets: List[Dict[str, str]] = []
+            gathered_fact_check_snippets.clear()
             
             FAST_FACT_CHECK_PROVIDERS_BASE = [
                 p for p in GENERAL_WEB_FACT_CHECK_PROVIDERS 
@@ -1790,7 +1773,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
 
             for fc_req_idx, fc_req in enumerate(fact_check_requests[:settings.DEEP_SEARCH_MAX_FACT_CHECK_QUERIES]):
                 if state.is_cancelled_flag.is_set():
-                    logger.info(f"[{task_id}] SynthesizeReportNode: Cancellation detected during fact-checking loop.")
+                    logger.info("[%s] SynthesizeReportNode: Cancellation detected during fact-checking loop.", task_id)
                     break
                 claim = fc_req.get("claim_to_verify"); query = fc_req.get("verification_query"); preferred_provider_from_llm = fc_req.get("preferred_provider", "general_web")
                 if not claim or not query: continue
@@ -1822,7 +1805,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
                         combined_fast_providers = ["duckduckgo", "brave"]
                     search_providers_for_fc = random.sample(combined_fast_providers, len(combined_fast_providers))
                 
-                logger.info(f"[{task_id}] Fact-checking claim '{claim[:30]}...' using actual providers: {search_providers_for_fc}")
+                logger.info("[%s] Fact-checking claim '%s...' using actual providers: %s", task_id, claim[:200], search_providers_for_fc)
                 fc_search_results, _ = await search_scraper.execute_search_pass(
                     query=query, 
                     search_providers=search_providers_for_fc, 
@@ -1990,7 +1973,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
     active_feedback_for_current_review_cycle = list(state.active_comptroller_feedback_items) if state.active_comptroller_feedback_items else []
 
 
-    logger.info(f"[{task_id}] SynthesizeReportNode: Checking conditions for Comptroller review. Comptroller instance: {'Exists' if comptroller else 'None'}. Setting DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW: {settings.DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW}")
+    logger.info("[%s] SynthesizeReportNode: Checking conditions for Comptroller review. Comptroller instance: %s. Setting DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW: %s", task_id, 'Exists' if comptroller else 'None', settings.DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW)
 
     if comptroller and settings.DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW: # Check the setting
         await output_queue.put(models.SSEEvent(task_id=task_id, event_type="progress", payload=models.SSEProgressData(stage="comptroller_review_start", message="Comptroller performing final draft review..."))) # is_key_summary=True REMOVED
@@ -2001,11 +1984,11 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
         if active_feedback_for_current_review_cycle and is_repetitive and updated_comptroller_feedback_retry_count >= settings.DEEP_SEARCH_MAX_REPETITIVE_FEEDBACK_LIMIT:
             perform_actual_review = False
             review_result = {"approved": True, "feedback_points": ["Review auto-approved due to repetitive feedback limit."], "usage": {"prompt_tokens":0, "completion_tokens":0, "total_tokens":0}}
-            logger.warning(f"[{task_id}] Comptroller review auto-approved due to repetitive feedback limit.")
+            logger.warning("[%s] Comptroller review auto-approved due to repetitive feedback limit.", task_id)
         elif state.comptroller_hop_credits <= 0 and active_feedback_for_current_review_cycle : # Only auto-approve due to credits if it's a re-review
             perform_actual_review = False
             review_result = {"approved": True, "feedback_points": ["Review auto-approved as Comptroller credits are exhausted for re-review."], "usage": {"prompt_tokens":0, "completion_tokens":0, "total_tokens":0}}
-            logger.warning(f"[{task_id}] Comptroller review auto-approved as credits are already exhausted ({state.comptroller_hop_credits}) for re-review.")
+            logger.warning("[%s] Comptroller review auto-approved as credits are already exhausted (%s) for re-review.", task_id, state.comptroller_hop_credits)
 
         if perform_actual_review:
             # Pass the previous draft (state.final_report_md before it's updated by current synthesis)
@@ -2046,20 +2029,20 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
             if not new_queries and comptroller_feedback_points: new_queries = comptroller_feedback_points # Use raw feedback if no queries generated
             
             if new_queries and updated_credits_after_rejection >= 0 : 
-                 logger.info(f"[{task_id}] Comptroller rejected draft. Feedback: {comptroller_feedback_points}. New queries: {new_queries}. Credits updated to: {updated_credits_after_rejection}")
+                 logger.info("[%s] Comptroller rejected draft. Feedback: %s. New queries: %s. Credits updated to: %s", task_id, comptroller_feedback_points, new_queries, updated_credits_after_rejection)
                  return_is_comptroller_review_failed = True
                  return_comptroller_feedback_for_retake = new_queries
                  return_comptroller_hop_credits = updated_credits_after_rejection
                  active_feedback_for_current_review_cycle = list(comptroller_feedback_points) # Store this feedback
                  current_cycle_fact_checked_claims = set() # Reset for the new research/synthesis cycle
             else: 
-                 logger.warning(f"[{task_id}] Comptroller rejected draft. No new queries OR credits exhausted ({updated_credits_after_rejection}) for re-research. Finalizing with current (rejected) draft. Feedback: {comptroller_feedback_points}")
+                 logger.warning("[%s] Comptroller rejected draft. No new queries OR credits exhausted (%s) for re-research. Finalizing with current (rejected) draft. Feedback: %s", task_id, updated_credits_after_rejection, comptroller_feedback_points)
                  return_is_comptroller_review_failed = False 
                  return_comptroller_feedback_for_retake = []
                  return_comptroller_hop_credits = updated_credits_after_rejection
                  active_feedback_for_current_review_cycle = None # Clear if not retrying
         else: # This means review_result.get("approved", True) was True OR comptroller_feedback_points was empty
-            logger.info(f"[{task_id}] Comptroller review resulted in approval OR no actionable feedback points. Approved: {review_result.get('approved', True)}, Feedback Points: {comptroller_feedback_points}")
+            logger.info("[%s] Comptroller review resulted in approval OR no actionable feedback points. Approved: %s, Feedback Points: %s", task_id, review_result.get('approved', True), comptroller_feedback_points)
             return_is_comptroller_review_failed = False
             return_comptroller_feedback_for_retake = []
             active_feedback_for_current_review_cycle = None # Clear on approval
@@ -2069,7 +2052,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
     
     # Only send the markdown chunk if the report is approved (or if comptroller is disabled)
         if not comptroller or not settings.DEEP_SEARCH_ENABLE_COMPTROLLER_FINAL_REVIEW or review_result.get("approved"):
-            logger.info(f"[{task_id}] Sending final approved report markdown to SSE stream.")
+            logger.info("[%s] Sending final approved report markdown to SSE stream.", task_id)
             
             # --- Final Translation Step for English-Fallback Mode ---
             report_to_send = final_report_md_with_sources_and_date
@@ -2090,7 +2073,7 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
 
             await output_queue.put(models.SSEEvent(task_id=task_id, event_type="markdown_chunk", payload=models.SSEMarkdownChunkData(chunk_id=0, content=report_to_send, is_final_chunk=True)))
         else:
-            logger.info(f"[{task_id}] Report rejected by comptroller. Markdown not sent to SSE stream in this iteration.")
+            logger.info("[%s] Report rejected by comptroller. Markdown not sent to SSE stream in this iteration.", task_id)
 
     final_node_return = {
         "final_report_md": final_report_md_with_sources_and_date, # Always update state with the latest attempt
@@ -2111,10 +2094,10 @@ async def synthesize_report_node(state: models.OverallState, services: Dict[str,
 
 async def generate_follow_ups_node(state: models.OverallState, services: Dict[str, Any], output_queue: asyncio.Queue) -> Dict[str, Any]:
     task_id = state.task_id; final_report_md = state.final_report_md; llm_reasoner: LLMReasoning = services["llm_reasoner"]; settings: app_config.Settings = services["settings"]; current_aggregated_tokens = list(state.aggregated_token_usage)
-    logger.info(f"[{task_id}] Entered generate_follow_ups_node.")
+    logger.info("[%s] Entered generate_follow_ups_node.", task_id)
     suggested_follow_ups_list: List[str] = []
     if final_report_md and "No information was gathered" not in final_report_md:
-        logger.info(f"[{task_id}] final_report_md is present, proceeding to generate follow-ups. Report length: {len(final_report_md)}")
+        logger.info("[%s] final_report_md is present, proceeding to generate follow-ups. Report length: %s", task_id, len(final_report_md))
         try:
             model_info_follow_up = state.request_params.reasoning_model_info or {}
             if not model_info_follow_up.get("name"): model_info_follow_up["name"] = settings.DEFAULT_REASONING_MODEL
@@ -2127,20 +2110,19 @@ async def generate_follow_ups_node(state: models.OverallState, services: Dict[st
                 request_id=f"{task_id}_follow_ups_graph",
                 is_cancelled_flag=state.is_cancelled_flag
             )
-            logger.info(f"[{task_id}] LLM response for follow-ups: {follow_up_response_dict}")
+            logger.info("[%s] LLM response for follow-ups: %s", task_id, follow_up_response_dict)
             if follow_up_response_dict.get("usage"): current_aggregated_tokens.append(models.ModelUsageData(model_id=model_info_follow_up.get("id",0), model_name=model_info_follow_up.get("name"), **follow_up_response_dict["usage"]))
             suggested_follow_ups_list = follow_up_response_dict.get("suggestions", [])
             if suggested_follow_ups_list:
-                logger.info(f"[{task_id}] Successfully generated {len(suggested_follow_ups_list)} follow-up suggestions.")
+                logger.info("[%s] Successfully generated %s follow-up suggestions.", task_id, len(suggested_follow_ups_list))
                 await output_queue.put(models.SSEEvent(task_id=task_id, event_type="follow_up_suggestions", payload=models.SSEFollowUpSuggestionsData(suggestions=suggested_follow_ups_list)))
-            if follow_up_response_dict.get("error"): 
-                logger.error(f"[{task_id}] Error from LLM during follow-up generation: {follow_up_response_dict.get('error')}")
-                pass
+            if follow_up_response_dict.get("error"):
+                logger.error("[%s] Error from LLM during follow-up generation: %s", task_id, follow_up_response_dict.get('error'))
         except Exception as e_follow_up: 
-            logger.error(f"[{task_id}] Exception in generate_follow_ups_node: {e_follow_up}", exc_info=True)
+            logger.error("[%s] Exception in generate_follow_ups_node: %s", task_id, e_follow_up, exc_info=True)
             suggested_follow_ups_list = [] 
     else:
-        logger.warning(f"[{task_id}] Skipping follow-up generation because final_report_md is missing or empty.")
+        logger.warning("[%s] Skipping follow-up generation because final_report_md is missing or empty.", task_id)
 
     return {"suggested_follow_ups": suggested_follow_ups_list, "aggregated_token_usage": current_aggregated_tokens}
 

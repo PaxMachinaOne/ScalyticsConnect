@@ -135,5 +135,7 @@ def main():
         print(json.dumps({"error": f"Failed to start vLLM server: {str(e)}", "success": False}))
         return 1
 
+    return 0
+
 if __name__ == "__main__":
     sys.exit(main())

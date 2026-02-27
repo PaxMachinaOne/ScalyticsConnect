@@ -4,11 +4,7 @@ const { db } = require('../models/db');
 const providerManager = require('../services/providers'); 
 const Chat = require('../models/Chat');
 const Message = require('../models/Message');
-const Model = require('../models/Model'); 
-const { getSystemSetting } = require('../config/systemConfig');
 const { UserCancelledError } = require('../utils/errorUtils'); 
-const AgentService = require('../services/agents/AgentService'); 
-const apiKeyService = require('../services/apiKeyService'); 
 const MCPService = require('../services/agents/MCPService'); 
 
 /**
@@ -43,7 +39,7 @@ exports.getAgents = async (req, res) => {
           capabilities = await mcpProvider.getModelCapabilities(model.external_model_id);
         }
       } catch (error) {
-        console.error(`Error fetching capabilities for model ${model.id}:`, error);
+        console.error('Error fetching capabilities for model %s:', model.id, error);
       }
       return {
         ...model,
@@ -147,7 +143,7 @@ exports.getAgentCapabilities = async (req, res) => {
         };
       }
     } catch (error) {
-      console.error(`Error fetching capabilities for agent ${agentId}:`, error);
+      console.error('Error fetching capabilities for agent %s:', String(agentId).replace(/\n|\r/g, ''), error);
       capabilities = {
         context_window: agent.context_window || 8192,
         supports_functions: true, supports_tools: true,
@@ -219,7 +215,7 @@ exports.handleDeepSearchRequest = async (req, res) => {
     );
 
     if (!configRow || !configRow.config) {
-      console.warn(`[Deep Search Ctrl] User ${userId} attempted deep search without configuration for 'deep-search'.`);
+      console.warn('[Deep Search Ctrl] User %s attempted deep search without configuration for \'deep-search\'.', userId);
       return res.status(400).json({ success: false, message: 'Deep Search configuration not found. Please configure the tool models in the Agent settings.' });
     }
 
@@ -228,7 +224,7 @@ exports.handleDeepSearchRequest = async (req, res) => {
 
     // Validate reasoningModelName
     if (!reasoningModelName || typeof reasoningModelName !== 'string' || reasoningModelName.trim() === '') {
-      console.warn(`[Deep Search Ctrl] User ${userId} has incomplete configuration (missing or invalid reasoningModelName). Config:`, toolConfig);
+      console.warn('[Deep Search Ctrl] User %s has incomplete configuration (missing or invalid reasoningModelName). Config:', userId, toolConfig);
       return res.status(400).json({ success: false, message: 'Deep Search configuration is incomplete or invalid. Please configure the reasoning model.' });
     }
     reasoningModelName = reasoningModelName.trim(); 
@@ -246,14 +242,14 @@ exports.handleDeepSearchRequest = async (req, res) => {
             }
             actualModelIdentifier = modelRecord.external_model_id || modelRecord.name;
         } catch (resolveError) {
-            console.error(`[Deep Search Ctrl] Error resolving reasoning model ID ${reasoningModelName}:`, resolveError);
+            console.error('[Deep Search Ctrl] Error resolving reasoning model ID %s:', reasoningModelName, resolveError);
             return res.status(500).json({ success: false, message: `Failed to resolve configured reasoning model: ${resolveError.message}` });
         }
     } else {
     }
 
   } catch (err) {
-    console.error(`[Deep Search Ctrl] Error fetching/parsing/resolving tool config for user ${userId}:`, err);
+    console.error('[Deep Search Ctrl] Error fetching/parsing/resolving tool config for user %s:', userId, err);
     const userMessage = err instanceof SyntaxError ? 'Stored configuration is invalid.' : `Failed to load tool configuration: ${err.message}`;
      return res.status(500).json({ success: false, message: userMessage });
   }
@@ -276,7 +272,7 @@ exports.handleDeepSearchRequest = async (req, res) => {
     }
 
     if (!userDefaultModelId) {
-        console.error(`[Deep Search Ctrl] Could not determine a default model for user ${userId} or system.`);
+        console.error('[Deep Search Ctrl] Could not determine a default model for user %s or system.', userId);
         return res.status(500).json({ success: false, message: 'Could not determine a default model to create the chat.' });
     }
 
@@ -319,7 +315,7 @@ exports.handleDeepSearchRequest = async (req, res) => {
       chatId
     }
   ).catch(mcpError => {
-      console.error(`[Deep Search Ctrl] Failed to trigger MCP tool 'deep-search' for chat ${chatId}:`, mcpError);
+      console.error('[Deep Search Ctrl] Failed to trigger MCP tool \'deep-search\' for chat %s:', chatId, mcpError);
       Message.create({ chat_id: chatId, role: 'system', content: `Error: Failed to start the Deep Search process. ${mcpError.message}` }).catch(console.error);
   });
 
@@ -435,7 +431,7 @@ exports.runToolInChat = async (req, res) => {
                 // Message.create({ chatId: numericChatId, role: 'system', content: `Tool '${toolName}' finished.` }).catch(console.error);
             })
             .catch(toolError => {
-                console.error(`[Agent Ctrl] Background execution of internal tool '${toolName}' for chat ${numericChatId} failed:`, toolError);
+                console.error('[Agent Ctrl] Background execution of internal tool \'%s\' for chat %s failed: %s', String(toolName).replace(/\n|\r/g, ''), numericChatId, (toolError instanceof Error ? toolError.message : String(toolError)).replace(/\n|\r/g, ''));
                 let systemMessageContent;
                 if (toolError instanceof UserCancelledError) {
                     // Use a more direct message for user cancellations
@@ -448,7 +444,7 @@ exports.runToolInChat = async (req, res) => {
             });
 
     } catch (error) {
-        console.error(`[Agent Ctrl] Error running tool '${toolName}' in chat ${numericChatId}:`, error);
+        console.error('[Agent Ctrl] Error running tool \'%s\' in chat %s:', String(toolName).replace(/\n|\r/g, ''), numericChatId, error);
         if (!res.headersSent) {
             return res.status(500).json({ success: false, message: `Failed to run tool: ${error.message}` });
         }

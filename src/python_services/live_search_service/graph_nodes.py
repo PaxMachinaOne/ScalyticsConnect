@@ -1,8 +1,7 @@
 import asyncio
-from typing import Dict, List, Any, Optional, Set, Tuple
+from typing import Dict, List, Any, Set
 import uuid
 from datetime import datetime, timezone
-import re
 
 from . import models
 from . import config as app_config
@@ -10,6 +9,7 @@ from .sub_workers.llm_reasoning import LLMReasoning
 from .sub_workers.content_vector import ContentVector
 from .sub_workers.search_scrape import SearchScrape
 from .utils import setup_logger, agent_dialogue, citations
+import logging
 
 logger = setup_logger(__name__, level="WARNING")
 
@@ -136,7 +136,7 @@ async def web_search_node(state: models.OverallState, services: Dict[str, Any], 
             for item_dict in s_list:
                 if item_dict.get('url') and isinstance(item_dict.get('url'), str) and item_dict.get('url').strip():
                     try: results_this_node.append(models.SearchResultItem(**item_dict))
-                    except Exception as e_model: pass
+                    except Exception as e_model: logging.debug("Suppressed %s: %s", type(e_model).__name__, e_model)
                 else: pass
 
             for p, e in errors.items(): 

@@ -18,14 +18,10 @@ const vllmService = require('../../services/vllmService');
 async function* runLiveSearchTool(args, context) {
     // console.log(`[LIVE SEARCH TOOL ARGS RECEIVED V2] Args: ${JSON.stringify(args, null, 2)}`);
 
-    const { 
-        query: originalUserQuery, 
-        search_providers, 
-        fileIds = [], 
-        max_distinct_search_queries, 
-        max_results_per_provider_query, 
-        max_url_exploration_depth,
-        max_total_urls_per_task 
+    const {
+        query: originalUserQuery,
+        search_providers,
+        fileIds = [],
     } = args;
     const { userId, chatId } = context;
     const stringChatId = String(chatId); 
@@ -100,7 +96,7 @@ async function* runLiveSearchTool(args, context) {
                 throw new Error(`Reasoning model '${effectiveReasoningModelName}' not found among accessible models for user ${userId} (checked ID, name, and external_model_id).`);
             }
             
-            if (modelData && !modelData.external_provider_id && !modelData.provider_name) {
+            if (!modelData.external_provider_id && !modelData.provider_name) {
                 modelData.provider_name = 'local'; 
             }
             reasoningModelInfoFull = { ...modelData }; 

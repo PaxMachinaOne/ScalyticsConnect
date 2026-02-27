@@ -129,7 +129,7 @@ async function validateApiKey(apiKey) {
 }
 
 async function streamCompletion(options) {
-  const { apiKey, modelId, messages: originalMessages, streamingContext, abortSignal, onToken } = options;
+  const { apiKey, modelId, messages: originalMessages, abortSignal, onToken } = options;
   const messages = filterImageContentFromMessages(originalMessages); 
 
   if (onToken && typeof onToken !== 'function') { 
@@ -218,7 +218,7 @@ async function generateImage(options) {
   }
   const targetUrl = `${baseUrl}${imageEndpointPath.startsWith('/') ? '' : '/'}${imageEndpointPath}`;
   const payload = {
-    model: modelId, 
+    model: modelId,
     prompt: prompt,
     n: 1, // OpenAI DALL-E API supports n=1 for image generations endpoint
     size: options.size || "1024x1024" // Use size from options or default
@@ -267,7 +267,7 @@ async function generateImage(options) {
     }
     throw new Error('No image data found in OpenAI response');
   } catch (error) {
-    console.error(`[openai.js] Image generation API error for model ${modelId}:`, error.response?.data || error.message); 
+    console.error('[openai.js] Image generation API error for model %s:', modelId, error.response?.data || error.message); 
     const errorMessage = error.response?.data?.error?.message || error.message || 'Unknown OpenAI image generation error';
     throw new Error(`OpenAI Image API error: ${errorMessage}`);
   }

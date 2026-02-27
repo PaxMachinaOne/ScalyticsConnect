@@ -326,11 +326,9 @@ const ChatList = ({
                   );
                 })
               ) : (
-                isMyChatsOpen && (
-                  <div className="text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    No chats yet. Click "New Chat" to start.
-                  </div>
-                )
+                <div className="text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  No chats yet. Click "New Chat" to start.
+                </div>
               )}
             </div>
            )}

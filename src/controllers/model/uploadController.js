@@ -3,12 +3,8 @@
 const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
-const { exec } = require('child_process'); // Keep for now, might be used elsewhere indirectly? Re-evaluate later.
-const util = require('util');
-const execPromise = util.promisify(exec); // Keep for now
 const Model = require('../../models/Model');
 const { MODELS_DIR } = require('../../utils/modelFileUtils');
-const vllmService = require('../../services/vllmService');
 
 /**
  * Upload and register a model file
@@ -126,14 +122,14 @@ exports.uploadModel = async (req, res) => {
       });
 
     } catch (dbError) {
-      console.error(`DB error for model ${name}:`, dbError);
+      console.error('DB error for model %s:', String(name).replace(/\n|\r/g, ''), dbError);
 
       // Clean up if DB creation failed
       try {
-        console.log(`Attempting to delete model file ${modelPath} after DB error.`);
+        console.log('Attempting to delete model file %s after DB error.', modelPath);
         await fs.unlink(modelPath);
       } catch (fileDeleteError) {
-        console.error(`Failed to delete model file ${modelPath} during cleanup:`, fileDeleteError);
+        console.error('Failed to delete model file %s during cleanup:', modelPath, fileDeleteError);
       }
 
       // Return error response

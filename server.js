@@ -19,11 +19,9 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const dotenv = require('dotenv');
-const swaggerUi = require('swagger-ui-express'); 
-const swaggerSpec = require('./src/config/swagger'); 
 const dbPath = path.join(__dirname, 'src', 'models', 'db.js');
 if (!fs.existsSync(dbPath)) {
-  console.error(`ERROR: Database module not found at ${dbPath}. Deployment issue?`);
+  console.error('ERROR: Database module not found at %s. Deployment issue?', dbPath);
   process.exit(1);
 }
 
@@ -93,7 +91,7 @@ setupMiddleware(app);
     }
 
     if (err.type === 'entity.too.large' || (err.name === 'PayloadTooLargeError' || err.status === 413)) {
-      console.warn(`PayloadTooLargeError encountered for ${req.method} ${req.path}: ${err.message}`);
+      console.warn("PayloadTooLargeError encountered for %s %s: %s",  String(req.method).replace(/\n|\r/g, ''), String(req.path).replace(/\n|\r/g, ''), err.message);
       const limit = err.limit ? `${(err.limit / 1024 / 1024).toFixed(2)} MB` : 'the configured limit';
       return res.status(413).json({
         error: 'Request payload is too large.',

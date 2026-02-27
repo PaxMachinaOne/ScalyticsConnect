@@ -15,7 +15,7 @@ class FileLock:
         try:
             fcntl.flock(self._lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except (IOError, BlockingIOError):
-            logger.warning(f"Process {os.getpid()} could not acquire lock on {self.lock_file_path}, another process is holding it.")
+            logger.warning("Process %s could not acquire lock on %s, another process is holding it.", os.getpid(), self.lock_file_path)
             raise
         return self
 
@@ -27,7 +27,7 @@ class FileLock:
             try:
                 os.remove(self.lock_file_path)
             except OSError:
-                pass
+                pass  # Exception intentionally suppressed
 
 def setup_logger(name, level=logging.INFO):
     """Function to set up a logger."""

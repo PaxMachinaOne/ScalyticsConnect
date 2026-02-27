@@ -35,7 +35,6 @@ if (!globalThis.TextDecoderStream) {
 
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
 const axios = require('axios');
-const { broadcastToRoom } = require('../../config/socket');
 
 /**
  * Discover Google models using the API key
@@ -52,7 +51,7 @@ async function discoverModels(options = {}) {
     const validationResult = await validateApiKey(apiKey);
 
     if (!validationResult.isValid) {
-      console.error(`Invalid API key provided for Google model discovery: ${validationResult.errorMessage}`);
+      console.error('Invalid API key provided for Google model discovery: %s', validationResult.errorMessage);
       return { models: [], error: validationResult.errorMessage };
     }
 
@@ -89,7 +88,7 @@ async function discoverModels(options = {}) {
         };
       });
 
-    console.log(`Discovered ${models.length} Google models with valid API key.`);
+    console.log('Discovered %s Google models with valid API key.', models.length);
     return { models, error: null };
   } catch (error) {
     console.error('Error discovering Google models:', error.message);
@@ -177,7 +176,7 @@ async function validateApiKey(apiKey) {
   }
 
   try {
-    const response = await axios.get(
+    await axios.get(
       'https://generativelanguage.googleapis.com/v1beta/models',
       {
         headers: {
@@ -299,7 +298,7 @@ function postProcessMessage(message) {
       if (!processed.endsWith('\n')) processed += '\n';
       processed += '```';
     }
-    console.log(`[WARN] Added ${missingClosing} missing code fence closing(s)`);
+    console.log('[WARN] Added %s missing code fence closing(s)', missingClosing);
   }
   
   processed = processed.replace(/\n{4,}/g, '\n\n\n');
@@ -331,62 +330,16 @@ function extractContentFromCandidate(parsed) {
   return content;
 }
 
-/**
- * Extract JSON chunks from a buffer
- */
-function extractJsonChunks(buffer) {
-  const chunks = [];
-  let braceCount = 0;
-  let currentChunk = '';
-  let inString = false;
-  let escaped = false;
-
-  for (let i = 0; i < buffer.length; i++) {
-    const char = buffer[i];
-    currentChunk += char;
-
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-
-    if (char === '\\') {
-      escaped = true;
-      continue;
-    }
-
-    if (char === '"') {
-      inString = !inString;
-      continue;
-    }
-
-    if (!inString) {
-      if (char === '{') {
-        braceCount++;
-      } else if (char === '}') {
-        braceCount--;
-        
-        if (braceCount === 0 && currentChunk.trim().startsWith('{')) {
-          chunks.push(currentChunk.trim());
-          currentChunk = '';
-        }
-      }
-    }
-  }
-
-  return chunks;
-}
-
 // --- API Calls ---
 
 /**
  * Stream completion from Google Gemini API - Working Version
  */
 async function streamCompletion(options) {
-  let { apiKey, modelId, messages, streamingContext, abortSignal, onToken, isImagePrompt, model } = options;
+  let { apiKey, modelId, messages, abortSignal, onToken, isImagePrompt, model } = options;
 
   if (isImagePrompt && modelId === 'gemini-2.0-flash-exp-image-generation') {
-    console.warn(`[Google Stream] Correcting model ID from ${modelId} to gemini-2.0-flash-preview-image-generation`);
+    console.warn('[Google Stream] Correcting model ID from %s to gemini-2.0-flash-preview-image-generation', modelId);
     modelId = 'gemini-2.0-flash-preview-image-generation';
   }
 
@@ -435,14 +388,14 @@ async function streamCompletion(options) {
 
     if (isImagePrompt && model?.can_generate_images) {
       payload.generationConfig.responseModalities = ["TEXT", "IMAGE"];
-      console.log(`[Google Stream] Requesting IMAGE and TEXT for model ${modelId}`);
+      console.log('[Google Stream] Requesting IMAGE and TEXT for model %s', modelId);
     }
 
     if (conversationHistory.length > 0 && !isImagePrompt) {
       payload.contents = [...conversationHistory, ...payload.contents];
     }
 
-    console.log(`[Google Stream] Starting stream for model ${modelId}, prompt length: ${currentPrompt.length}`);
+    console.log('[Google Stream] Starting stream for model %s, prompt length: %s', modelId, currentPrompt.length);
 
     const response = await axios({
       method: 'post',
@@ -573,7 +526,7 @@ async function streamCompletion(options) {
 
         fullMessage = postProcessMessage(fullMessage);
         
-        console.log(`[Google Stream] Stream completed. Message length: ${fullMessage.length}, chunks: ${chunkCount}`);
+        console.log('[Google Stream] Stream completed. Message length: %s, chunks: %s', fullMessage.length, chunkCount);
         
         if (fullMessage.length === 0) {
           console.warn('[Google Stream] Received empty response - this may indicate an API issue');
@@ -611,7 +564,7 @@ async function completion(options) {
   let { apiKey, modelId, messages, abortSignal, isImagePrompt, model } = options;
 
   if (isImagePrompt && modelId === 'gemini-2.0-flash-exp-image-generation') {
-    console.warn(`[Google Completion] Correcting model ID from ${modelId} to gemini-2.0-flash-preview-image-generation`);
+    console.warn('[Google Completion] Correcting model ID from %s to gemini-2.0-flash-preview-image-generation', modelId);
     modelId = 'gemini-2.0-flash-preview-image-generation';
   }
 
@@ -650,7 +603,7 @@ async function completion(options) {
 
     if (isImagePrompt && model?.can_generate_images) {
       payload.generationConfig.responseModalities = ["TEXT", "IMAGE"];
-      console.log(`[Google Completion] Requesting IMAGE and TEXT for model ${modelId}`);
+      console.log('[Google Completion] Requesting IMAGE and TEXT for model %s', modelId);
     }
 
     if (conversationHistory.length > 0 && !isImagePrompt) {
@@ -706,7 +659,7 @@ module.exports = {
 };
 
 async function generateImage(options) {
-  const { apiKey, modelId, prompt, providerDetails, size, n } = options; 
+  const { apiKey, modelId, prompt, size } = options; 
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -771,7 +724,7 @@ async function generateImage(options) {
     };
 
   } catch (error) {
-    console.error(`[google.js] Image generation API error for model ${modelId}:`, error.response?.data || error.message, error.stack);
+    console.error('[google.js] Image generation API error for model %s:', modelId, error.response?.data || error.message, error.stack);
     const errMessage = error.response?.data?.error?.message || error.message || 'Unknown Google image generation error';
     throw new Error(`Google Image API error: ${errMessage}`);
   }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const axios = require('axios');
+const { validateProviderUrl } = require('../../utils/urlValidation');
 
 class SearchResultItem {
   constructor({ url, title, snippet, provider_name, query_phrase_used, position, raw_provider_data }) {
@@ -74,9 +75,11 @@ const courtlistenerProvider = {
       return { isValid: false, errorMessage: 'API key is required for CourtListener.' };
     }
 
-    const courtlistenerApiUrl = providerConfig?.api_url && providerConfig.api_url.includes('api.courtlistener.com') 
-      ? providerConfig.api_url 
-      : 'https://www.courtlistener.com/api/rest/v4/'; 
+    const courtlistenerApiUrl = validateProviderUrl(
+      providerConfig?.api_url,
+      'courtlistener.com',
+      'https://www.courtlistener.com/api/rest/v4/'
+    );
 
     const testUrl = `${courtlistenerApiUrl.replace(/\/$/, '')}/opinions/?q=test&count=1`;
 

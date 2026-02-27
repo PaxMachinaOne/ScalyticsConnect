@@ -10,7 +10,6 @@ Communicates via stdin/stdout JSON protocol.
 import os
 os.environ['LITELLM_DISABLE_TELEMETRY'] = '1'
 
-import argparse
 import json
 import signal
 import sys
@@ -22,7 +21,7 @@ import litellm
 litellm.suppress_debug_info = True 
 import logging
 import contextlib
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, Any
 
 try:
     litellm_logger = logging.getLogger("litellm")
@@ -117,7 +116,7 @@ class DeepSearchLLMWorker:
                 loop = asyncio.get_running_loop()
                 loop.stop()
             except RuntimeError: 
-                pass
+                logging.debug("Suppressed exception")
             self.cleanup()
             sys.exit(0)
 

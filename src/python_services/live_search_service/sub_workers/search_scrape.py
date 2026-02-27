@@ -5,7 +5,6 @@ Uses Scrapy for robust HTML/XML fetching and parsing, and pdfminer for PDFs.
 Performs source vetting.
 """
 import asyncio
-import time
 import os
 import re
 import json
@@ -13,11 +12,9 @@ from typing import Dict, List, Optional, Any, Tuple
 from urllib.parse import urlparse, urljoin
 from datetime import datetime, timedelta
 import sqlite3
-import traceback
 import random
 import sys
 
-import pyalex
 from pyalex import Works
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build as build_google_service
@@ -30,11 +27,8 @@ from pdfminer.layout import LAParams
 import whois
 import tldextract # Added import
 import scrapy
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
 from scrapy_playwright.page import PageMethod
-from scrapy.http import HtmlResponse, Response as ScrapyResponse
-from scrapy_playwright.handler import ScrapyPlaywrightDownloadHandler
+from scrapy.http import Response as ScrapyResponse
 
 from .. import models # Import models for ExtractedLinkItem
 from .. import config as app_config
@@ -45,7 +39,7 @@ import logging
 # from urllib.parse import urlparse # Already imported above
 
 # Import the new Brave parser
-from ..utils.brave_search_parser import BraveResponseParser, BraveAPIResult, BraveResponseType
+from ..utils.brave_search_parser import BraveResponseParser
 
 logger = setup_logger(__name__, level=app_config.settings.LOG_LEVEL)
 logging.getLogger('wikipediaapi').setLevel(logging.WARNING)
@@ -160,8 +154,8 @@ class GenericScraperSpider(scrapy.Spider):
                 extract_text_to_fp(pdf_bytes, output_string, laparams=LAParams(), output_type='text', codec='utf-8')
                 item['content'] = output_string.getvalue().strip()
                 item['metadata']['is_pdf'] = True
-            except Exception as e_pdf:
-                pass
+            except (IOError, OSError, ValueError) as e_pdf:
+                pass  # PDF extraction failed; content remains None
         elif 'text/html' in content_type:
             try:
                 doc = Document(html_content)
@@ -196,17 +190,15 @@ class GenericScraperSpider(scrapy.Spider):
                             abs_link = response.urljoin(href)
                             if urlparse(abs_link).scheme in ['http', 'https']:
                                 item['links'].append(models.ExtractedLinkItem(url=abs_link, anchor_text=text if text else None).model_dump())
-                        except ValueError: pass
-            except Exception as e_link_extract: 
-                pass
+                        except ValueError as e_url_join: logging.debug("Suppressed URL join error: %s", e_url_join)
+            except Exception as e_link_extract: logging.debug("Suppressed %s: %s", type(e_link_extract).__name__, e_link_extract)
             
             if not item['metadata'].get('title'):
                 item['metadata']['title'] = response.css('title::text').get() or response.xpath('//title/text()').get()
         else:
             try: 
                 item['content'] = response.body.decode('utf-8', errors='ignore').strip()
-            except Exception as e_decode: 
-                pass
+            except Exception as e_decode: logging.debug("Suppressed %s: %s", type(e_decode).__name__, e_decode)
         
         if self.results_list_ref is not None: 
             self.results_list_ref.append(item)
@@ -328,8 +320,7 @@ class SearchScrape:
             info = whois.whois(domain); cd = info.creation_date
             if isinstance(cd, list): cd = cd[0] if cd else None
             if cd: age = (datetime.now() - cd).days; self.whois_cache[domain] = {'age_days': age, 'timestamp': datetime.now()}; return age
-        except Exception as e:
-            pass
+        except Exception as e: logging.debug("Suppressed %s: %s", type(e).__name__, e)
         self.whois_cache[domain] = {'age_days': None, 'timestamp': datetime.now()}; return None
 
     def _get_domain_trust_profile(self, domain: str) -> Optional[Dict]:
@@ -342,7 +333,7 @@ class SearchScrape:
             for i in range(len(parts)):
                 pattern = '*.' + '.'.join(parts[i:]); cur.execute("SELECT * FROM domain_trust_profiles WHERE domain = ? AND tld_type_bonus > 0", (pattern,)); row = cur.fetchone()
                 if row: return dict(row)
-        except sqlite3.Error as e: pass
+        except sqlite3.Error as e: logging.debug("Suppressed SQLite error in domain trust lookup: %s", e)
         finally:
             if conn: conn.close()
         return None
@@ -435,7 +426,8 @@ class SearchScrape:
 
     async def _scrape_url_content_internal(self, target_url: str, source_info: Dict, is_cancelled_flag: asyncio.Event) -> Dict[str, Any]:
         final_url_to_scrape = target_url
-        if "doi.org" in urlparse(target_url).netloc:
+        parsed_netloc = urlparse(target_url).netloc.lower()
+        if parsed_netloc == "doi.org" or parsed_netloc.endswith(".doi.org"):
             try:
                 loop = asyncio.get_event_loop()
                 def resolve_doi_sync():
@@ -445,7 +437,7 @@ class SearchScrape:
                 if resolved_url and resolved_url != target_url:
                     final_url_to_scrape = resolved_url
                 else: pass
-            except Exception as e_resolve: pass
+            except Exception as e_resolve: logging.debug("Suppressed %s: %s", type(e_resolve).__name__, e_resolve)
         scraped_data_list = await self._run_scrapy_spider(final_url_to_scrape, is_cancelled_flag)
         if scraped_data_list:
             scraped_item = scraped_data_list[0]; final_source_info = {**source_info, **scraped_item.get('metadata', {})}; raw_links_from_spider = scraped_item.get('links', []); parsed_links_for_output: List[models.ExtractedLinkItem] = []
@@ -453,7 +445,7 @@ class SearchScrape:
                 for link_data_dict in raw_links_from_spider:
                     if isinstance(link_data_dict, dict):
                         try: parsed_links_for_output.append(models.ExtractedLinkItem(**link_data_dict))
-                        except Exception as e_link_model: pass
+                        except Exception as e_link_model: logging.debug("Suppressed %s: %s", type(e_link_model).__name__, e_link_model)
                     elif isinstance(link_data_dict, str): parsed_links_for_output.append(models.ExtractedLinkItem(url=link_data_dict))
             return {"content": scraped_item.get('content'), "links": parsed_links_for_output, "source_info": final_source_info, "title": final_source_info.get('title')}
         else: return {"content": None, "links": [], "source_info": source_info, "title": source_info.get("title")}
@@ -469,9 +461,9 @@ class SearchScrape:
                     if not isinstance(content_type_header, str) or 'application/pdf' not in content_type_header.lower(): return
                     pdf_bytes = BytesIO(r.content); output_string = StringIO(); extract_text_to_fp(pdf_bytes, output_string, laparams=LAParams(), output_type='text', codec='utf-8'); content = output_string.getvalue()
                     if content: pdf_content_text = content.strip()
-            except Exception as e_sync_pdf: pass
+            except Exception as e_sync_pdf: logging.debug("Suppressed %s: %s", type(e_sync_pdf).__name__, e_sync_pdf)
         try: await loop.run_in_executor(None, sync_scrape_pdf)
-        except Exception as e_pdf_executor: pass
+        except Exception as e_pdf_executor: logging.debug("Suppressed %s: %s", type(e_pdf_executor).__name__, e_pdf_executor)
         return {"content": pdf_content_text, "source_info": source_info, "links": []}
 
     def _sync_openalex_search(self, single_keyword_query: str, max_results: int) -> List[Dict[str, Any]]:
@@ -495,7 +487,7 @@ class SearchScrape:
                 if not best_url: best_url = work_data.get('id')
                 authors = [authorship.get('author', {}).get('display_name') for authorship in work_data.get('authorships', []) if authorship.get('author', {}).get('display_name')]
                 openalex_results.append({'title': work_data.get('title'), 'authors': authors[:5], 'venue': venue_name, 'year': work_data.get('publication_year'), 'description': abstract, 'doi': work_data.get('doi'), 'url': best_url, 'openalex_id': work_data.get('id'), 'type': work_data.get('type_crossref') or work_data.get('type')}); retrieved_count += 1
-        except Exception as e_oa: pass
+        except Exception as e_oa: logging.debug("Suppressed %s: %s", type(e_oa).__name__, e_oa)
         return openalex_results
 
     async def execute_search_pass(self, query: str, search_providers: List[str], api_config: Dict[str, str], max_results_per_query: int, progress_callback: Optional[callable] = None, is_fact_checking_pass: bool = False, is_cancelled_flag: Optional[asyncio.Event] = None) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
@@ -508,8 +500,6 @@ class SearchScrape:
         if not available_providers_input:
             return [], {"internal_error": "No search providers configured."}
 
-        task_id_for_log = api_config.get("task_id", "N/A") if isinstance(api_config, dict) else "N/A"
-        
         if is_cancelled_flag and is_cancelled_flag.is_set():
             return [], {"cancelled": "Operation cancelled before starting search pass."}
 
@@ -754,7 +744,7 @@ class SearchScrape:
             item['content'] = re.sub(r'\s+', ' ', item['content']).strip() if item['content'] else None
         return item
     async def scrape_url_with_vetting_enhanced(self, url: str, original_source_info: Dict[str, Any], is_cancelled_flag: asyncio.Event) -> Dict[str, Any]:
-        search_snippet = original_source_info.get('snippet', ''); search_title = original_source_info.get('title', ''); task_id = original_source_info.get('task_id', 'N/A')
+        search_snippet = original_source_info.get('snippet', ''); search_title = original_source_info.get('title', '')
         domain = self._get_domain_from_url(url); source_info_for_handler = original_source_info.copy()
         if domain: source_info_for_handler.update(self._ensure_domain_profile(domain, url))
         else: source_info_for_handler.setdefault('trust_score', 0.3); source_info_for_handler.setdefault('is_https', self._is_https(url)); source_info_for_handler.setdefault('source_trust_type', 'unparseable_domain_in_enhanced_vetting')

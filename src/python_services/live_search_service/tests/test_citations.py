@@ -1,4 +1,3 @@
-import pytest
 from python_services.deep_search_service.utils.citations import (
     resolve_urls,
     insert_citation_markers,

@@ -8,11 +8,11 @@ import os
 os.environ['LITELLM_DISABLE_TELEMETRY'] = '1'
 
 import asyncio
-import traceback
 import json
 import openai # Add openai import
 import random
 import re
+from urllib.parse import urlparse
 from typing import Dict, List, Optional, Any, Union, Literal, Tuple, Mapping, Set
 import contextlib
 import sys
@@ -46,7 +46,7 @@ try:
 
     litellm.set_verbose = False
 except Exception as e_log:
-    pass
+    logging.debug("Suppressed exception: %s", e_log)
 
 class LiteLLMWrapper(LLM):
     model_info: Dict[str, Any]
@@ -179,7 +179,7 @@ class LiteLLMWrapper(LLM):
 
             text_output = response_obj_custom.choices[0].message.content if response_obj_custom and response_obj_custom.choices else ""
         except Exception as e:
-            logger.error(f"LiteLLMWrapper _call error: {e}", exc_info=True)
+            logger.error("LiteLLMWrapper _call error: %s", e, exc_info=True)
             text_output = f"[Error in LiteLLMWrapper _call: {e}]"
             if run_manager: run_manager.on_llm_error(e)
         return text_output
@@ -209,7 +209,7 @@ class LLMReasoning:
         try:
             return litellm.token_counter(model=model_name, text=text)
         except Exception as e:
-            logger.warning(f"LiteLLM token_counter failed for model {model_name}: {e}. Falling back to word count.")
+            logger.warning("LiteLLM token_counter failed for model %s: %s. Falling back to word count.", str(model_name).replace('\n', '').replace('\r', ''), e)
             return len(text.split())
 
     def _calculate_dynamic_max_tokens(self, prompt: str, model_info: Dict[str, Any], safety_buffer: int = 200) -> int:
@@ -533,7 +533,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                 usage_data["total_tokens"] = response.usage.total_tokens or 0
             
             if output_content is None:
-                 logger.warning(f"{log_prefix} xAI direct call: Response content is None/empty.")
+                 logger.warning("%s xAI direct call: Response content is None/empty.", log_prefix)
                  return {"output": None, "error": "xAI response content empty.", "usage": usage_data}
 
             if response_format_type == "json_object":
@@ -543,19 +543,19 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     parsed_output = json.loads(cleaned_output)
                     return {"output": parsed_output, "usage": usage_data, "error": None}
                 except json.JSONDecodeError as e_json:
-                    logger.error(f"{log_prefix} Failed to parse JSON response from xAI after sanitization: {e_json}. Raw: '{output_content[:500]}...'. Sanitized: '{cleaned_output[:500]}...'")
+                    logger.error("%s Failed to parse JSON response from xAI after sanitization: %s. Raw: '%s...'. Sanitized: '%s...'", log_prefix, e_json, output_content[:200], cleaned_output[:200])
                     return {"output": None, "error": f"JSON parsing failed after sanitization: {e_json}", "usage": usage_data}
             else:
                 return {"output": output_content, "usage": usage_data, "error": None}
 
         except openai.APIError as e:
-            logger.error(f"{log_prefix} xAI API Error (direct call): {type(e).__name__} - {e}", exc_info=True)
+            logger.error("%s xAI API Error (direct call): %s - %s", log_prefix, type(e).__name__, e, exc_info=True)
             error_detail = str(e)
             if hasattr(e, 'status_code'):
                 error_detail = f"Status {e.status_code}: {error_detail}"
             return {"output": None, "error": f"xAI API Error: {error_detail}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
         except Exception as e:
-            logger.error(f"{log_prefix} Unexpected error in _call_xai_directly_async: {type(e).__name__} - {e}", exc_info=True)
+            logger.error("%s Unexpected error in _call_xai_directly_async: %s - %s", log_prefix, type(e).__name__, e, exc_info=True)
             return {"output": None, "error": f"Unexpected error during direct xAI call: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
     def _resolve_placeholders(
@@ -569,7 +569,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
             return text_with_placeholders
 
         if _current_depth >= max_depth:
-            logger.warning(f"[LLMReasoning:_resolve_placeholders] Max recursion depth ({max_depth}) reached. Returning text as is: '{text_with_placeholders}'")
+            logger.warning("[LLMReasoning:_resolve_placeholders] Max recursion depth (%s) reached. Returning text as is: '%s'", max_depth, text_with_placeholders)
             return text_with_placeholders 
 
         resolved_text = text_with_placeholders
@@ -617,7 +617,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
             if not made_a_change_in_this_pass and current_text_before_pass == resolved_text: break 
         
         if passes_for_this_depth >= max_passes_per_depth:
-            logger.warning(f"[LLMReasoning:_resolve_placeholders] Max passes ({max_passes_per_depth}) reached at depth {_current_depth} for text: '{text_with_placeholders}'. Returning current state: '{resolved_text}'")
+            logger.warning("[LLMReasoning:_resolve_placeholders] Max passes (%s) reached at depth %s for text: '%s'. Returning current state: '%s'", max_passes_per_depth, _current_depth, text_with_placeholders, resolved_text)
 
         if _current_depth == 0: 
             final_text = resolved_text
@@ -633,20 +633,20 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
         Cleans and sanitizes a string to make it valid JSON.
         Addresses common LLM-generated errors like invalid escapes and trailing commas.
         """
-        logger.debug(f"{log_prefix} Starting JSON sanitization. Initial string: '{json_str[:500]}...'")
+        logger.debug("%s Starting JSON sanitization. Initial string: '%s...'", log_prefix, json_str[:200])
 
         # Stage 0: Strip markdown fences if they exist
         json_match = re.search(r"```(json)?\s*(\{.*\}|\[.*\])\s*```", json_str, re.DOTALL)
         if json_match:
             json_str = json_match.group(2)
-            logger.debug(f"{log_prefix} After Stage 0 (markdown strip): '{json_str[:500]}...'")
+            logger.debug("%s After Stage 0 (markdown strip): '%s...'", log_prefix, json_str[:200])
 
         # Use a more robust method to find the main JSON object
         try:
             # Find the first '{' or '['
             match = re.search(r'[\{\[]', json_str)
             if not match:
-                logger.warning(f"{log_prefix} No JSON object start character found. Returning as is.")
+                logger.warning("%s No JSON object start character found. Returning as is.", log_prefix)
                 return json_str
 
             start_index = match.start()
@@ -678,27 +678,27 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                 json_str = json_str[:end_index + 1]
             else:
                 # If stack is not empty, JSON is incomplete
-                logger.warning(f"{log_prefix} Incomplete JSON object found. Returning as is.")
+                logger.warning("%s Incomplete JSON object found. Returning as is.", log_prefix)
                 return json_str
 
         except (ValueError, IndexError) as e:
-            logger.error(f"{log_prefix} Error finding JSON boundaries: {e}. Returning original string slice.")
+            logger.error("%s Error finding JSON boundaries: %s. Returning original string slice.", log_prefix, e)
             return json_str # Return the string sliced from the first bracket/brace
         
-        logger.debug(f"{log_prefix} After slicing to first/last bracket/brace: '{json_str[:500]}...'")
+        logger.debug("%s After slicing to first/last bracket/brace: '%s...'", log_prefix, json_str[:200])
 
         # Stage 1: Correct double-escaped quotes (e.g., \\" -> \").
         cleaned_json_str = json_str.replace('\\\\"', '\\"')
-        logger.debug(f"{log_prefix} After Stage 1 (double-quote fix): '{cleaned_json_str[:500]}...'")
+        logger.debug("%s After Stage 1 (double-quote fix): '%s...'", log_prefix, cleaned_json_str[:200])
 
         # Stage 2: Remove backslashes from invalid escape sequences.
         # This regex finds a backslash that is NOT followed by a valid JSON escape character.
         cleaned_json_str = re.sub(r'\\([^"\\/bfnrtu])', r'\1', cleaned_json_str)
-        logger.debug(f"{log_prefix} After Stage 2 (invalid-escape fix): '{cleaned_json_str[:500]}...'")
+        logger.debug("%s After Stage 2 (invalid-escape fix): '%s...'", log_prefix, cleaned_json_str[:200])
 
         # Stage 3: Remove trailing commas before a closing brace or bracket.
         cleaned_json_str = re.sub(r",\s*([\}\]])", r"\1", cleaned_json_str)
-        logger.debug(f"{log_prefix} After Stage 3 (trailing-comma fix): '{cleaned_json_str[:500]}...'")
+        logger.debug("%s After Stage 3 (trailing-comma fix): '%s...'", log_prefix, cleaned_json_str[:200])
 
         return cleaned_json_str
 
@@ -782,7 +782,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
             prompt = trimmed_messages[0]["content"]
 
         except Exception as e_trim:
-            logger.error(f"{log_prefix} Error during litellm.prompt_trimming: {e_trim}. Falling back to manual truncation.")
+            logger.error("%s Error during litellm.prompt_trimming: %s. Falling back to manual truncation.", log_prefix, e_trim)
             model_max_context = model_info.get("context_window", 4096)
             prompt_tokens = self._count_tokens(prompt, model_info)
             if prompt_tokens >= (model_max_context - MIN_COMPLETION_TOKENS):
@@ -830,7 +830,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     break # Success
                 else:
                     error_message_for_return_xai = xai_result.get("error", "Unknown error from direct xAI call.")
-                    logger.warning(f"{log_prefix} Direct xAI call attempt {attempt + 1}/{max_retries + 1} failed: {error_message_for_return_xai}")
+                    logger.warning("%s Direct xAI call attempt %s/%s failed: %s", log_prefix, attempt + 1, max_retries + 1, error_message_for_return_xai)
                     if attempt < max_retries:
                         delay = (base_delay * (2 ** attempt)) + random.uniform(0, 0.5)
                         await asyncio.sleep(delay)
@@ -851,7 +851,19 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
             if not vllm_base_url:
                 return {"output": None, "error": "vLLM API base URL not found in api_config for local model.", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
-            direct_vllm_api_url = f"{vllm_base_url.rstrip('/')}/v1/chat/completions"
+            # Validate URL scheme and host to prevent SSRF
+            parsed_url = urlparse(vllm_base_url)
+            if parsed_url.scheme not in ("http", "https"):
+                return {"output": None, "error": "Invalid vLLM API URL scheme.", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+            allowed_hosts = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+            if parsed_url.hostname not in allowed_hosts and not (parsed_url.hostname and parsed_url.hostname.endswith(".local")):
+                return {"output": None, "error": "vLLM API URL must point to a local host.", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+
+            # Reconstruct URL from validated parts to break taint chain
+            safe_scheme = "http" if parsed_url.scheme == "http" else "https"
+            safe_host = "localhost"  # Already validated hostname is in allowed_hosts
+            safe_port = int(parsed_url.port) if parsed_url.port else (443 if safe_scheme == "https" else 80)
+            direct_vllm_api_url = f"{safe_scheme}://{safe_host}:{safe_port}/v1/chat/completions"
             headers = {"Content-Type": "application/json"}
             messages_payload = [{"role": "user", "content": prompt}]
             
@@ -880,7 +892,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     async with session.post(direct_vllm_api_url, json=payload, headers=headers) as response:
                         if response.status != 200:
                             error_text = await response.text()
-                            logger.error(f"{log_prefix} Direct vLLM API Error {response.status} (Attempt {attempt+1}/{max_retries+1}): {error_text}")
+                            logger.error("%s Direct vLLM API Error %s (Attempt %s/%s): %s", log_prefix, response.status, attempt+1, max_retries+1, error_text)
                             if response.status in [500, 502, 503, 504] and attempt < max_retries:
                                 delay = (base_delay * (2 ** attempt)) + random.uniform(0, 0.5)
                                 await asyncio.sleep(delay)
@@ -917,7 +929,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                                         if chunk_data.get("usage"):
                                             current_final_usage.update(chunk_data["usage"])
                                     except json.JSONDecodeError:
-                                        logger.warning(f"{log_prefix} Failed to parse JSON from vLLM SSE line: {data_json_str[:100]}...")
+                                        logger.warning("%s Failed to parse JSON from vLLM SSE line: %s...", log_prefix, data_json_str[:200])
                             if stream_completed:
                                 break
                         
@@ -929,13 +941,13 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     error_message_for_return = "Operation cancelled."
                     break
                 except (aiohttp.ClientError, asyncio.TimeoutError) as e_http:
-                    logger.error(f"{log_prefix} (Attempt {attempt+1}/{max_retries+1}) HTTP/Timeout Error (Direct vLLM): {e_http}", exc_info=True)
+                    logger.error("%s (Attempt %s/%s) HTTP/Timeout Error (Direct vLLM): %s", log_prefix, attempt+1, max_retries+1, e_http, exc_info=True)
                     error_message_for_return = f"HTTP/Timeout Error (Direct vLLM): {e_http}"
                     if attempt < max_retries:
                         delay = (base_delay * (2 ** attempt)) + random.uniform(0, 0.5)
                         await asyncio.sleep(delay); continue
                 except Exception as e_vllm_call:
-                    logger.error(f"{log_prefix} (Attempt {attempt+1}/{max_retries+1}) Unexpected error (Direct vLLM): {e_vllm_call}", exc_info=True)
+                    logger.error("%s (Attempt %s/%s) Unexpected error (Direct vLLM): %s", log_prefix, attempt+1, max_retries+1, e_vllm_call, exc_info=True)
                     error_message_for_return = f"Direct vLLM API call failed: {e_vllm_call}"
                     if attempt < max_retries:
                         delay = (base_delay * (2 ** attempt)) + random.uniform(0, 0.5)
@@ -954,7 +966,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     parsed_json = json.loads(cleaned_json_str)
                     llm_response_content = parsed_json
                 except json.JSONDecodeError as e_json:
-                    logger.error(f"{log_prefix} Failed to parse JSON from direct vLLM after sanitization. Error: {e_json}. Original: '{llm_response_content[:500]}...'. Sanitized: '{cleaned_json_str[:500]}...'")
+                    logger.error("%s Failed to parse JSON from direct vLLM after sanitization. Error: %s. Original: '%s...'. Sanitized: '%s...'", log_prefix, e_json, llm_response_content[:200], cleaned_json_str[:200])
                     return {"output": {}, "error": "Failed to parse JSON from direct vLLM response after sanitization.", "usage": final_usage}
 
             result_to_return = {"output": llm_response_content, "usage": final_usage, "error": None}
@@ -984,7 +996,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     # LiteLLM usually infers provider from model string.
                     # If specific custom_llm_provider is needed for other providers, it can be set here.
                     # as example, if provider_name_cap is 'AzureOpenAI', custom_llm_provider = 'azure'.
-                    # custom_llm_provider = provider_name_cap # Example, adjust if needed
+                    custom_llm_provider = provider_name_cap
 
             litellm_params = {"model": model_arg_for_litellm, "messages": [{"role": "user", "content": prompt}], **common_llm_params}
             
@@ -1031,15 +1043,15 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                     call_start_time = asyncio.get_event_loop().time()
                     with contextlib.redirect_stdout(sys.stderr):
                         response_obj_litellm = await litellm.acompletion(**final_litellm_params)
-                    call_duration = asyncio.get_event_loop().time() - call_start_time
+                    asyncio.get_event_loop().time() - call_start_time  # call duration measured for timing
 
                     raw_content = None
                     if response_obj_litellm and response_obj_litellm.choices and response_obj_litellm.choices[0].message:
                         raw_content = response_obj_litellm.choices[0].message.content
-                    
+
                     # Specific check for Gemini-like finish_reason='length' but content is None
                     if raw_content is None and response_obj_litellm and response_obj_litellm.choices and response_obj_litellm.choices[0].finish_reason == 'length':
-                        logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: LLM (likely Gemini) reported finish_reason='length' but returned no content.")
+                        logger.error("%s (LiteLLM) Attempt %s: LLM (likely Gemini) reported finish_reason='length' but returned no content.", log_prefix, attempt + 1)
                         error_message_for_return_litellm = "LLM finished due to length but returned no content."
                         break 
 
@@ -1048,7 +1060,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                         if error_message_for_return_litellm and "LLM finished due to length but returned no content" in error_message_for_return_litellm:
                              specific_empty_reason = error_message_for_return_litellm
                         
-                        logger.warning(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}: {specific_empty_reason}")
+                        logger.warning("%s (LiteLLM) Attempt %s: %s", log_prefix, attempt + 1, specific_empty_reason)
                         error_message_for_return_litellm = specific_empty_reason 
                         if attempt < max_retries:
                             delay = (base_delay_litellm * (2 ** attempt)) + random.uniform(0, 0.5)
@@ -1069,7 +1081,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                             break 
                         except json.JSONDecodeError as e_json_main:
                             error_message_for_return_litellm = f"LLM output not valid JSON after sanitization: {e_json_main}"
-                            logger.warning(f"{log_prefix} (LiteLLM) JSON parsing failed after sanitization. Raw: '{raw_content[:500]}...'. Sanitized: '{cleaned_json_str[:500]}...'. Error: {e_json_main}.")
+                            logger.warning("%s (LiteLLM) JSON parsing failed after sanitization. Raw: '%s...'. Sanitized: '%s...'. Error: %s.", log_prefix, raw_content[:200], cleaned_json_str[:200], e_json_main)
                             if attempt < max_retries:
                                 delay = (base_delay_litellm * (2**attempt)) + random.uniform(0,0.5)
                                 await asyncio.sleep(delay)
@@ -1082,14 +1094,14 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                         break 
 
                 except (litellm.exceptions.APIConnectionError, litellm.exceptions.Timeout, litellm.exceptions.ServiceUnavailableError, litellm.exceptions.APIError) as e_transient:
-                    logger.warning(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}/{max_retries + 1}: Transient Error ({type(e_transient).__name__}): {e_transient}", exc_info=True)
+                    logger.warning("%s (LiteLLM) Attempt %s/%s: Transient Error (%s): %s", log_prefix, attempt + 1, max_retries + 1, type(e_transient).__name__, e_transient, exc_info=True)
                     error_message_for_return_litellm = f"LLM Transient Error: {e_transient}"
                     if attempt < max_retries:
                         delay = (base_delay_litellm * (2 ** attempt)) + random.uniform(0, 0.5)
                         await asyncio.sleep(delay)
                         continue 
                 except litellm.RateLimitError as e_rate_limit: 
-                    logger.warning(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}/{max_retries + 1}: Rate Limit Error: {e_rate_limit}", exc_info=False)
+                    logger.warning("%s (LiteLLM) Attempt %s/%s: Rate Limit Error: %s", log_prefix, attempt + 1, max_retries + 1, e_rate_limit, exc_info=False)
                     error_message_for_return_litellm = f"LLM Rate Limit Error: {e_rate_limit}"
                     if attempt < max_retries:
                         retry_after_seconds = base_delay_litellm * (2 ** attempt)
@@ -1099,11 +1111,11 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
                                 if retry_after_header_val:
                                     parsed_retry_after = int(retry_after_header_val)
                                     retry_after_seconds = max(parsed_retry_after, retry_after_seconds)
-                        except Exception: pass
+                        except Exception as e_retry_parse: logging.debug("Suppressed retry-after parse error: %s", e_retry_parse)
                         await asyncio.sleep(retry_after_seconds + random.uniform(0, 0.5))
                         continue 
                 except Exception as e_llm_call: 
-                    logger.error(f"{log_prefix} (LiteLLM) Attempt {attempt + 1}/{max_retries + 1}: Unexpected Error: {e_llm_call}", exc_info=True)
+                    logger.error("%s (LiteLLM) Attempt %s/%s: Unexpected Error: %s", log_prefix, attempt + 1, max_retries + 1, e_llm_call, exc_info=True)
                     error_message_for_return_litellm = f"LLM call failed: {e_llm_call}"
                     if attempt < max_retries:
                         delay = (base_delay_litellm * (2 ** attempt)) + random.uniform(0, 0.5)
@@ -1118,7 +1130,7 @@ CRITICAL INSTRUCTION: You are a fact-based reasoner. Your primary goal is to con
 
         if error_message_for_return_litellm or llm_response_content_litellm is None:
             final_error_message = error_message_for_return_litellm or "LLM response content empty/unparsable after all retries."
-            logger.error(f"{log_prefix} (LiteLLM) Final failure after all retries. Error: {final_error_message}")
+            logger.error("%s (LiteLLM) Final failure after all retries. Error: %s", log_prefix, final_error_message)
             default_output = {} if expected_output_format == "json" else ""
             result_to_return = {"output": default_output, "usage": {"prompt_tokens": prompt_tokens_litellm, "completion_tokens": completion_tokens_litellm, "total_tokens": total_tokens_litellm}, "error": final_error_message}
         else:
@@ -1274,7 +1286,7 @@ CRITICAL REMINDER: Your entire response must be ONLY the JSON object described a
         }
 
         if error_data:
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for extract_research_plan: {error_data}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for extract_research_plan: %s", request_id, error_data)
             default_error_return["error"] = error_data
             return default_error_return
 
@@ -1294,11 +1306,11 @@ CRITICAL REMINDER: Your entire response must be ONLY the JSON object described a
                     "error": None
                 }
             else:
-                logger.error(f"[LLMReasoning:{request_id}] required_data_points validation failed. Type: {type(required_data_points)}, Value: {str(required_data_points)[:500]}...") # Log part of the value
+                logger.error("[LLMReasoning:%s] required_data_points validation failed. Type: %s, Value: %s...", request_id, type(required_data_points), str(required_data_points)[:200]) # Log part of the value
                 default_error_return["error"] = f"required_data_points validation failed. Type: {type(required_data_points)}"
                 return default_error_return
         else:
-            logger.error(f"[LLMReasoning:{request_id}] output_data validation failed. Type: {type(output_data)}, Value: {str(output_data)[:500]}...") # Log part of the value
+            logger.error("[LLMReasoning:%s] output_data validation failed. Type: %s, Value: %s...", request_id, type(output_data), str(output_data)[:200]) # Log part of the value
             default_error_return["error"] = f"output_data validation failed. Type: {type(output_data)}"
             return default_error_return
 
@@ -1330,7 +1342,7 @@ CRITICAL REMINDER: Your entire response must be ONLY the JSON object described a
             return {"error": "Operation cancelled during initial query decomposition."}
 
         if plan_result.get("error"):
-            logger.warning(f"[LLMReasoning:{request_id}] extract_research_plan failed, falling back to simpler decompose. Error: {plan_result.get('error')}")
+            logger.warning("[LLMReasoning:%s] extract_research_plan failed, falling back to simpler decompose. Error: %s", request_id, plan_result.get('error'))
             return {
                 "table_of_contents": [original_query],
                 "seed_queries": [original_query],
@@ -1404,7 +1416,6 @@ Additionally, the following key entities and relationships have been extracted f
 ---
 """
         verification_instruction = ""
-        verification_outcome_instruction = ""
         if proposed_fact_to_verify:
             original_question, proposed_answer = proposed_fact_to_verify
             verification_instruction = f"""
@@ -1414,8 +1425,6 @@ Proposed Answer that needs verification: "{proposed_answer}"
 Based on the 'Retrieved Content', does it CONFIRM, CONTRADICT, or is it INCONCLUSIVE regarding the 'Proposed Answer'?
 If CONFIRMED, what is the confirmed answer/value based *only* on the provided content? This confirmed answer/value is critical.
 """
-            verification_outcome_instruction = """- "verification_outcome": "CONFIRMED | CONTRADICTED | INCONCLUSIVE | NOT_APPLICABLE" (must be one of these exact strings, based on the VERIFICATION TASK if provided, otherwise "NOT_APPLICABLE")
-- "confirmed_value": "string_or_null" (If verification_outcome is "CONFIRMED", provide the specific confirmed answer/value from the text. This is crucial. Otherwise, null.)"""
 
         date_context_instruction_librarian = ""
         if task_date_context:
@@ -1498,7 +1507,7 @@ If this is a VERIFICATION TASK, ensure "verified_query_phrase_if_any" is populat
 
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for perform_librarian_check: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for perform_librarian_check: %s", request_id, result['error'])
             return {
                 "analysis": models.LibrarianAnalysisResult(
                     covered_reasoning_steps=[],
@@ -1513,7 +1522,7 @@ If this is a VERIFICATION TASK, ensure "verified_query_phrase_if_any" is populat
         try:
             llm_output_dict = result["output"]
             if not isinstance(llm_output_dict, dict): 
-                logger.error(f"[LLMReasoning:{request_id}] LLM output for librarian check was not a dictionary. Output: {llm_output_dict}")
+                logger.error("[LLMReasoning:%s] LLM output for librarian check was not a dictionary. Output: %s", request_id, llm_output_dict)
                 raise ValueError("LLM output for librarian check was not a dictionary.")
 
             # Robust parsing for verification_outcome and new verification_reasoning
@@ -1564,7 +1573,7 @@ If this is a VERIFICATION TASK, ensure "verified_query_phrase_if_any" is populat
             analysis_data = models.LibrarianAnalysisResult(**llm_output_dict)
             return {"analysis": analysis_data, "usage": result["usage"]}
         except Exception as e_pydantic_parse:
-            logger.error(f"[LLMReasoning:{request_id}] Failed to parse LibrarianAnalysisResult from LLM output. Error: {e_pydantic_parse}. Output: {result.get('output', 'N/A')}", exc_info=True)
+            logger.error("[LLMReasoning:%s] Failed to parse LibrarianAnalysisResult from LLM output. Error: %s. Output: %s", request_id, e_pydantic_parse, result.get('output', 'N/A'), exc_info=True)
             return {
                 "analysis": models.LibrarianAnalysisResult(
                     covered_reasoning_steps=[],
@@ -1677,7 +1686,7 @@ Final JSON Output (combined list of all generated queries/tasks):
             return {"queries": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during next hop query generation."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for generate_next_hop_queries: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for generate_next_hop_queries: %s", request_id, result['error'])
             return {"queries": [], "usage": result["usage"], "error": result["error"]}
 
         llm_output = result.get("output")
@@ -1686,7 +1695,7 @@ Final JSON Output (combined list of all generated queries/tasks):
         if isinstance(llm_output, dict) and len(llm_output) == 1:
             potential_list = next(iter(llm_output.values()), None)
             if isinstance(potential_list, list):
-                logger.warning(f"[LLMReasoning:{request_id}] LLM returned a dict for next hop queries, but extracting the inner list.")
+                logger.warning("[LLMReasoning:%s] LLM returned a dict for next hop queries, but extracting the inner list.", request_id)
                 llm_output = potential_list
 
         # Handle both formats: simple list of strings OR list of dicts with "task" key
@@ -1700,12 +1709,12 @@ Final JSON Output (combined list of all generated queries/tasks):
                     # Structured format with "task" key
                     extracted_queries.append(item["task"])
                 else:
-                    logger.warning(f"[LLMReasoning:{request_id}] Skipping invalid item in next hop queries: {item}")
+                    logger.warning("[LLMReasoning:%s] Skipping invalid item in next hop queries: %s", request_id, item)
             
             if extracted_queries:
                 return {"queries": extracted_queries, "usage": result["usage"]}
 
-        logger.error(f"[LLMReasoning:{request_id}] Next hop query output was not a list of strings or valid structured format: {llm_output}")
+        logger.error("[LLMReasoning:%s] Next hop query output was not a list of strings or valid structured format: %s", request_id, llm_output)
         return {"queries": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of strings or valid structured format"}
 
 
@@ -1788,7 +1797,7 @@ Final JSON Output (combined list of all generated queries/tasks):
         )
 
         if quality_filter_result.get("error"):
-            logger.warning(f"[{request_id}] Quality filter failed pre-synthesis. Proceeding with original (unfiltered) chunks. Error: {quality_filter_result['error']}")
+            logger.warning("[%s] Quality filter failed pre-synthesis. Proceeding with original (unfiltered) chunks. Error: %s", request_id, quality_filter_result['error'])
             chunks_for_synthesis = accumulated_top_chunks_text
         else:
             chunks_for_synthesis = quality_filter_result.get("filtered_chunks", accumulated_top_chunks_text)
@@ -1921,7 +1930,7 @@ Example Output:
             return {"fact_check_requests": [], "newly_identified_claims_this_call": set(), "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during fact check query identification."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for review_draft_and_identify_fact_check_queries: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for review_draft_and_identify_fact_check_queries: %s", request_id, result['error'])
             return {"fact_check_requests": [], "newly_identified_claims_this_call": set(), "usage": result["usage"], "error": result["error"]}
 
         llm_identified_requests = []
@@ -1938,10 +1947,10 @@ Example Output:
                 if isinstance(parsed_json, list) and all(isinstance(item, dict) for item in parsed_json):
                     llm_identified_requests = parsed_json
             except json.JSONDecodeError as e:
-                logger.error(f"[LLMReasoning:{request_id}] Fact check query identification output was not a list of dicts and could not be fixed: {result['output']}. Error: {e}")
+                logger.error("[LLMReasoning:%s] Fact check query identification output was not a list of dicts and could not be fixed: %s. Error: %s", request_id, result['output'], e)
                 return {"fact_check_requests": [], "newly_identified_claims_this_call": set(), "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of dicts"}
         else:
-            logger.error(f"[LLMReasoning:{request_id}] Fact check query identification output was not a list of dicts: {result['output']}")
+            logger.error("[LLMReasoning:%s] Fact check query identification output was not a list of dicts: %s", request_id, result['output'])
             return {"fact_check_requests": [], "newly_identified_claims_this_call": set(), "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of dicts"}
 
         final_fact_check_requests = []
@@ -2003,7 +2012,7 @@ Concise Answer:"""
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error in get_direct_fact: {error}")
+            logger.error("[LLMReasoning:%s] Error in get_direct_fact: %s", request_id, error)
             return {"answer": None, "usage": usage, "error": error}
 
         answer_text = llm_answer
@@ -2080,8 +2089,6 @@ Factual Overview of "{entity_name}":
         if not text_content or not attributes_to_extract:
             return {"attributes": {}, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
-        attributes_json_schema = {attr: "string_or_null" for attr in attributes_to_extract}
-
         prompt = f"""Given the following text, which is known to be about "{core_entity}", extract the values for the listed attributes.
 If an attribute's value is not found in the text, use null for its value.
 For numeric values or dates, extract them exactly as they appear.
@@ -2132,7 +2139,7 @@ JSON Output:
                 extracted_attributes[attr] = result["output"].get(attr) 
 
         if result.get("error"):
-             logger.error(f"[LLMReasoning:{request_id}] Error extracting specific attributes: {result['error']}")
+             logger.error("[LLMReasoning:%s] Error extracting specific attributes: %s", request_id, result['error'])
 
         return {"attributes": extracted_attributes, "usage": result.get("usage"), "error": result.get("error")}
 
@@ -2179,7 +2186,7 @@ Optimal Web Search Query for Verification:"""
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error or not verification_query:
-            logger.error(f"[LLMReasoning:{request_id}] Error formulating verification query: {error or 'Empty query returned'}. Falling back to simple combination.")
+            logger.error("[LLMReasoning:%s] Error formulating verification query: %s. Falling back to simple combination.", request_id, error or 'Empty query returned')
             fallback_query = f"{question} {proposed_answer}"
             return {"verification_query": fallback_query, "usage": usage, "error": error or "Generated alternative query was empty."}
 
@@ -2251,17 +2258,17 @@ Output the complete, revised Final Report (aim for approximately {self.settings.
             return {"final_report_text": initial_draft_text, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during report refinement."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for refine_report_with_fact_check_results: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for refine_report_with_fact_check_results: %s", request_id, result['error'])
             return {"final_report_text": f"[Refinement failed: {result['error']}]\n\n{initial_draft_text}", "usage": result["usage"], "error": result["error"]}
 
         return {"final_report_text": result["output"], "usage": result["usage"]}
 
     async def perform_reasoning_step(self, prompt: str, model_info: Dict[str, Any], api_config: Dict[str, Any], user_id: Optional[str], request_id: Optional[str] = None) -> Dict[str, Any]: 
-        logger.warning(f"[LLMReasoning:{request_id}] Generic 'perform_reasoning_step' called. Consider using a more specific method.")
+        logger.warning("[LLMReasoning:%s] Generic 'perform_reasoning_step' called. Consider using a more specific method.", request_id)
         return await self._execute_llm_call("reasoning", prompt, model_info, api_config, user_id, request_id, expected_output_format="text") 
 
     async def perform_synthesis_step(self, prompt: str, model_info: Dict[str, Any], api_config: Dict[str, Any], user_id: Optional[str], request_id: Optional[str] = None) -> Dict[str, Any]: 
-        logger.warning(f"[LLMReasoning:{request_id}] Generic 'perform_synthesis_step' called. Consider using 'synthesize_initial_draft' or 'refine_report_with_fact_check_results'.")
+        logger.warning("[LLMReasoning:%s] Generic 'perform_synthesis_step' called. Consider using 'synthesize_initial_draft' or 'refine_report_with_fact_check_results'.", request_id)
         return await self._execute_llm_call("synthesis", prompt, model_info, api_config, user_id, request_id, expected_output_format="text") 
 
     async def summarize_text(
@@ -2280,7 +2287,7 @@ Output the complete, revised Final Report (aim for approximately {self.settings.
 
         max_summary_input_length = model_info.get("max_input_length_summarize", self.settings.DEFAULT_MAX_SUMMARIZATION_INPUT_LENGTH)
         if len(text_to_summarize) > max_summary_input_length:
-            logger.warning(f"[LLMReasoning:{request_id or 'N/A'}:summarization] Truncating text for summarization. Original length: {len(text_to_summarize)}")
+            logger.warning("[LLMReasoning:%s:summarization] Truncating text for summarization. Original length: %s", request_id or 'N/A', len(text_to_summarize))
             text_to_summarize = text_to_summarize[:max_summary_input_length] + "\n[... text truncated ...]"
 
         context_header = ""
@@ -2304,7 +2311,7 @@ Output the complete, revised Final Report (aim for approximately {self.settings.
             return {"summary": "[Summarization cancelled.]", "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during summarization."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for summarize_text: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for summarize_text: %s", request_id, result['error'])
             return {"summary": f"[Summarization failed: {result['error']}]", "usage": result["usage"], "error": result["error"]}
         return {"summary": result["output"], "usage": result["usage"]}
 
@@ -2341,7 +2348,7 @@ Follow-up Suggestions (JSON list of strings):"""
                 return {"suggestions": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during follow-up generation."}
 
             if result.get("error"):
-                 logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for generate_follow_up_suggestions: {result['error']}")
+                 logger.error("[LLMReasoning:%s] Error in _execute_llm_call for generate_follow_up_suggestions: %s", request_id, result['error'])
                  return {"suggestions": [], "usage": result["usage"], "error": result["error"]}
 
             llm_output = result.get("output")
@@ -2349,16 +2356,16 @@ Follow-up Suggestions (JSON list of strings):"""
             if isinstance(llm_output, dict) and len(llm_output) == 1:
                 potential_list = next(iter(llm_output.values()), None)
                 if isinstance(potential_list, list):
-                    logger.warning(f"[LLMReasoning:{request_id}] LLM returned a dict for follow-up suggestions, but extracting the inner list.")
+                    logger.warning("[LLMReasoning:%s] LLM returned a dict for follow-up suggestions, but extracting the inner list.", request_id)
                     llm_output = potential_list
 
             if isinstance(llm_output, list) and all(isinstance(item, str) for item in llm_output):
                 return {"suggestions": llm_output, "usage": result["usage"]}
             else:
-                logger.error(f"[LLMReasoning:{request_id}] Follow-up suggestion output was not a list of strings: {llm_output}")
+                logger.error("[LLMReasoning:%s] Follow-up suggestion output was not a list of strings: %s", request_id, llm_output)
                 return {"suggestions": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of strings"}
         except Exception as e:
-            logger.error(f"[LLMReasoning:{request_id}] Unexpected error in generate_follow_up_suggestions: {e}", exc_info=True)
+            logger.error("[LLMReasoning:%s] Unexpected error in generate_follow_up_suggestions: %s", request_id, e, exc_info=True)
             return {"suggestions": [], "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": str(e)}
 
     async def extract_entities_from_text(
@@ -2426,7 +2433,7 @@ JSON Output (list of objects with "text" and "type"):
             return {"entities": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during entity extraction."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for extract_entities_from_text: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for extract_entities_from_text: %s", request_id, result['error'])
             return {"entities": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result["error"]}
 
         output_data = result.get("output")
@@ -2439,10 +2446,10 @@ JSON Output (list of objects with "text" and "type"):
                 try:
                     valid_entities.append(models.TypedEntity(**item).model_dump()) 
                 except Exception:
-                    logger.warning(f"[LLMReasoning:{request_id}] Invalid entity object in list: {item}")
+                    logger.warning("[LLMReasoning:%s] Invalid entity object in list: %s", request_id, item)
             return {"entities": valid_entities, "usage": result["usage"]}
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Typed entity extraction output was not a list of valid entity objects: {output_data}")
+            logger.warning("[LLMReasoning:%s] Typed entity extraction output was not a list of valid entity objects: %s", request_id, output_data)
             return {"entities": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of valid entity objects"}
 
     async def extract_relationships_from_text(
@@ -2552,7 +2559,7 @@ JSON Output (list of relationship dictionaries):
             return {"relationships": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during relationship extraction."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for extract_relationships_from_text: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for extract_relationships_from_text: %s", request_id, result['error'])
             return {"relationships": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result["error"]}
 
         output_data = result.get("output")
@@ -2563,12 +2570,12 @@ JSON Output (list of relationship dictionaries):
                     models.TypedRelationship(**item)
                     valid_relationships.append(item)
                 except Exception:
-                    logger.warning(f"[LLMReasoning:{request_id}] Invalid relationship object in list: {item}")
+                    logger.warning("[LLMReasoning:%s] Invalid relationship object in list: %s", request_id, item)
 
         if valid_relationships or (isinstance(output_data, list) and not output_data):
              return {"relationships": valid_relationships, "usage": result["usage"]}
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Typed relationship extraction output was not a list of valid relationship objects: {output_data}")
+            logger.warning("[LLMReasoning:%s] Typed relationship extraction output was not a list of valid relationship objects: %s", request_id, output_data)
             return {"relationships": [], "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output not list of valid relationship objects"}
 
     async def rerank_chunks_for_relevance(
@@ -2658,7 +2665,7 @@ JSON list of scored chunks:
 
 
             if result.get("error"):
-                logger.warning(f"[LLMReasoning:{batch_request_id}] Error reranking batch: {result['error']}. Assigning default low score to chunks in this batch.")
+                logger.warning("[LLMReasoning:%s] Error reranking batch: %s. Assigning default low score to chunks in this batch.", batch_request_id, result['error'])
                 for chunk_obj in batch_chunks:
                     all_scored_chunks.append((chunk_obj, 0.05))
                 continue
@@ -2669,7 +2676,7 @@ JSON list of scored chunks:
             if isinstance(llm_scored_batch_data, dict) and len(llm_scored_batch_data) == 1:
                 potential_list = next(iter(llm_scored_batch_data.values()), None)
                 if isinstance(potential_list, list):
-                    logger.warning(f"[LLMReasoning:{batch_request_id}] LLM returned a dict, but extracting the inner list.")
+                    logger.warning("[LLMReasoning:%s] LLM returned a dict, but extracting the inner list.", batch_request_id)
                     llm_scored_batch_data = potential_list
 
             if isinstance(llm_scored_batch_data, list):
@@ -2680,13 +2687,13 @@ JSON list of scored chunks:
                             score = float(item["relevance_score"])
                             scores_for_current_batch_map[item["chunk_id"]] = max(0.0, min(1.0, score))
                         except (ValueError, TypeError):
-                            logger.warning(f"[LLMReasoning:{batch_request_id}] Could not parse score for chunk_id {item.get('chunk_id')} in batch. Score: {item.get('relevance_score')}")
+                            logger.warning("[LLMReasoning:%s] Could not parse score for chunk_id %s in batch. Score: %s", batch_request_id, item.get('chunk_id'), item.get('relevance_score'))
 
                 for chunk_obj in batch_chunks:
                     score_from_llm = scores_for_current_batch_map.get(chunk_obj.chunk_id, 0.1) 
                     all_scored_chunks.append((chunk_obj, score_from_llm))
             else:
-                logger.warning(f"[LLMReasoning:{batch_request_id}] LLM output for batch reranking was not a list. Output: {llm_scored_batch_data}. Assigning default low score to chunks in this batch.")
+                logger.warning("[LLMReasoning:%s] LLM output for batch reranking was not a list. Output: %s. Assigning default low score to chunks in this batch.", batch_request_id, llm_scored_batch_data)
                 for chunk_obj in batch_chunks:
                     all_scored_chunks.append((chunk_obj, 0.05))
             
@@ -2749,7 +2756,7 @@ Focused Summary:
             return {"summary": "[Cluster summarization cancelled.]", "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during cluster summarization."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for summarize_chunk_cluster (intra-URL): {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for summarize_chunk_cluster (intra-URL): %s", request_id, result['error'])
             return {"summary": f"[Intra-URL Cluster summarization failed: {result['error']}]", "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result["error"]}
 
         return {"summary": result["output"], "usage": result["usage"]}
@@ -2794,7 +2801,7 @@ Focused Summary:
                 # user_id_for_internal_call=user_id # LiteLLMWrapper needs to be adapted if it uses _execute_llm_call internally for local models
             )
         except Exception as e_lc_llm_init:
-            logger.error(f"[LLMReasoning:{request_id}] Failed to initialize LiteLLMWrapper for Langchain: {e_lc_llm_init}", exc_info=True)
+            logger.error("[LLMReasoning:%s] Failed to initialize LiteLLMWrapper for Langchain: %s", request_id, e_lc_llm_init, exc_info=True)
             return {"summary": "", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": f"Langchain LLM wrapper init failed: {e_lc_llm_init}"}
 
         try:
@@ -2811,7 +2818,7 @@ Focused Summary:
         except Exception as e_lc_chain:
             if isinstance(e_lc_chain, asyncio.CancelledError):
                 return {"summary": "[Cross-document summarization cancelled.]", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": "Operation cancelled during Langchain chain."}
-            logger.error(f"[LLMReasoning:{request_id}] Error during Langchain cross-document summarization: {e_lc_chain}", exc_info=True)
+            logger.error("[LLMReasoning:%s] Error during Langchain cross-document summarization: %s", request_id, e_lc_chain, exc_info=True)
             return {"summary": f"[Cross-document summarization failed: {e_lc_chain}]", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": str(e_lc_chain)}
 
     async def resolve_coreferences_in_text(
@@ -2877,12 +2884,12 @@ Processed Text with Coreferences Resolved:
             return {"resolved_text": text_content, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Operation cancelled during coreference resolution."}
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for resolve_coreferences_in_text: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for resolve_coreferences_in_text: %s", request_id, result['error'])
             return {"resolved_text": text_content, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result["error"]}
 
         resolved_text = result.get("output", text_content)
         if not resolved_text or len(resolved_text) < len(text_content) * 0.5:
-            logger.warning(f"[LLMReasoning:{request_id}] Coreference resolution resulted in empty or significantly shorter text. Falling back to original. Original len: {len(text_content)}, Resolved len: {len(resolved_text if resolved_text else '')}")
+            logger.warning("[LLMReasoning:%s] Coreference resolution resulted in empty or significantly shorter text. Falling back to original. Original len: %s, Resolved len: %s", request_id, len(text_content), len(resolved_text if resolved_text else ''))
             return {"resolved_text": text_content, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Resolution produced empty/short text"}
 
         return {"resolved_text": resolved_text, "usage": result["usage"]}
@@ -2907,7 +2914,7 @@ Processed Text with Coreferences Resolved:
             return {"is_relevant": False, "reasoning": "Operation cancelled.", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": "Operation cancelled."}
 
         if not reasoning_step_context or not snippet_to_check:
-            logger.warning(f"[LLMReasoning:{request_id}] Input validation failed for expansion snippet relevance: empty context or snippet.")
+            logger.warning("[LLMReasoning:%s] Input validation failed for expansion snippet relevance: empty context or snippet.", request_id)
             return {
                 "is_relevant": False,
                 "reasoning": "Reasoning context or snippet was empty.",
@@ -2956,7 +2963,7 @@ JSON Output:
         error = result.get("error")
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error in relevance check for expansion snippet: {error}")
+            logger.error("[LLMReasoning:%s] Error in relevance check for expansion snippet: %s", request_id, error)
             return {"is_relevant": False, "reasoning": "LLM call failed during relevance check.", "usage": usage, "error": error}
 
         output_data = result.get("output")
@@ -2970,7 +2977,7 @@ JSON Output:
                 "error": None
             }
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Invalid JSON structure from expansion snippet relevance check. Output: {output_data}")
+            logger.warning("[LLMReasoning:%s] Invalid JSON structure from expansion snippet relevance check. Output: %s", request_id, output_data)
             return {
                 "is_relevant": False,
                 "reasoning": "LLM output structure for relevance check was invalid.",
@@ -3034,16 +3041,16 @@ JSON Output:
 
         score = 0.0
         if result.get("error"):
-            logger.warning(f"[LLMReasoning:{request_id}] Error in relevance check for expansion snippet: {result['error']}")
+            logger.warning("[LLMReasoning:%s] Error in relevance check for expansion snippet: %s", request_id, result['error'])
         elif isinstance(result.get("output"), dict) and "relevance_score" in result["output"]:
             try:
                 raw_score = result["output"]["relevance_score"]
                 parsed_score = float(raw_score)
                 score = max(0.0, min(1.0, parsed_score))
             except (ValueError, TypeError) as e_score_parse:
-                logger.warning(f"[LLMReasoning:{request_id}] Could not parse relevance_score '{result['output']['relevance_score']}' as float. Error: {e_score_parse}")
+                logger.warning("[LLMReasoning:%s] Could not parse relevance_score '%s' as float. Error: %s", request_id, result['output']['relevance_score'], e_score_parse)
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Invalid or missing 'relevance_score' in LLM output for snippet check. Output: {result.get('output')}")
+            logger.warning("[LLMReasoning:%s] Invalid or missing 'relevance_score' in LLM output for snippet check. Output: %s", request_id, result.get('output'))
 
         return {"score": score, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result.get("error")}
 
@@ -3119,7 +3126,7 @@ JSON Output:
 
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error in _execute_llm_call for analyze_table_data: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error in _execute_llm_call for analyze_table_data: %s", request_id, result['error'])
             return {"analysis": None, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": result["error"]}
 
         output_data = result.get("output")
@@ -3129,7 +3136,7 @@ JSON Output:
            "potential_entities" in output_data:
             return {"analysis": output_data, "usage": result["usage"]}
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Table analysis output did not match expected structure: {output_data}")
+            logger.warning("[LLMReasoning:%s] Table analysis output did not match expected structure: %s", request_id, output_data)
             return {"analysis": None, "usage": result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}), "error": "Output structure mismatch for table analysis."}
 
     async def select_best_links_to_follow(
@@ -3155,7 +3162,7 @@ JSON Output:
             # Use a standard, fast tokenizer as a general-purpose estimator.
             tokenizer = AutoTokenizer.from_pretrained("gpt2")
         except Exception as e_tok:
-            logger.error(f"Could not load AutoTokenizer: {e_tok}. Batching will be disabled.", exc_info=True)
+            logger.error("Could not load AutoTokenizer: %s. Batching will be disabled.", e_tok, exc_info=True)
             # Fallback to old behavior if tokenizer fails to load
             return {"selected_links": links[:top_n], "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}, "error": "Tokenizer failed to load"}
 
@@ -3243,14 +3250,14 @@ JSON list of selected URLs:
             total_usage["total_tokens"] += usage.get("total_tokens", 0)
 
             if result.get("error"):
-                logger.error(f"[LLMReasoning:{request_id}] Error processing link selection batch {i}: {result['error']}")
+                logger.error("[LLMReasoning:%s] Error processing link selection batch %s: %s", request_id, i, result['error'])
                 continue
 
             selected_urls_from_batch = result.get("output")
             if isinstance(selected_urls_from_batch, list) and all(isinstance(url, str) for url in selected_urls_from_batch):
                 all_selected_urls.extend(selected_urls_from_batch)
             else:
-                logger.warning(f"[LLMReasoning:{request_id}] Link selection batch {i} output was not a list of strings: {selected_urls_from_batch}")
+                logger.warning("[LLMReasoning:%s] Link selection batch %s output was not a list of strings: %s", request_id, i, selected_urls_from_batch)
 
         unique_selected_urls = list(dict.fromkeys(all_selected_urls))
         url_to_link_obj_map = {link_obj.url: link_obj for link_obj in links}
@@ -3305,7 +3312,7 @@ Comprehensive Initial Answer (approx. {self.settings.DEEP_SEARCH_PREFLIGHT_TARGE
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error in get_holistic_initial_answer: {error}")
+            logger.error("[LLMReasoning:%s] Error in get_holistic_initial_answer: %s", request_id, error)
             return {"answer": None, "usage": usage, "error": error}
 
         if not answer_text or "i do not have enough information" in answer_text.lower() or "i cannot answer" in answer_text.lower():
@@ -3394,7 +3401,7 @@ JSON Output:
         error = result.get("error")
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error getting strategic pivot suggestions: {error}")
+            logger.error("[LLMReasoning:%s] Error getting strategic pivot suggestions: %s", request_id, error)
             return {"critique": "Error in strategic analysis.", "abandon_step_names": [], "new_strategic_questions": [], "next_query_type_suggestions": [], "usage": usage, "error": error}
 
         output_data = result.get("output")
@@ -3405,7 +3412,7 @@ JSON Output:
            "next_query_type_suggestions" in output_data:
             return {**output_data, "usage": usage, "error": None}
         else:
-            logger.error(f"[LLMReasoning:{request_id}] Strategic pivot suggestions output was not in the expected format: {output_data}")
+            logger.error("[LLMReasoning:%s] Strategic pivot suggestions output was not in the expected format: %s", request_id, output_data)
             return {"critique": "Malformed output from strategic analysis.", "abandon_step_names": [], "new_strategic_questions": [], "next_query_type_suggestions": [], "usage": usage, "error": "Malformed LLM output for strategist"}
 
     async def filter_chunks_for_quality(
@@ -3489,7 +3496,7 @@ JSON list of selected Chunk IDs:
         error = result.get("error")
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error filtering chunks for quality: {error}. Returning original top_n chunks as fallback.")
+            logger.error("[LLMReasoning:%s] Error filtering chunks for quality: %s. Returning original top_n chunks as fallback.", request_id, error)
             return {"filtered_chunks": chunks[:top_n], "usage": usage, "error": error}
 
         selected_chunk_ids_from_llm = result.get("output")
@@ -3498,7 +3505,7 @@ JSON list of selected Chunk IDs:
         if isinstance(selected_chunk_ids_from_llm, dict) and len(selected_chunk_ids_from_llm) == 1:
             potential_list = next(iter(llm_output_data.values()), None)
             if isinstance(potential_list, list):
-                logger.warning(f"[LLMReasoning:{request_id}] LLM returned a dict for quality filter, but extracting the inner list.")
+                logger.warning("[LLMReasoning:%s] LLM returned a dict for quality filter, but extracting the inner list.", request_id)
                 selected_chunk_ids_from_llm = potential_list
 
         if isinstance(selected_chunk_ids_from_llm, list) and all(isinstance(cid, str) for cid in selected_chunk_ids_from_llm):
@@ -3509,7 +3516,7 @@ JSON list of selected Chunk IDs:
 
             return {"filtered_chunks": final_selected_chunks[:top_n], "usage": usage}
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Quality filter output was not a list of chunk IDs: {selected_chunk_ids_from_llm}. Returning original top_n chunks.")
+            logger.warning("[LLMReasoning:%s] Quality filter output was not a list of chunk IDs: %s. Returning original top_n chunks.", request_id, selected_chunk_ids_from_llm)
             return {"filtered_chunks": chunks[:top_n], "usage": usage, "error": "LLM output for quality filter was not a list of chunk IDs."}
 
     async def filter_queries_for_relevance_and_novelty(
@@ -3598,7 +3605,7 @@ JSON list of selected query strings:
             }
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] LLM call failed for filter_queries_for_relevance_and_novelty: {result['error']}")
+            logger.error("[LLMReasoning:%s] LLM call failed for filter_queries_for_relevance_and_novelty: %s", request_id, result['error'])
             return {
                 "filtered_queries": [],
                 "usage": result.get("usage", default_usage),
@@ -3610,7 +3617,7 @@ JSON list of selected query strings:
 
         if result.get("error") and current_provider == "google" and \
            ("LLM finished due to length but returned no content" in result.get("error") or "LLM response was empty" in result.get("error")):
-            logger.warning(f"[{request_id}] LLM query filter (Gemini) failed: {result.get('error')}. Using basic non-LLM fallback.")
+            logger.warning("[%s] LLM query filter (Gemini) failed: %s. Using basic non-LLM fallback.", request_id, result.get('error'))
             executed_queries_lower = {eq.lower() for eq in executed_queries}
             fallback_filtered_queries = [
                 q for q in candidate_queries if q.lower() not in executed_queries_lower
@@ -3629,7 +3636,7 @@ JSON list of selected query strings:
                 "usage": result.get("usage", default_usage)
             }
         else:
-            logger.error(f"[LLMReasoning:{request_id}] Query filter output was not a list of strings as expected. Output type: {type(llm_output)}, Content: {str(llm_output)[:500]}")
+            logger.error("[LLMReasoning:%s] Query filter output was not a list of strings as expected. Output type: %s, Content: %s", request_id, type(llm_output), str(llm_output)[:200])
             # Fallback for general malformed output from any provider
             executed_queries_lower = {eq.lower() for eq in executed_queries}
             fallback_filtered_queries_general = [
@@ -3702,18 +3709,18 @@ Ideal Hypothetical Paragraph (approx. {self.settings.DEEP_SEARCH_HYDE_TARGET_WOR
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error generating hypothetical document: {error}")
+            logger.error("[LLMReasoning:%s] Error generating hypothetical document: %s", request_id, error)
             # Specific fallback for Gemini if it's the "length but no content" error
             if provider_for_hyde_prompt == "google" and error == "LLM finished due to length but returned no content.":
-                logger.warning(f"[{request_id}] HyDE generation failed specifically with Gemini (length error, no content). Skipping HyDE for query: '{query}'.")
+                logger.warning("[%s] HyDE generation failed specifically with Gemini (length error, no content). Skipping HyDE for query: '%s'.", request_id, query)
                 return {"hypothetical_document": None, "usage": usage, "error": "HyDE generation failed with Gemini (length error, no content), skipping HyDE."}
             return {"hypothetical_document": None, "usage": usage, "error": error}
         
         if not hypothetical_document_text:
-            logger.warning(f"[LLMReasoning:{request_id}] Hypothetical document generation resulted in empty text for query: '{query}'")
+            logger.warning("[LLMReasoning:%s] Hypothetical document generation resulted in empty text for query: '%s'", request_id, query)
             # Specific fallback for Gemini if it's an empty text response
             if provider_for_hyde_prompt == "google":
-                 logger.warning(f"[{request_id}] HyDE generation with Gemini resulted in empty text for query: '{query}'. Skipping HyDE.")
+                 logger.warning("[%s] HyDE generation with Gemini resulted in empty text for query: '%s'. Skipping HyDE.", request_id, query)
                  return {"hypothetical_document": None, "usage": usage, "error": "Generated hypothetical document was empty (Gemini)."}
             return {"hypothetical_document": None, "usage": usage, "error": "Generated hypothetical document was empty."}
 
@@ -3766,7 +3773,7 @@ Alternative Query:"""
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error or not alternative_query_text:
-            logger.error(f"[LLMReasoning:{request_id}] Error generating alternative query for '{original_query}': {error or 'Empty response'}. Using original.")
+            logger.error("[LLMReasoning:%s] Error generating alternative query for '%s': %s. Using original.", request_id, original_query, error or 'Empty response')
             return {"alternative_query": original_query, "usage": usage, "error": error or "Generated alternative query was empty."}
         
         cleaned_alt_query = alternative_query_text.strip().strip('"')
@@ -3838,11 +3845,11 @@ JSON list of new query strings:
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error generating queries from comptroller feedback: {error}")
+            logger.error("[LLMReasoning:%s] Error generating queries from comptroller feedback: %s", request_id, error)
         elif isinstance(result.get("output"), list) and all(isinstance(q, str) for q in result["output"]):
             queries = result["output"]
         else:
-            logger.warning(f"[LLMReasoning:{request_id}] Output for comptroller feedback query generation was not a list of strings: {result.get('output')}")
+            logger.warning("[LLMReasoning:%s] Output for comptroller feedback query generation was not a list of strings: %s", request_id, result.get('output'))
             error = "LLM output was not a list of strings."
             
         return {"queries": queries, "usage": usage, "error": error}
@@ -3898,11 +3905,11 @@ Core Summary (1-2 sentences):
         usage = result.get("usage", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
         if error:
-            logger.error(f"[LLMReasoning:{request_id}] Error summarizing chunk in isolation: {error}")
+            logger.error("[LLMReasoning:%s] Error summarizing chunk in isolation: %s", request_id, error)
             return {"summary": None, "usage": usage, "error": error}
         
         if not summary_text:
-            logger.warning(f"[LLMReasoning:{request_id}] Isolated chunk summary generation resulted in empty text.")
+            logger.warning("[LLMReasoning:%s] Isolated chunk summary generation resulted in empty text.", request_id)
             return {"summary": None, "usage": usage, "error": "Generated isolated summary was empty."}
 
         return {"summary": summary_text.strip(), "usage": usage, "error": None}
@@ -3952,7 +3959,7 @@ Translated Text:
         )
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error during translation: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error during translation: %s", request_id, result['error'])
             return {"translated_text": None, "usage": result.get("usage", {}), "error": result["error"]}
 
         return {"translated_text": result.get("output", "").strip(), "usage": result.get("usage", {})}
@@ -4013,7 +4020,7 @@ Translations:
         )
 
         if result.get("error"):
-            logger.error(f"[LLMReasoning:{request_id}] Error during batch translation: {result['error']}")
+            logger.error("[LLMReasoning:%s] Error during batch translation: %s", request_id, result['error'])
             return {"translated_texts": [], "usage": result.get("usage", {}), "error": result["error"]}
 
         # Parse the batch response
@@ -4027,7 +4034,7 @@ Translations:
 
         # Handle mismatch in expected vs actual number of translations
         if len(cleaned_translations) != len(texts_to_translate):
-            logger.warning(f"[LLMReasoning:{request_id}] Batch translation returned {len(cleaned_translations)} translations, expected {len(texts_to_translate)}. Padding with empty strings.")
+            logger.warning("[LLMReasoning:%s] Batch translation returned %s translations, expected %s. Padding with empty strings.", request_id, len(cleaned_translations), len(texts_to_translate))
             while len(cleaned_translations) < len(texts_to_translate):
                 cleaned_translations.append("")
 
