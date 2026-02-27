@@ -5,7 +5,6 @@
  * Includes VRAM pre-filtering based on detected GPU limits.
  */
 const axios = require('axios');
-const { getEffectiveGpuVramLimitGb } = require('../../controllers/hardwareController'); 
 
 /**
  * Search for models on Hugging Face Hub
@@ -31,11 +30,9 @@ async function searchModels(query, options = {}) {
     });
 
     let initialModels = response.data;
-    let isEmbeddingSearch = false;
 
     // Check if the query is the special object for embedding models
     if (typeof query === 'object' && query !== null && query.pipeline_tag === 'sentence-similarity') {
-        isEmbeddingSearch = true;
         // Use the original query object for the API call parameters if needed,
         // but for filtering logic below, we just need the flag.
         // The actual API call uses params.search, which was set correctly in the controller.
@@ -115,12 +112,12 @@ const getModelInfo = async (modelId, options = {}) => {
     const model = response.data;
     
     // Debug logging to see what's actually returned
-    console.log(`[HF API Debug] Model ${modelId} response keys:`, Object.keys(model));
-    console.log(`[HF API Debug] Model ${modelId} license field:`, model.license);
-    console.log(`[HF API Debug] Model ${modelId} cardData:`, model.cardData ? Object.keys(model.cardData) : 'No cardData');
+    console.log('[HF API Debug] Model %s response keys:', modelId, Object.keys(model));
+    console.log('[HF API Debug] Model %s license field:', modelId, model.license);
+    console.log('[HF API Debug] Model %s cardData:', modelId, model.cardData ? Object.keys(model.cardData) : 'No cardData');
     if (model.cardData) {
-      console.log(`[HF API Debug] Model ${modelId} cardData.license:`, model.cardData.license);
-      console.log(`[HF API Debug] Model ${modelId} cardData.metadata:`, model.cardData.metadata);
+      console.log('[HF API Debug] Model %s cardData.license:', modelId, model.cardData.license);
+      console.log('[HF API Debug] Model %s cardData.metadata:', modelId, model.cardData.metadata);
     }
     
     // Enhanced metadata extraction with proper fallbacks
@@ -148,7 +145,7 @@ const getModelInfo = async (modelId, options = {}) => {
       gated: model.gated === 'auto' || model.gated === true
     };
   } catch (error) {
-    console.error(`Error fetching model info for ${modelId}:`, error);
+    console.error('Error fetching model info for %s:', modelId, error);
     throw error;
   }
 };

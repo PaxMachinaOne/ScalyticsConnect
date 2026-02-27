@@ -4,7 +4,6 @@
  * API routes configuration
  */
 const path = require('path');
-const express = require('express');
 const rateLimit = require('express-rate-limit');
 
 /**
@@ -31,7 +30,6 @@ function setupRoutes(app, middleware) {
   const apiKeyRoutes = require('../routes/apiKeyRoutes');
   const agentRoutes = require('../routes/agentRoutes');
   const fileRoutes = require('../routes/fileRoutes');
-  const githubRoutes = require('../routes/githubRoutes');
   const systemMaintenanceRoutes = require('../routes/systemMaintenanceRoutes');
   const documentationRoutes = require('../routes/documentationRoutes');
   const integrationRoutes = require('../routes/integrationRoutes');
@@ -40,7 +38,6 @@ function setupRoutes(app, middleware) {
   const shareRoutes = require('../routes/shareRoutes');
   const userRoutes = require('../routes/userRoutes');
   const mcpRoutes = require('../routes/mcpRoutes'); 
-  const userController = require('../controllers/userController');
   const scalyticsApiRoutes = require('../routes/scalyticsApiRoutes');
   const adminFilteringRoutes = require('../routes/adminFilteringRoutes'); 
   const filterDataRoutes = require('../routes/filterDataRoutes');

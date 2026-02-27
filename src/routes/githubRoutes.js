@@ -13,9 +13,9 @@ const githubLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply authentication and rate limiting middleware to all routes
-router.use(protect);
+// Apply rate limiting before authentication to prevent brute-force attacks
 router.use(githubLimiter);
+router.use(protect);
 
 // GitHub OAuth routes
 router.post('/connect', githubController.connectAccount);

@@ -15,7 +15,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from lancedb.pydantic import pydantic_to_schema
 from pydantic import BaseModel as PydanticBaseModel
 from typing import List as PyList
-import numpy as np
 
 from .. import config as app_config
 from .. import models
@@ -78,12 +77,12 @@ class ContentVector:
                     # Validate that the table handle is actually valid
                     if self.db_table is None:
                         error_msg = f"Table '{self.table_name}' exists but open_table() returned None. This indicates a LanceDB API issue or corrupted table."
-                        logger.error(f"[PID:{os.getpid()}] {error_msg}")
+                        logger.error("[PID:%s] %s", os.getpid(), error_msg)
                         raise RuntimeError(f"LanceDB open_table() returned None for existing table '{self.table_name}'")
                         
                 except Exception as e_open:
                     error_msg = f"Failed to open existing table '{self.table_name}': {e_open}"
-                    logger.error(f"[PID:{os.getpid()}] {error_msg}")
+                    logger.error("[PID:%s] %s", os.getpid(), error_msg)
                     raise RuntimeError(f"Cannot open existing table '{self.table_name}': {e_open}")
             else:
                 try:
@@ -91,18 +90,18 @@ class ContentVector:
                     self.db_table = self.db_connection.create_table(self.table_name, schema=schema)
                 except Exception as e_create:
                     error_msg = f"Failed to create table '{self.table_name}': {e_create}"
-                    logger.error(f"[PID:{os.getpid()}] {error_msg}")
+                    logger.error("[PID:%s] %s", os.getpid(), error_msg)
                     raise RuntimeError(f"Cannot create table '{self.table_name}': {e_create}")
 
             if self.db_table is None:
                 error_msg = f"Table handle is None after initialization for '{self.table_name}'. This should not happen."
-                logger.error(f"[PID:{os.getpid()}] FATAL ERROR: {error_msg}")
+                logger.error("[PID:%s] FATAL ERROR: %s", os.getpid(), error_msg)
                 raise RuntimeError(error_msg)
 
             return True
         except Exception as e:
             error_msg = f"FATAL: Failed to initialize ContentVector resources. Error: {e}"
-            logger.error(f"[PID:{os.getpid()}] {error_msg}", exc_info=True)
+            logger.error("[PID:%s] %s", os.getpid(), error_msg, exc_info=True)
             return False
 
     async def chunk_text(self, text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> List[str]:
@@ -208,7 +207,7 @@ class ContentVector:
         final_results = []
         for result in batch_results:
             if isinstance(result, Exception):
-                logger.error(f"Error during batch vector search: {result}", exc_info=result)
+                logger.error("Error during batch vector search: %s", result, exc_info=result)
                 final_results.append([]) # Append empty list for failed searches
             else:
                 final_results.append(result)
@@ -220,7 +219,7 @@ class ContentVector:
         fts_query: Optional[str] = None, metadata_filter: Optional[Dict[str, Any]] = None
     ) -> List[models.VectorSearchResultItem]:
         if self.db_table is None:
-            logger.error(f"[PID:{os.getpid()}] search_vectors: FAILED because db_table is None.")
+            logger.error("[PID:%s] search_vectors: FAILED because db_table is None.", os.getpid())
             raise RuntimeError("LanceDB table is not available.")
 
         if not query_vector and not (fts_query and fts_query.strip()) and not metadata_filter:
@@ -277,7 +276,7 @@ class ContentVector:
                 await loop.run_in_executor(None, lambda: self.db_table.delete(f"chat_id = '{str(group_id)}'"))
             return {"success": True, "message": f"Vectors for group ID {group_id} deleted."}
         except Exception as e:
-            logger.error(f"Error deleting vectors for group ID {group_id}: {e}", exc_info=True)
+            logger.error("Error deleting vectors for group ID %s: %s", group_id, e, exc_info=True)
             return {"success": False, "message": f"Error deleting vectors: {str(e)}"}
 
 async def get_content_vector() -> ContentVector:
@@ -290,17 +289,17 @@ async def get_content_vector() -> ContentVector:
     
     # Step 1: Initialize on first call
     if _worker_local_instance is None:
-        _worker_local_instance = ContentVector(settings=app_config.settings)
-        initialized_ok = await _worker_local_instance.initialize_resources()
+        new_instance = ContentVector(settings=app_config.settings)
+        initialized_ok = await new_instance.initialize_resources()
         if not initialized_ok:
-            _worker_local_instance = None 
             raise RuntimeError("Failed to initialize ContentVector service during first call.")
+        _worker_local_instance = new_instance
     
     # Step 2: Perform a health check on EVERY call to detect and repair corruption.
     is_healthy = _worker_local_instance.is_healthy()
     
     if not is_healthy:
-        logger.warning(f"[PID:{os.getpid()}] get_content_vector: CORRUPTION DETECTED. The ContentVector singleton was found in an unhealthy state. Attempting to repair by re-establishing connection...")
+        logger.warning("[PID:%s] get_content_vector: CORRUPTION DETECTED. The ContentVector singleton was found in an unhealthy state. Attempting to repair by re-establishing connection...", os.getpid())
         
         # Try to re-establish connection without affecting existing data
         try:
@@ -312,16 +311,16 @@ async def get_content_vector() -> ContentVector:
                 
                 if _worker_local_instance.db_table is None:
                     raise RuntimeError(f"Cannot open existing table '{_worker_local_instance.table_name}' during repair")
-                logger.info(f"[PID:{os.getpid()}] Successfully reconnected to existing table '{_worker_local_instance.table_name}'")
+                logger.info("[PID:%s] Successfully reconnected to existing table '%s'", os.getpid(), _worker_local_instance.table_name)
             else:
                 # Table doesn't exist, create new one (this should be rare during repair)
                 schema = pydantic_to_schema(LanceDbRowSchema)
                 _worker_local_instance.db_table = _worker_local_instance.db_connection.create_table(_worker_local_instance.table_name, schema=schema)
-                logger.info(f"[PID:{os.getpid()}] Created new table '{_worker_local_instance.table_name}' during repair")
+                logger.info("[PID:%s] Created new table '%s' during repair", os.getpid(), _worker_local_instance.table_name)
                 
-            logger.info(f"[PID:{os.getpid()}] get_content_vector: Repair successful. ContentVector is now healthy.")
+            logger.info("[PID:%s] get_content_vector: Repair successful. ContentVector is now healthy.", os.getpid())
         except Exception as e_repair:
-            logger.error(f"[PID:{os.getpid()}] Failed to repair ContentVector corruption: {e_repair}")
+            logger.error("[PID:%s] Failed to repair ContentVector corruption: %s", os.getpid(), e_repair)
             raise RuntimeError(f"Failed to repair corrupted ContentVector service: {e_repair}")
 
     return _worker_local_instance

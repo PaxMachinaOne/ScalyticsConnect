@@ -1,9 +1,7 @@
-import asyncio
 import re
 from typing import Dict, List, Optional, Any
 
 from .llm_reasoning import LLMReasoning
-from .. import models
 from .. import config as app_config
 from ..utils import setup_logger
 
@@ -109,7 +107,7 @@ async def analyze_document_content(
         text_chunks = _chunk_text_content(text_content, chunk_size_words=chunk_size, max_chunk_size_words=max_chunk_size)
         
         if not text_chunks:
-            logger.warning(f"Document {original_document_name} (ID: {document_id}) produced no text chunks after chunking, though text_content was present.")
+            logger.warning("Document %s (ID: %s) produced no text chunks after chunking, though text_content was present.", original_document_name, document_id)
         
         for idx, chunk_text in enumerate(text_chunks):
             chunk_metadata: Dict[str, Any] = {
@@ -121,7 +119,7 @@ async def analyze_document_content(
             log_prefix = f"[DocumentProcessor:{analysis_request_id_base}]"
 
             try:
-                logger.debug(f"{log_prefix} Starting summarization for chunk {idx} of {original_document_name}")
+                logger.debug("%s Starting summarization for chunk %s of %s", log_prefix, idx, original_document_name)
                 summary_result = await llm_reasoner.summarize_text(
                     text_to_summarize=chunk_text,
                     model_info=reasoning_model_info,
@@ -134,19 +132,19 @@ async def analyze_document_content(
                     chunk_metadata["extracted_summary"] = summary_result.get("summary")
                 else:
                     if summary_result.get("error"):
-                        logger.error(f"{log_prefix} Summarization failed: {summary_result.get('error')}")
+                        logger.error("%s Summarization failed: %s", log_prefix, summary_result.get('error'))
                         chunk_metadata["llm_analysis_error_summary"] = str(summary_result.get("error"))
                     else:
-                        logger.warning(f"{log_prefix} Summarization returned no summary text.")
+                        logger.warning("%s Summarization returned no summary text.", log_prefix)
                         chunk_metadata["llm_analysis_warn_summary"] = "LLM returned no summary."
                     # Fallback shallow summary for text chunk
                     fallback_summary_words = chunk_text.split()[:50] # First 50 words
                     chunk_metadata["extracted_summary"] = " ".join(fallback_summary_words) + "..." if len(fallback_summary_words) >= 50 else " ".join(fallback_summary_words)
                     chunk_metadata["summary_type"] = "fallback_shallow"
-                    logger.info(f"{log_prefix} Using fallback shallow summary for text chunk {idx}.")
+                    logger.info("%s Using fallback shallow summary for text chunk %s.", log_prefix, idx)
 
                 text_for_entities = chunk_metadata.get("extracted_summary", chunk_text) # Use LLM summary if available, else original chunk for entities
-                logger.debug(f"{log_prefix} Starting entity extraction for chunk {idx}")
+                logger.debug("%s Starting entity extraction for chunk %s", log_prefix, idx)
                 entity_result = await llm_reasoner.extract_entities_from_text(
                     text_content=text_for_entities,
                     model_info=reasoning_model_info,
@@ -160,11 +158,11 @@ async def analyze_document_content(
                     chunk_metadata["extracted_entities"] = entity_result.get("entities")
                     extracted_entities_for_relationships = entity_result.get("entities")
                 elif entity_result.get("error"):
-                    logger.error(f"{log_prefix} Entity extraction failed: {entity_result.get('error')}")
+                    logger.error("%s Entity extraction failed: %s", log_prefix, entity_result.get('error'))
                     chunk_metadata["llm_analysis_error_entities"] = str(entity_result.get("error"))
 
                 text_for_relationships = chunk_metadata.get("extracted_summary", chunk_text)
-                logger.debug(f"{log_prefix} Starting relationship extraction for chunk {idx}")
+                logger.debug("%s Starting relationship extraction for chunk %s", log_prefix, idx)
                 relationship_result = await llm_reasoner.extract_relationships_from_text(
                     text_content=text_for_relationships,
                     model_info=reasoning_model_info,
@@ -177,26 +175,26 @@ async def analyze_document_content(
                 if not relationship_result.get("error") and isinstance(relationship_result.get("relationships"), list):
                     chunk_metadata["extracted_relationships"] = relationship_result.get("relationships")
                 elif relationship_result.get("error"):
-                    logger.error(f"{log_prefix} Relationship extraction failed: {relationship_result.get('error')}")
+                    logger.error("%s Relationship extraction failed: %s", log_prefix, relationship_result.get('error'))
                     chunk_metadata["llm_analysis_error_relationships"] = str(relationship_result.get("error"))
                 
                 all_processed_items_metadata.append(chunk_metadata)
 
             except Exception as e:
-                logger.error(f"{log_prefix} Unexpected error during LLM analysis for chunk {idx}: {e}", exc_info=True)
+                logger.error("%s Unexpected error during LLM analysis for chunk %s: %s", log_prefix, idx, e, exc_info=True)
                 chunk_metadata["llm_analysis_error"] = f"Unexpected error in document_processor text chunk analysis: {str(e)}"
                 all_processed_items_metadata.append(chunk_metadata) # Still append chunk with error
     elif not text_content or not text_content.strip():
-         logger.warning(f"Document {original_document_name} (ID: {document_id}) has no text content to analyze for text chunks.")
+         logger.warning("Document %s (ID: %s) has no text content to analyze for text chunks.", original_document_name, document_id)
 
 
     # Process Extracted Tables
     if raw_tables:
-        logger.info(f"Processing {len(raw_tables)} raw tables found in {original_document_name}")
+        logger.info("Processing %s raw tables found in %s", len(raw_tables), original_document_name)
         for table_idx, table_data in enumerate(raw_tables):
             table_markdown = _format_table_to_markdown(table_data)
             if not table_markdown.strip():
-                logger.warning(f"Skipping empty or unformattable table {table_idx} from {original_document_name}")
+                logger.warning("Skipping empty or unformattable table %s from %s", table_idx, original_document_name)
                 continue
 
             table_metadata: Dict[str, Any] = {
@@ -208,7 +206,7 @@ async def analyze_document_content(
             log_prefix_table = f"[DocumentProcessor:{analysis_request_id_base_table}]"
 
             try:
-                logger.debug(f"{log_prefix_table} Starting analysis for table {table_idx} of {original_document_name}")
+                logger.debug("%s Starting analysis for table %s of %s", log_prefix_table, table_idx, original_document_name)
                 
                 # Call the new method for table analysis
                 table_analysis_response = await llm_reasoner.analyze_table_data(
@@ -229,27 +227,27 @@ async def analyze_document_content(
                     if not analysis_content.get("table_summary"): # If LLM returned empty summary for table
                         table_metadata["table_summary"] = f"Table {table_idx+1} data (unable to generate LLM summary)."
                         table_metadata["summary_type"] = "fallback_placeholder"
-                    logger.info(f"{log_prefix_table} Table analysis successful.")
+                    logger.info("%s Table analysis successful.", log_prefix_table)
                 else:
                     if table_analysis_response.get("error"):
-                        logger.error(f"{log_prefix_table} Table analysis LLM call failed: {table_analysis_response.get('error')}")
+                        logger.error("%s Table analysis LLM call failed: %s", log_prefix_table, table_analysis_response.get('error'))
                         table_metadata["llm_analysis_error_table"] = str(table_analysis_response.get("error"))
                     else: # No error but also no analysis content
-                        logger.warning(f"{log_prefix_table} Table analysis did not return expected 'analysis' data.")
+                        logger.warning("%s Table analysis did not return expected 'analysis' data.", log_prefix_table)
                         table_metadata["llm_analysis_warn_table"] = "No analysis data returned from LLM."
                     # Fallback for table summary
                     table_metadata["table_summary"] = f"Table {table_idx+1} data (LLM analysis failed or incomplete)."
                     table_metadata["summary_type"] = "fallback_error"
-                    logger.info(f"{log_prefix_table} Using fallback summary for table {table_idx}.")
+                    logger.info("%s Using fallback summary for table %s.", log_prefix_table, table_idx)
 
                 all_processed_items_metadata.append(table_metadata)
 
             except Exception as e:
-                logger.error(f"{log_prefix_table} Unexpected error during LLM analysis for table {table_idx}: {e}", exc_info=True)
+                logger.error("%s Unexpected error during LLM analysis for table %s: %s", log_prefix_table, table_idx, e, exc_info=True)
                 table_metadata["llm_analysis_error"] = f"Unexpected error in document_processor table analysis: {str(e)}"
                 all_processed_items_metadata.append(table_metadata) # Still append table with error
     
     if not text_content and not raw_tables:
-        logger.warning(f"Document {original_document_name} (ID: {document_id}) has no text content or tables to process.")
+        logger.warning("Document %s (ID: %s) has no text content or tables to process.", original_document_name, document_id)
 
     return all_processed_items_metadata

@@ -18,26 +18,12 @@ try {
 // Protect routes - verify token and attach user to request
 exports.protect = async (req, res, next) => {
   try {
-    let token;
+    // Extract Bearer token — always require both header and prefix
+    const token = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7) : '';
 
-    // Check for token in headers
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-    // Check if token exists
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authorized to access this route'
-      });
-    }
-
+    // Always attempt verification — jwt.verify will throw on empty/invalid tokens
     try {
-      // Verify token
       let decoded;
       try {
         decoded = jwt.verify(
@@ -46,7 +32,7 @@ exports.protect = async (req, res, next) => {
         );
       } catch (jwtError) {
         console.error('Token verification failed:', jwtError.message);
-        
+
         // Provide more specific error message based on the JWT error
         if (jwtError.name === 'TokenExpiredError') {
           return res.status(401).json({
@@ -150,46 +136,6 @@ exports.checkPrivateMode = async (req, res, next) => {
  * @param {Object} res - Response object
  * @param {Function} next - Next middleware function
  */
-const checkModelAccess = async (req, res, next) => {
-  try {
-    // Get model ID from params or body
-    const modelId = req.params.modelId || req.body.modelId;
-    if (!modelId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Model ID is required'
-      });
-    }
-
-    // Check if user has access through any of their groups
-    const hasAccess = await db.getAsync(`
-      SELECT EXISTS (
-        SELECT 1 
-        FROM group_model_access gma 
-        JOIN user_groups ug ON gma.group_id = ug.group_id 
-        WHERE gma.model_id = ? 
-        AND ug.user_id = ? 
-        AND gma.can_access = 1
-      ) as has_access
-    `, [modelId, req.user.id]);
-
-    if (!hasAccess || hasAccess.has_access !== 1) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have access to this model'
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error('Model access check error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error checking model access'
-    });
-  }
-};
-
 /**
  * Check whether the user has access to a model.
  * This takes into account:

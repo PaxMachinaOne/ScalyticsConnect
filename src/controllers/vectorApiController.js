@@ -19,7 +19,7 @@ exports.embedTextsHandler = async (req, res, next) => {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     const embedApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/embed-texts');
     
-    console.log(`[VectorAPIController] Requesting embeddings for ${texts.length} texts from ${embedApiUrl}. Model hint: ${model_identifier || 'default'}`);
+    console.log("[VectorAPIController] Requesting embeddings for %d texts from %s. Model hint: %s", Number(texts.length), embedApiUrl, String(model_identifier || 'default').replace(/\n|\r/g, ''));
 
     const apiResponse = await axios.post(embedApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       texts: texts,
@@ -72,7 +72,7 @@ exports.addDocumentsHandler = async (req, res, next) => {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     const addDocsApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/documents');
     
-    console.log(`[VectorAPIController] Requesting to add ${documents.length} documents to group ${group_id} via ${addDocsApiUrl}.`);
+    console.log("[VectorAPIController] Requesting to add %d documents to group %s via %s.", Number(documents.length), String(group_id).replace(/\n|\r/g, ''), addDocsApiUrl);
 
     const apiResponse = await axios.post(addDocsApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       documents: documents, // These should match Python's GenericDocumentItem structure
@@ -119,7 +119,7 @@ exports.searchVectorsHandler = async (req, res, next) => {
     if (group_id) payload.group_id = group_id;
     if (top_k) payload.top_k = top_k;
 
-    console.log(`[VectorAPIController] Requesting vector search via ${searchApiUrl} with query "${query_text}".`);
+    console.log("[VectorAPIController] Requesting vector search via %s with query '%s'.", searchApiUrl, String(query_text).replace(/\n|\r/g, ''));
 
     const apiResponse = await axios.post(searchApiUrl, payload); // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
 
@@ -155,7 +155,7 @@ exports.deleteVectorGroupHandler = async (req, res, next) => {
     const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
     const deleteGroupApiUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
     
-    console.log(`[VectorAPIController] Requesting to delete vector documents for group ${group_id} via ${deleteGroupApiUrl}.`);
+    console.log("[VectorAPIController] Requesting to delete vector documents for group %s via %s.", String(group_id).replace(/\n|\r/g, ''), deleteGroupApiUrl);
 
     const apiResponse = await axios.post(deleteGroupApiUrl, {  // lgtm[js/request-forgery] URL validated via validateInternalServiceUrl
       group_id: group_id

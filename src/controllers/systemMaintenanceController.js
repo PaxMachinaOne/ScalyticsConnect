@@ -82,7 +82,7 @@ exports.deleteModelDirectory = async (req, res) => {
       });
     }
     
-    console.error('Error deleting model directory:', error);
+    console.error('Error deleting model directory: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     res.status(500).json({
       success: false,
       message: 'Error deleting model directory',
@@ -248,7 +248,7 @@ exports.forceDeleteModelDirectory = async (req, res) => {
       });
     }
     
-    console.error('Error force deleting model directory:', error);
+    console.error('Error force deleting model directory: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     res.status(500).json({
       success: false,
       message: 'Error force deleting model directory',
@@ -282,7 +282,7 @@ exports.restoreDatabaseBackup = async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error restoring database backup:', error);
+    console.error('Error restoring database backup: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     
     if (error.message.includes('not found')) {
       return res.status(404).json({
@@ -322,7 +322,7 @@ exports.deleteDatabaseBackup = async (req, res) => {
       message: `Backup file deleted: ${fileName}`
     });
   } catch (error) {
-    console.error('Error deleting database backup:', error);
+    console.error('Error deleting database backup: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     
     // Handle specific errors
     if (error.message.includes('not found')) {
@@ -367,7 +367,7 @@ exports.uploadDatabaseBackup = async (req, res) => {
     
     // Check if there are any files in the request
     if (Object.keys(req.files).length === 0) {
-      console.error('req.files is empty:', req.files);
+      console.error('req.files is empty: %s', JSON.stringify(req.files));
       return res.status(400).json({
         success: false,
         message: 'No backup file uploaded'
@@ -406,7 +406,7 @@ exports.uploadDatabaseBackup = async (req, res) => {
     });
   } 
   catch (error) {
-    console.error('Error uploading database backup:', error);
+    console.error('Error uploading database backup: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     if (error.message.includes('Invalid file type') || 
         error.message.includes('Invalid backup file name format')) {
       return res.status(400).json({

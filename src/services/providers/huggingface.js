@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const { default: axios } = require('axios');
-const path = require('path');
-const { db } = require('../../models/db');
-
 /**
  * Provider: Hugging Face
  * Provides interface for discovering and managing Hugging Face models

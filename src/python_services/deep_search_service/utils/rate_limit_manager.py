@@ -32,9 +32,9 @@ class RateLimitManager:
         if not os.path.exists(dir_name):
             try:
                 os.makedirs(dir_name, exist_ok=True)
-                logger.info(f"Created directory for rate limit ignore list: {dir_name}")
+                logger.info("Created directory for rate limit ignore list: %s", dir_name)
             except Exception as e:
-                logger.error(f"Failed to create directory {dir_name}: {e}", exc_info=True)
+                logger.error("Failed to create directory %s: %s", dir_name, e, exc_info=True)
 
     async def _load_ignore_list(self) -> Dict[str, str]:
         """Loads the ignore list from the JSON file."""
@@ -45,14 +45,14 @@ class RateLimitManager:
                 with open(self.ignore_file_path, 'r') as f:
                     data = json.load(f)
                     if not isinstance(data, dict):
-                        logger.warning(f"Ignore list file {self.ignore_file_path} does not contain a valid dictionary. Returning empty list.")
+                        logger.warning("Ignore list file %s does not contain a valid dictionary. Returning empty list.", self.ignore_file_path)
                         return {}
                     return data
             except json.JSONDecodeError:
-                logger.error(f"Error decoding JSON from {self.ignore_file_path}. Returning empty list.", exc_info=True)
+                logger.error("Error decoding JSON from %s. Returning empty list.", self.ignore_file_path, exc_info=True)
                 return {}
             except Exception as e:
-                logger.error(f"Error loading ignore list from {self.ignore_file_path}: {e}", exc_info=True)
+                logger.error("Error loading ignore list from %s: %s", self.ignore_file_path, e, exc_info=True)
                 return {}
 
     async def _save_ignore_list(self, ignore_list: Dict[str, str]):
@@ -62,7 +62,7 @@ class RateLimitManager:
                 with open(self.ignore_file_path, 'w') as f:
                     json.dump(ignore_list, f, indent=4)
             except Exception as e:
-                logger.error(f"Error saving ignore list to {self.ignore_file_path}: {e}", exc_info=True)
+                logger.error("Error saving ignore list to %s: %s", self.ignore_file_path, e, exc_info=True)
 
     async def add_or_update_provider(self, provider_name: str, duration_seconds: Optional[int] = None):
         """Adds or updates a provider in the ignore list with an expiry timestamp."""
@@ -77,7 +77,7 @@ class RateLimitManager:
         ignore_list = await self._load_ignore_list()
         ignore_list[provider_name] = expiry_iso
         await self._save_ignore_list(ignore_list)
-        logger.info(f"Provider '{provider_name}' added/updated in ignore list. Expires at: {expiry_iso}")
+        logger.info("Provider '%s' added/updated in ignore list. Expires at: %s", provider_name, expiry_iso)
 
     async def get_ignored_providers(self) -> Dict[str, datetime]:
         """Returns a dictionary of currently ignored providers and their expiry times (UTC)."""
@@ -102,7 +102,7 @@ class RateLimitManager:
                     providers_to_remove.append(provider)
                     needs_resave = True
             except ValueError:
-                logger.warning(f"Invalid ISO format for provider '{provider}' expiry '{expiry_iso}'. Marking for removal.")
+                logger.warning("Invalid ISO format for provider '%s' expiry '%s'. Marking for removal.", provider, expiry_iso)
                 providers_to_remove.append(provider)
                 needs_resave = True
         
@@ -111,7 +111,7 @@ class RateLimitManager:
                 if provider_to_remove in ignore_list_raw:
                     del ignore_list_raw[provider_to_remove]
             await self._save_ignore_list(ignore_list_raw)
-            logger.info(f"Cleaned up expired/invalid entries from ignore list: {providers_to_remove}")
+            logger.info("Cleaned up expired/invalid entries from ignore list: %s", providers_to_remove)
             
         return ignored_providers
 
@@ -126,9 +126,9 @@ class RateLimitManager:
         if provider_name in ignore_list:
             del ignore_list[provider_name]
             await self._save_ignore_list(ignore_list)
-            logger.info(f"Provider '{provider_name}' removed from ignore list.")
+            logger.info("Provider '%s' removed from ignore list.", provider_name)
         else:
-            logger.info(f"Provider '{provider_name}' not found in ignore list for removal.")
+            logger.info("Provider '%s' not found in ignore list for removal.", provider_name)
 
     async def clear_all_ignored_providers(self):
         """Clears all providers from the ignore list."""

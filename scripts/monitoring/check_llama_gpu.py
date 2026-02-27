@@ -39,7 +39,6 @@ def main():
                 print(f"Detected {gpu_count} GPUs, configuring tensor_split={tensor_split}", file=sys.stderr)
         except Exception as e:
             print(f"Could not determine GPU count: {e}", file=sys.stderr)
-            gpu_count = 1
             tensor_split = None
         
         # Try to initialize model with all GPU layers
@@ -59,7 +58,7 @@ def main():
             model_params["tensor_split"] = tensor_split
         
         print(f"Model parameters: {model_params}", file=sys.stderr)
-        model = llama_cpp.Llama(**model_params)
+        llama_cpp.Llama(**model_params)
         
         # If we get here, it worked
         print("Successfully initialized llama_cpp with GPU support", file=sys.stderr)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs'); // Keep original fs
 const fsPromises = require('fs').promises; // Use fs.promises for async operations
@@ -20,8 +20,7 @@ function triggerPythonServiceRestart() { // Made non-async, returns a Promise
       // fs.promises was not defined, using fsPromises as defined at the top of the file
       await fsPromises.access(PYTHON_SERVICE_CONFIG_PATH, fs.constants.F_OK);
 
-      const command = `touch "${PYTHON_SERVICE_CONFIG_PATH}"`;
-      exec(command, (error, stdout, stderr) => {
+      execFile('touch', [PYTHON_SERVICE_CONFIG_PATH], (error, stdout, stderr) => {
         if (error) {
           console.error(`[PythonServiceUtils] Error touching Python config file to trigger restart: ${error.message}`);
           reject(error); // Reject the promise on error

@@ -32,13 +32,13 @@ async function runTests() {
     for (let i = 0; i < providers.length; i++) {
       try {
         // This might be the source of the error - test both provider_id and external_provider_id
-        const modelCount1 = await db.getAsync(`
+        await db.getAsync(`
           SELECT COUNT(*) as count
           FROM models
           WHERE provider_id = ?
         `, [providers[i].id]);
 
-        const modelCount2 = await db.getAsync(`
+        await db.getAsync(`
           SELECT COUNT(*) as count
           FROM models
           WHERE external_provider_id = ?
@@ -51,7 +51,6 @@ async function runTests() {
         // Try to dump table schema to see column names
         try {
           // console.log('\nDumping models table schema:');
-          const pragma = await db.allAsync('PRAGMA table_info(models)');
           // console.log(pragma);
         } catch (schemaErr) {
           console.error('Failed to get schema:', schemaErr);

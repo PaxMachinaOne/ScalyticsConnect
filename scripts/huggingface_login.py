@@ -14,7 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger("hf_login")
 
 try:
-    from huggingface_hub import login, logout
+    from huggingface_hub import login
 except ImportError:
     logger.error("huggingface_hub package not available. Please install it.")
     sys.exit(1)
@@ -36,7 +36,7 @@ def main():
         print("Login successful.")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"Failed to log in: {e}")
+        logger.error("Failed to log in: %s", e)
         print(f"Login failed: {e}", file=sys.stderr)
         sys.exit(1)
 

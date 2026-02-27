@@ -269,7 +269,7 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
                     <span>System Prompt Active</span>
                   </div>
               )}
-              {chat && chat.user_id === currentUserId && (
+              {chat.user_id === currentUserId && (
                 <button
                   onClick={() => openShareModal(chat)}
                   className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors"

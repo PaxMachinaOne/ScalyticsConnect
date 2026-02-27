@@ -47,7 +47,7 @@ exports.getMcpServer = async (req, res) => {
         }
         res.status(200).json({ success: true, data: server });
     } catch (error) {
-        console.error('Error getting MCP server %s:', req.params.id, error);
+        console.error('Error getting MCP server %s:',  String(req.params.id).replace(/\n|\r/g, ''), error);
         res.status(500).json({ success: false, message: 'Failed to fetch MCP server details.' });
     }
 };
@@ -155,7 +155,7 @@ exports.updateMcpServer = async (req, res) => {
         // MCPService.handleServerUpdate(updatedServer); // Hypothetical function
 
     } catch (error) {
-        console.error('Error updating MCP server %s:', id, error);
+        console.error('Error updating MCP server %s:', String(id).replace(/\n|\r/g, ''), error);
          if (error.message.includes('UNIQUE constraint failed')) {
             return res.status(400).json({ success: false, message: 'An MCP Server with this name already exists.' });
         }
@@ -180,7 +180,7 @@ exports.deleteMcpServer = async (req, res) => {
          // MCPService.handleServerDelete(id); // Hypothetical function
 
     } catch (error) {
-        console.error('Error deleting MCP server %s:', id, error);
+        console.error('Error deleting MCP server %s:', String(id).replace(/\n|\r/g, ''), error);
         res.status(500).json({ success: false, message: 'Failed to delete MCP server.' });
     }
 };

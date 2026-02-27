@@ -18,7 +18,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
   const [loading, setLoading] = useState(true);
   const [primaryModelData, setPrimaryModelData] = useState(null);
   // eslint-disable-next-line no-unused-vars
-  const [intervalId, setIntervalId] = useState(null);
+  const [, setIntervalId] = useState(null);
   const [error, setError] = useState(null);
   const [isSettingPrimary, setIsSettingPrimary] = useState(false);
   const [isUnsettingPrimary, setIsUnsettingPrimary] = useState(false);

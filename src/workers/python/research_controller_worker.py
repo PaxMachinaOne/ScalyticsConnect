@@ -13,10 +13,10 @@ import os
 import re
 from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Set, Any, Tuple
-import collections 
 import traceback 
 import heapq
 from datetime import datetime
+import logging
 
 try:
     from search_scrape_worker import SearchScrapeWorker
@@ -118,7 +118,7 @@ class ResearchControllerWorker:
         Lower score = higher priority.
         """
         extracted_links_for_pq = []
-        url_pattern = re.compile(r'https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', re.IGNORECASE)
+        url_pattern = re.compile(r'https?://(?:[a-zA-Z0-9\$_@.&+!*(),/-]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', re.IGNORECASE)
 
         for item in content_items:
             item_content = item.get("content", "")
@@ -154,7 +154,7 @@ class ResearchControllerWorker:
                     }
                     extracted_links_for_pq.append((priority_score, new_depth, abs_url, link_source_info))
                 except ValueError:
-                    pass 
+                    logging.debug("Suppressed exception")
         
         return extracted_links_for_pq
 
@@ -203,15 +203,12 @@ class ResearchControllerWorker:
         heapq.heappush(urls_to_explore_pq, (-1.0, pq_tie_breaker_count, 0, None, initial_directive_source_info))
         
         while urls_to_explore_pq and total_hops < MAX_TOTAL_HOPS and web_query_count < max_distinct_search_queries:
-            if not urls_to_explore_pq:
-                break
-
             priority_score, _, current_depth, current_url_to_explore, current_source_info = heapq.heappop(urls_to_explore_pq)
             total_hops += 1
             action_taken_this_hop = False
             if current_url_to_explore is None: 
                 query_from_directive = current_source_info.get("query", current_active_query)
-                if query_from_directive and query_from_directive not in executed_web_search_queries and web_query_count < max_distinct_search_queries:
+                if query_from_directive and query_from_directive not in executed_web_search_queries:
                     current_active_query = query_from_directive
                     executed_web_search_queries.add(current_active_query)
                     self.send_message({"type": "research_progress", "requestId": request_id, "payload": {"status": "Scout: Performing web search", "query": current_active_query, "web_query_num": web_query_count + 1}})
@@ -229,9 +226,8 @@ class ResearchControllerWorker:
                     except Exception as e_search:
                         print(f"[ResearchControllerWorker {request_id}] Error during web search for '{current_active_query}': {e_search}", file=sys.stderr)
                         traceback.print_exc(file=sys.stderr)
-                else: 
-                    if query_from_directive in executed_web_search_queries: pass 
-                    elif web_query_count >= max_distinct_search_queries: pass 
+                else:
+                    pass  # Query already executed or limit reached
 
             elif current_url_to_explore and current_url_to_explore not in visited_urls and current_depth <= max_url_exploration_depth: 
                 visited_urls.add(current_url_to_explore)
@@ -284,7 +280,7 @@ class ResearchControllerWorker:
                     if vector_search_results_list:
                         for chunk_info in vector_search_results_list:
                             chunk_content, original_source_info_str = chunk_info.get("text_content"), chunk_info.get("source")
-                            distance, similarity_score = chunk_info.get("distance", 1.0), 1.0 - chunk_info.get("distance", 1.0)
+                            _distance, similarity_score = chunk_info.get("distance", 1.0), 1.0 - chunk_info.get("distance", 1.0)
                             if chunk_content: context_for_next_query.append(chunk_content[:250])
                             if original_source_info_str:
                                 try:
@@ -421,7 +417,7 @@ class ResearchControllerWorker:
 
     def _extract_urls_from_content(self, content_items: List[Dict], max_depth_from_config: int, current_item_depth: int) -> List[Dict]:
         all_new_urls_with_source_info = []
-        url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+        url_pattern = re.compile(r'https?://(?:[a-zA-Z0-9\$_@.&+!*(),/-]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
         for item in content_items:
             item_content, item_source_info = item.get("content", ""), item.get("source_info", {}) 
             base_url = item_source_info.get("url")
@@ -437,7 +433,7 @@ class ResearchControllerWorker:
                     if new_depth > max_depth_from_config: continue
                     new_link_source_info = {"type": "extracted_link_legacy", "url": abs_url, "title": f"Link from: {item_source_info.get('title', base_url)}", "discovery_method": "legacy_content_extraction", "depth": new_depth, "parent_url": base_url, "parent_query": item_source_info.get("parent_query"), "timestamp": datetime.utcnow().isoformat()}
                     all_new_urls_with_source_info.append({"url": abs_url, "source_info": new_link_source_info})
-                except ValueError: pass 
+                except ValueError as e_url_parse: logging.debug("Suppressed URL parse error: %s", e_url_parse)
         return all_new_urls_with_source_info
         
     def _deduplicate_items(self, items: List[Dict]) -> List[Dict]:

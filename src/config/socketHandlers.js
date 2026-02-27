@@ -10,15 +10,9 @@ const { cancelInferenceRequest } = require('../services/inferenceRouter');
 let localWsServer = null;
 
 const rooms = new Map();
-const clientIdMap = new Map();
-const roomTimeouts = new Map();
 
 function joinRoom(roomName, ws) { if (!rooms.has(roomName)) { rooms.set(roomName, new Set()); } rooms.get(roomName).add(ws); }
 function leaveRoom(roomName, ws) { if (rooms.has(roomName)) { rooms.get(roomName).delete(ws); if (rooms.get(roomName).size === 0) { rooms.delete(roomName); } } }
-function leaveAllRooms(ws, immediate = false) { rooms.forEach((clients, roomName) => { if (clients.has(ws)) { if (immediate) { leaveRoom(roomName, ws); } else { delayedRoomCleanup(roomName, ws); } } }); }
-function delayedRoomCleanup(roomName, ws) { const clientId = ws.clientId; const isChatRoom = roomName.startsWith('chat:'); if (!clientId && !isChatRoom) { leaveRoom(roomName, ws); return; } const trackingId = clientId || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`; if (!clientIdMap.has(trackingId)) { clientIdMap.set(trackingId, new Set()); } clientIdMap.get(trackingId).add(roomName); const timeoutKey = `${roomName}:${trackingId}`; if (roomTimeouts.has(timeoutKey)) { clearTimeout(roomTimeouts.get(timeoutKey)); } const timeout = setTimeout(() => { if (rooms.has(roomName) && clientIdMap.has(trackingId)) { let clientWs = null; rooms.get(roomName).forEach(existingWs => { if (existingWs.clientId === trackingId) { clientWs = existingWs; } }); if (clientWs) { leaveRoom(roomName, clientWs); } clientIdMap.get(trackingId).delete(roomName); if (clientIdMap.get(trackingId).size === 0) { clientIdMap.delete(trackingId); } } roomTimeouts.delete(timeoutKey); }, 180000); roomTimeouts.set(timeoutKey, timeout); }
-function cleanupClosedConnectionsInRoom(roomName) { if (!rooms.has(roomName)) return 0; const clients = rooms.get(roomName); const closedClients = []; clients.forEach(client => { if (client.readyState === WebSocket.CLOSED || client.readyState === WebSocket.CLOSING) { closedClients.push(client); } }); closedClients.forEach(client => { clients.delete(client); }); if (clients.size === 0) { rooms.delete(roomName); } return closedClients.length; }
-
 
 // Token processor 
 const tokenProcessor = {
@@ -57,7 +51,7 @@ function handleStopGeneration(payload) {
     if (requestIdToStop) {
         const success = cancelInferenceRequest(requestIdToStop);
         if (!success) {
-            console.warn(`[Socket] Failed to send interrupt for request ID: ${requestIdToStop} (maybe already completed)`);
+            console.warn('[Socket] Failed to send interrupt for request ID: %s (maybe already completed)', requestIdToStop);
         }
     } else {
         console.error(`[Socket] Received stop_generation with invalid requestId:`, payload?.requestId);
@@ -146,7 +140,7 @@ function broadcastToRoom(roomName, message) {
         clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 try { client.send(messageStr); }
-                catch (sendError) { console.error(`[WS Broadcast] Error sending message to client ${client.clientId || 'unknown'} in room ${roomName}:`, sendError.message); }
+                catch (sendError) { console.error('[WS Broadcast] Error sending message to client %s in room %s:', client.clientId || 'unknown', roomName, sendError.message); }
             }
         });
     }

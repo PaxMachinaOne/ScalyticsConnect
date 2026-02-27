@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 from typing import List, Dict, Optional, Any, Set, Tuple, Literal, Union
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 import asyncio
+import functools
 import uuid
 
 class DeepSearchRequestParams(BaseModel):
@@ -120,6 +121,7 @@ class ContentChunk(BaseModel):
     depth: int
     vector_metadata: Dict[str, Any] = Field(default_factory=dict)
 
+@functools.total_ordering
 class CandidateLinkToExplore(BaseModel):
     url: str
     source_page_url: str
@@ -127,6 +129,11 @@ class CandidateLinkToExplore(BaseModel):
     anchor_text: Optional[str] = None
     context_around_link: Optional[str] = None
     priority_score: float = 0.5
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CandidateLinkToExplore):
+            return NotImplemented
+        return self.priority_score == other.priority_score and self.calculated_depth == other.calculated_depth
 
     def __lt__(self, other: 'CandidateLinkToExplore') -> bool:
         # For heapq, which is a min-heap, we store negative priority

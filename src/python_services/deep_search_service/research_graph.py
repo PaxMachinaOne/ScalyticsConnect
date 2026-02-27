@@ -24,41 +24,41 @@ def should_continue_hopping(state: models.OverallState, services: Dict[str, Any]
     # Priority 1: Handle Comptroller Review Failure
     if state.is_comptroller_review_failed:
         if state.comptroller_hop_credits > 0:
-            logger.info(f"[{task_id}] Comptroller review failed. Credits remaining: {state.comptroller_hop_credits}. Routing to web_search for re-research.")
+            logger.info("[%s] Comptroller review failed. Credits remaining: %s. Routing to web_search for re-research.", task_id, state.comptroller_hop_credits)
             return "web_search"
         else: # Credits are <= 0
-            logger.warning(f"[{task_id}] Comptroller review failed AND no credits remaining ({state.comptroller_hop_credits}). Forcing synthesis.")
+            logger.warning("[%s] Comptroller review failed AND no credits remaining (%s). Forcing synthesis.", task_id, state.comptroller_hop_credits)
             return "synthesize_report"
 
     if state.comptroller_hop_credits <= 0:
-        logger.warning(f"[{task_id}] Comptroller hop credits exhausted ({state.comptroller_hop_credits}). Forcing synthesis.")
+        logger.warning("[%s] Comptroller hop credits exhausted (%s). Forcing synthesis.", task_id, state.comptroller_hop_credits)
         return "synthesize_report"
         
     if state.is_cancelled_flag.is_set(): # Corrected check for asyncio.Event
-        logger.info(f"[{task_id}] Task cancelled. Routing to synthesize_report.")
+        logger.info("[%s] Task cancelled. Routing to synthesize_report.", task_id)
         return "synthesize_report"
 
     if comptroller:
         if comptroller.check_hard_constraints(state): # This might check max_hops internally
-            logger.warning(f"[{task_id}] Comptroller mandated a hard stop. Routing to synthesize_report.")
+            logger.warning("[%s] Comptroller mandated a hard stop. Routing to synthesize_report.", task_id)
             return "synthesize_report"
             
     if state.current_hop >= state.max_hops:
-        logger.info(f"[{task_id}] General max hops ({state.max_hops}) reached. Routing to synthesize_report.")
+        logger.info("[%s] General max hops (%s) reached. Routing to synthesize_report.", task_id, state.max_hops)
         return "synthesize_report"
 
     if state.consecutive_stagnation_hops >= 2:
-        logger.info(f"[{task_id}] Research has stagnated for {state.consecutive_stagnation_hops} hops. Routing to synthesize_report.")
+        logger.info("[%s] Research has stagnated for %s hops. Routing to synthesize_report.", task_id, state.consecutive_stagnation_hops)
         return "synthesize_report"
     
     has_new_queries = bool(state.current_queries_for_hop)
     has_links_to_explore = bool(state.links_to_explore_pq)
 
     if not has_new_queries and not has_links_to_explore:
-        logger.info(f"[{task_id}] No new queries and no links to explore. Routing to synthesize_report.")
+        logger.info("[%s] No new queries and no links to explore. Routing to synthesize_report.", task_id)
         return "synthesize_report"
     
-    logger.info(f"[{task_id}] Conditions met to continue hopping. Routing to web_search_node.")
+    logger.info("[%s] Conditions met to continue hopping. Routing to web_search_node.", task_id)
     return "web_search"
 
 def handle_search_outcome(state: models.OverallState) -> Literal["process_content", "prepare_next_hop"]:
@@ -66,9 +66,9 @@ def handle_search_outcome(state: models.OverallState) -> Literal["process_conten
     Checks if the web search returned any results. If not, skips content processing.
     """
     if not state.search_results_this_hop:
-        logger.warning(f"[{state.task_id}] Conditional edge: Web search returned no results. Skipping content processing and preparing for next hop.")
+        logger.warning("[%s] Conditional edge: Web search returned no results. Skipping content processing and preparing for next hop.", state.task_id)
         return "prepare_next_hop"
-    logger.info(f"[{state.task_id}] Conditional edge: Web search returned {len(state.search_results_this_hop)} results. Proceeding to process content.")
+    logger.info("[%s] Conditional edge: Web search returned %s results. Proceeding to process content.", state.task_id, len(state.search_results_this_hop))
     return "process_content"
 
 

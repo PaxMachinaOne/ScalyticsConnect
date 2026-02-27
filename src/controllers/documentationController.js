@@ -3,7 +3,6 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 const path = require('path');
-const Permission = require('../models/Permission'); 
 
 // Helper function to recursively get all markdown files from a directory and its subdirectories
 const getMarkdownFiles = async (dir, baseDir = '') => {
@@ -120,16 +119,20 @@ exports.getDocumentation = async (req, res) => {
     let normalizedDocId = docId.replace(/^\/+/, '');
     // Replace any kind of dash/hyphen character with standard hyphen
     normalizedDocId = normalizedDocId.replace(/[\u2010-\u2015\u2212\u23AF\uFE58\uFE63\uFF0D]/g, '-');
-    
+
+    // Reject path traversal characters
+    if (normalizedDocId.includes('..') || normalizedDocId.includes('\0')) {
+      return res.status(400).json({ success: false, message: 'Invalid documentation path' });
+    }
+
     const docsDir = await findDocsDirectory();
-    
-    // Get possible subdirectory and filename parts
-    let subdirectory = '';
+    const resolvedDocsDir = path.resolve(docsDir);
+
+    // Get possible filename parts
     let filename = normalizedDocId;
     
     if (normalizedDocId.includes('/')) {
       const parts = normalizedDocId.split('/');
-      subdirectory = parts[0];
       filename = parts[parts.length-1];
     }
     
@@ -157,14 +160,16 @@ exports.getDocumentation = async (req, res) => {
     
     // Try each path
     let fileContent = null;
-    let foundPath = null;
     
     for (const testPath of possiblePaths) {
       try {
-        // Check if file exists and is readable
-        await fsPromises.access(testPath, fs.constants.R_OK);
-        fileContent = await fsPromises.readFile(testPath, 'utf8');
-        foundPath = testPath;
+        // Validate resolved path stays within docs directory to prevent path traversal
+        const resolvedTestPath = path.resolve(testPath);
+        if (!resolvedTestPath.startsWith(resolvedDocsDir + path.sep) && resolvedTestPath !== resolvedDocsDir) {
+          continue;
+        }
+        // Read file directly (avoids TOCTOU race condition)
+        fileContent = await fsPromises.readFile(resolvedTestPath, 'utf8');
         break;
       } catch (err) {
         // Continue to next path
@@ -188,7 +193,7 @@ exports.getDocumentation = async (req, res) => {
 
     // Deny access if the user doesn't have full access AND is trying to access the 'admin' category
     if (!userHasFullAccessForDoc && requestedCategory === 'admin') {
-      console.warn(`Access Denied: User ID '${req.user?.id || 'undefined'}' (is_admin: ${req.user?.is_admin}, is_power_user: ${req.user?.is_power_user}) attempted to access restricted admin documentation '${normalizedDocId}'`);
+      console.warn("Access Denied: User ID '%s' (is_admin: %s, is_power_user: %s) attempted to access restricted admin documentation '%s'", String(req.user?.id || 'undefined').replace(/\n|\r/g, ''), req.user?.is_admin, req.user?.is_power_user, String(normalizedDocId).replace(/\n|\r/g, ''));
       return res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have permission to access this documentation.'
@@ -203,7 +208,7 @@ exports.getDocumentation = async (req, res) => {
     // Send raw file content
     return res.status(200).send(fileContent);
   } catch (error) {
-    console.error('Error fetching documentation \'%s\':', req.params.id, error);
+    console.error('Error fetching documentation \'%s\':',  String(req.params.id).replace(/\n|\r/g, ''), error);
     res.status(500).json({
       success: false,
       message: `Error fetching documentation: ${error.message}`

@@ -20,7 +20,7 @@ const getModelInfo = async (modelId, hfToken = null) => {
     const response = await axios.get(`https://huggingface.co/api/models/${sanitizePathSegment(modelId)}`, { headers });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching model info for ${modelId}:`, error);
+    console.error("Error fetching model info for %s:", String(modelId).replace(/\n|\r/g, ''), error);
     return null;
   }
 };

@@ -1,6 +1,5 @@
 import sys
 import json
-import asyncio 
 from typing import List, Dict, Any
 
 # This code is intended to be self-contained for subprocess execution.
@@ -12,7 +11,7 @@ import random # Added
 import signal # Add signal import
 import scrapy
 from scrapy.http import HtmlResponse, Response as ScrapyResponse
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from io import StringIO, BytesIO
 from pdfminer.high_level import extract_text_to_fp
 from pdfminer.layout import LAParams
@@ -140,12 +139,12 @@ class MinimalGenericScraperSpider(scrapy.Spider):
                             "context_around_link": parent_text[:250] 
                         })
                     except ValueError: 
-                        pass 
+                        logging.debug("Suppressed exception")
                     except Exception as e_link_detail:
-                        pass
+                        logging.debug("Suppressed exception: %s", e_link_detail)
                 item['links'] = extracted_link_data
             except Exception as e_link_extract_final: 
-                pass 
+                logging.debug("Suppressed exception: %s", e_link_extract_final)
             
             try:
                 item['metadata']['title'] = response.css('title::text').get() or response.xpath('//title/text()').get()

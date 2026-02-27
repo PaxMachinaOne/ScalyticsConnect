@@ -81,7 +81,7 @@ const AirGappedTab = ({ onSettingChange }) => {
       }
     } catch (err) {
       const errorMsg = `Error toggling air-gapped mode: ${err.response?.data?.message || err.message}.`;
-      setError(errorMsg || 'Failed to update setting.');
+      setError(errorMsg);
       setIsAirGapped(originalState); 
     } finally {
       setProcessingToggle(false);
@@ -118,10 +118,10 @@ const AirGappedTab = ({ onSettingChange }) => {
              {/* Standard Button Toggle */}
              <button
                 onClick={handleToggleAirGapped}
-                disabled={processingToggle || loading}
+                disabled={processingToggle}
                 className={`px-5 py-2.5 rounded font-medium text-white text-sm transition-colors duration-150 ${
                   isAirGapped ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-                } ${processingToggle || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${processingToggle ? 'opacity-50 cursor-not-allowed' : ''}`}
                 id="air-gapped-toggle-button"
               >
                 {processingToggle ? 'Processing...' : (isAirGapped ? 'Disable Air-Gap' : 'Enable Air-Gap')}

@@ -62,7 +62,7 @@ exports.updateLocalToolStatus = async (req, res) => {
     res.status(200).json({ success: true, message: `Status for tool '${toolName}' updated successfully.` });
 
   } catch (error) {
-    console.error('Error updating status for local tool \'%s\':', toolName, error);
+    console.error('Error updating status for local tool \'%s\':', String(toolName).replace(/\n|\r/g, ''), error);
     res.status(500).json({ success: false, message: 'Error updating local tool status.' });
   }
 };

@@ -238,26 +238,22 @@ class WebSocketService {
         case 'download:status:received':
           if (payload && payload.downloadId) {
             this.emitEvent(`download:${payload.downloadId}:received`, payload);
-            if (payload && payload.downloadId) {
-              const eventName = `download:${payload.downloadId}:received`;
-              const customEvent = new CustomEvent(eventName, { detail: payload });
-              window.dispatchEvent(customEvent);
-              const genericEvent = new CustomEvent('download-activity', { detail: { eventType: 'received', payload } });
-              window.dispatchEvent(genericEvent);
-            }
+            const eventName = `download:${payload.downloadId}:received`;
+            const customEvent = new CustomEvent(eventName, { detail: payload });
+            window.dispatchEvent(customEvent);
+            const genericEvent = new CustomEvent('download-activity', { detail: { eventType: 'received', payload } });
+            window.dispatchEvent(genericEvent);
           }
           break;
 
         default:
           if (type.startsWith('download:') && payload && payload.downloadId) {
             const eventType = type.split(':')[1];
-            if (payload && payload.downloadId) {
-              const eventName = `download:${payload.downloadId}:${eventType}`;
-              const customEvent = new CustomEvent(eventName, { detail: payload });
-              window.dispatchEvent(customEvent);
-              const genericEvent = new CustomEvent('download-activity', { detail: { eventType, payload } });
-              window.dispatchEvent(genericEvent);
-            }
+            const eventName = `download:${payload.downloadId}:${eventType}`;
+            const customEvent = new CustomEvent(eventName, { detail: payload });
+            window.dispatchEvent(customEvent);
+            const genericEvent = new CustomEvent('download-activity', { detail: { eventType, payload } });
+            window.dispatchEvent(genericEvent);
           } else {
             console.warn(`[SocketService] Received unknown message type: ${type}`, payload);
           }

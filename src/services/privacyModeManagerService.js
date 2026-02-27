@@ -2,7 +2,6 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const { db } = require('../models/db');
 const apiKeyService = require('./apiKeyService'); 
-const { getSystemSetting } = require('../config/systemConfig');
 
 /**
  * Applies provider and API key activation/deactivation rules based on privacy and air-gap modes.

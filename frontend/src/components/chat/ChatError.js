@@ -12,7 +12,7 @@ const ChatError = ({ error, onDismiss }) => {
   if (!error) return null;
   
   // Handle both string errors (for backward compatibility) and object errors
-  const isErrorObject = typeof error === 'object' && error !== null;
+  const isErrorObject = typeof error === 'object';
   const errorMessage = isErrorObject ? error.message : 'Error';
   const errorDetail = isErrorObject ? error.detail : error;
   const errorType = isErrorObject ? error.type : 'general';

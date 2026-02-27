@@ -56,7 +56,7 @@ const ModelDirectories = ({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-dark-primary divide-y divide-gray-200 dark:divide-dark-border">
-            {modelDirectories && Array.isArray(modelDirectories) && modelDirectories.map((dir) => (
+            {modelDirectories.map((dir) => (
               <tr key={dir.name} className={`hover:bg-gray-50 dark:hover:bg-dark-secondary ${dir.type === 'stale_db_entry' ? 'bg-red-50 dark:bg-red-900/20' : ''}`}>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
                   <div className="flex items-center">

@@ -3,12 +3,9 @@
  * Lightweight web search enhancement for LLM responses following OpenAI pattern:
  * User Input → Web Search → Vector Store → Top-K → Enhanced LLM Response
  */
-const { db } = require('../../models/db');
 const apiKeyService = require('../../services/apiKeyService');
-const { UserCancelledError } = require('../../utils/errorUtils'); 
-const Model = require('../../models/Model'); 
 const Chat = require('../../models/Chat');
-const { isCancellationRequested, clearCancellationRequest } = require('../../utils/cancellationManager'); 
+const { clearCancellationRequest } = require('../../utils/cancellationManager'); 
 const UsageStatsService = require('../../services/usageStatsService'); 
 const axios = require('axios');
 

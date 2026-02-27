@@ -1,14 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const { db } = require('../../models/db');
-const { aggregateAndFilterResults } = require('../../utils/filterUtils');
-const Chat = require('../../models/Chat');
-const Message = require('../../models/Message');
 // Removed routeInferenceRequest as analysis is now internal to SDK worker
-const { getSystemSetting } = require('../../config/systemConfig');
 // Removed EmbeddingService import as it's not directly used here anymore for deep search logic
 // const { embeddingWorkerService } = require('../embeddingWorkerService'); // Removed as the service file was deleted
-const MCPService = require('./MCPService'); // Keep for calling MCP tools
 // Removed imports specific to old runDeepSearchWorkflow:
 // const fs = require('fs/promises');
 // const pdf = require('pdf-parse');

@@ -4,7 +4,6 @@
  * External API Provider Handler
  */
 const { db } = require('../../models/db');
-const apiKeyController = require('../../controllers/apiKeyController'); 
 const apiKeyService = require('../apiKeyService');
 const Model = require('../../models/Model'); 
 
@@ -57,7 +56,7 @@ async function handleExternalApiRequest({
   } else {
     // --- This is the existing logic for TEXT chat completions ---
     if (!selectedChatModel.external_provider_id) {
-      console.error(`[Handler] handleExternalApiRequest called for a local chat model (ID: ${selectedChatModel.id}, Name: ${selectedChatModel.name}) for a text request. This should be handled by local model pipeline.`);
+      console.error('[Handler] handleExternalApiRequest called for a local chat model (ID: %s, Name: %s) for a text request. This should be handled by local model pipeline.', selectedChatModel.id, selectedChatModel.name);
       throw new Error(`External API handler called inappropriately for local chat model: ${selectedChatModel.name}`);
     }
 
@@ -171,7 +170,7 @@ async function executeProviderCall(
     }
     const imageModelExternalId = imageModelRecord.external_model_id;
     const imageProviderName = imageProviderDetails.name;
-    console.log(`[API Handler] Routing to IMAGE generation. Provider: ${imageProviderName}, Image Model ID: ${imageModelExternalId} (User's chat model was ${selectedChatModel.external_model_id})`);
+    console.log('[API Handler] Routing to IMAGE generation. Provider: %s, Image Model ID: %s (User\'s chat model was %s)', imageProviderName, imageModelExternalId, selectedChatModel.external_model_id);
     const imagePrompt = rawUserPrompt;
     switch (imageProviderName) {
       case 'OpenAI':
@@ -189,7 +188,7 @@ async function executeProviderCall(
         return await xaiImgProvider.generateImage({ apiKey: apiKeyForImageProvider, modelId: imageModelExternalId, prompt: imagePrompt, providerDetails: imageProviderDetails });
       default:
         if (imageProviderDetails.image_generation_endpoint_path && imageModelExternalId) {
-            console.warn(`[API Handler] Attempting generic image generation for ${imageProviderName} using endpoint: ${imageProviderDetails.image_generation_endpoint_path} and model: ${imageModelExternalId}`);
+            console.warn('[API Handler] Attempting generic image generation for %s using endpoint: %s and model: %s', imageProviderName, imageProviderDetails.image_generation_endpoint_path, imageModelExternalId);
             throw new Error(`Image generation for custom provider '${imageProviderName}' not fully implemented in generic handler.`);
         }
         throw new Error(`Image generation not supported or configured for provider: ${imageProviderName}`);
@@ -197,7 +196,7 @@ async function executeProviderCall(
    } else {
     const chatProviderName = providerDetailsForChatModel.name;
     const chatModelExternalId = selectedChatModel.external_model_id;
-    console.log(`[API Handler] Routing to CHAT completion. Provider: ${chatProviderName}, Chat Model ID: ${chatModelExternalId}`);
+    console.log('[API Handler] Routing to CHAT completion. Provider: %s, Chat Model ID: %s', chatProviderName, chatModelExternalId);
     const chatMessages = messages; 
     switch (chatProviderName) {
       case 'OpenAI':
@@ -243,7 +242,7 @@ async function executeProviderCall(
           return await xaiChatProvider.streamCompletion({ apiKey: apiKeyForChatProvider, modelId: chatModelExternalId, messages: chatMessages, files, streamingContext, onToken, providerDetails: providerDetailsForChatModel });
         }
       default:
-        console.warn(`[API Handler] Provider '${chatProviderName}' not explicitly listed for chat. Attempting generic OpenAI-compatible call.`);
+        console.warn('[API Handler] Provider \'%s\' not explicitly listed for chat. Attempting generic OpenAI-compatible call.', chatProviderName);
         let chatEndpointPath = providerDetailsForChatModel.endpoints?.chat || '/v1/chat/completions';
         if (!providerDetailsForChatModel.api_url) throw new Error(`API URL not configured for custom provider ${chatProviderName}`);
         const targetUrl = `${providerDetailsForChatModel.api_url.replace(/\/$/, '')}${chatEndpointPath.startsWith('/') ? '' : '/'}${chatEndpointPath}`;
@@ -287,7 +286,7 @@ async function executeProviderCall(
             return { message: sanitizedMessage, usage: response.data.usage, provider: chatProviderName };
           }
         } catch (error) {
-          console.error(`[API Handler Default Case] Error calling ${chatProviderName} at ${targetUrl}:`, error.response?.data || error.message);
+          console.error('[API Handler Default Case] Error calling %s at %s:', chatProviderName, targetUrl, error.response?.data || error.message);
           throw new Error(`Error with ${chatProviderName}: ${error.response?.data?.error?.message || error.response?.data?.detail || error.message}`);
         }
     }
@@ -319,7 +318,7 @@ function formatMessagesForProvider(providerName, previousMessages, userMessage) 
     case 'Mistral':
       return fullHistory; 
     default:
-      console.warn(`[API Handler] Using default message formatting for provider: ${providerName}`);
+      console.warn('[API Handler] Using default message formatting for provider: %s', providerName);
       formattedMessages = fullHistory.map(msg => ({ role: msg.role, content: msg.content }));
       break;
   }

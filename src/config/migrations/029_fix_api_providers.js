@@ -6,10 +6,7 @@
  * This migration ensures the api_providers table has the correct structure
  * and default provider entries.
  */
-const path = require('path');
-const fs = require('fs');
 const { db } = require('../../models/db'); // Import the shared db instance
-const EXTERNAL_PROVIDERS = ['OpenAI', 'Anthropic', 'Cohere', 'Mistral', 'Google'];
 
 /**
  * Fixes API providers INSERT statements issue

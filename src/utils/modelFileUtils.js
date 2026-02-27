@@ -2,10 +2,6 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const path = require('path');
 const fs = require('fs').promises;
-const fsSync = require('fs');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
 
 // Default model directory (where models are stored)
 const MODELS_DIR = process.env.MODELS_DIR || path.join(process.cwd(), 'models');
@@ -24,7 +20,7 @@ const modelFileUtils = {
   deleteModelDirectoryByName: async (modelName) => {
     if (!modelName) return { deleted: false, path: null };
     
-    console.log(`Looking for model directories matching: ${modelName}`);
+    console.log('Looking for model directories matching: %s', modelName);
     
     // Normalize the model name for comparison (for matching filenames)
     const normalizedName = modelName.toLowerCase().replace(/[\s_.-]+/g, '-');
@@ -33,7 +29,7 @@ const modelFileUtils = {
       // Get all entries in the models directory
       const entries = await fs.readdir(MODELS_DIR, { withFileTypes: true });
       
-      console.log(`Checking ${entries.length} entries in models directory for matches to: ${modelName}`);
+      console.log('Checking %s entries in models directory for matches to: %s', entries.length, modelName);
       
       // Process directories one by one
       for (const entry of entries) {
@@ -64,21 +60,21 @@ const modelFileUtils = {
                         normalizedName.includes(dirName);
                         
         if (isMatch) {
-          console.log(`Found potential model directory: ${dirPath}`);
+          console.log('Found potential model directory: %s', dirPath);
           
           // Try to delete the directory
           const deleted = await modelFileUtils.safeDeleteModelDirectory(dirPath);
           if (deleted) {
-            console.log(`Successfully deleted model directory: ${dirPath}`);
+            console.log('Successfully deleted model directory: %s', dirPath);
             return { deleted: true, path: dirPath };
           }
         }
       }
       
-      console.log(`No matching directories found or could not delete directories for model: ${modelName}`);
+      console.log('No matching directories found or could not delete directories for model: %s', modelName);
       return { deleted: false, path: null };
     } catch (err) {
-      console.error(`Error searching for model directories: ${err.message}`);
+      console.error('Error searching for model directories: %s', err.message);
       return { deleted: false, path: null };
     }
   },
@@ -93,7 +89,7 @@ const modelFileUtils = {
       return { deleted: false, path: null };
     }
     
-    console.log(`Attempting to delete files for model: ${model.name}`);
+    console.log('Attempting to delete files for model: %s', model.name);
     
     let fileDeleted = false;
     let dirDeleted = false;
@@ -111,12 +107,12 @@ const modelFileUtils = {
     const isInModelSubdir = modelDir.startsWith(MODELS_DIR) && modelDir !== MODELS_DIR;
     
     if (isInModelSubdir) {
-      console.log(`Model appears to be in a subdirectory: ${modelDir}`);
+      console.log('Model appears to be in a subdirectory: %s', modelDir);
       
       // Try to delete the entire directory
       dirDeleted = await modelFileUtils.safeDeleteModelDirectory(modelDir);
       if (dirDeleted) {
-        console.log(`Successfully deleted model directory: ${modelDir}`);
+        console.log('Successfully deleted model directory: %s', modelDir);
         return { deleted: true, path: modelDir };
       }
     }
@@ -129,10 +125,10 @@ const modelFileUtils = {
       // After deleting the file, try again to delete its parent directory
       // This is important as we want to clean up empty directories
       if (isInModelSubdir) {
-        console.log(`File deleted, now attempting to clean up parent directory: ${modelDir}`);
+        console.log('File deleted, now attempting to clean up parent directory: %s', modelDir);
         dirDeleted = await modelFileUtils.safeDeleteModelDirectory(modelDir);
         if (dirDeleted) {
-          console.log(`Successfully deleted parent directory after file deletion: ${modelDir}`);
+          console.log('Successfully deleted parent directory after file deletion: %s', modelDir);
           return { deleted: true, path: modelDir };
         }
       }
@@ -213,10 +209,10 @@ const modelFileUtils = {
         }
       }
     } catch (err) {
-      console.log(`Error searching models directory: ${err.message}`);
+      console.log('Error searching models directory: %s', err.message);
     }
     
-    console.log(`Failed to delete files for model: ${model.name}`);
+    console.log('Failed to delete files for model: %s', model.name);
     return { deleted: false, path: null };
   },
 
@@ -311,13 +307,13 @@ const modelFileUtils = {
             }
           }
         } catch (err) {
-          console.log(`Error checking file ${filePath}: ${err.message}`);
+          console.log('Error checking file %s: %s', filePath, err.message);
         }
       }
       
       return modelFiles;
     } catch (err) {
-      console.error(`Error reading models directory: ${err.message}`);
+      console.error('Error reading models directory: %s', err.message);
       return [];
     }
   },
@@ -332,14 +328,14 @@ const modelFileUtils = {
       const stats = await fs.stat(filePath);
       if (stats.isFile()) {
         await fs.unlink(filePath);
-        console.log(`Successfully deleted file: ${filePath}`);
+        console.log('Successfully deleted file: %s', filePath);
         return true;
       } else {
-        console.log(`Not deleting ${filePath} as it is not a file`);
+        console.log('Not deleting %s as it is not a file', filePath);
         return false;
       }
     } catch (err) {
-      console.log(`Error deleting file ${filePath}: ${err.message}`);
+      console.log('Error deleting file %s: %s', filePath, err.message);
       return false;
     }
   },
@@ -356,7 +352,7 @@ const modelFileUtils = {
       const normalizedModelsDir = path.normalize(MODELS_DIR);
       
       if (!normalizedDirPath.startsWith(normalizedModelsDir)) {
-        console.log(`Safety check failed: Directory ${dirPath} is not within models directory ${MODELS_DIR}`);
+        console.log('Safety check failed: Directory %s is not within models directory %s', dirPath, MODELS_DIR);
         return false;
       }
       
@@ -366,11 +362,11 @@ const modelFileUtils = {
         return false;
       }
       
-      console.log(`Using rm -rf to forcefully delete directory: ${dirPath}`);
+      console.log('Using rm -rf to forcefully delete directory: %s', dirPath);
       
       try {
         // Use the system rm command to delete the directory
-        await execPromise(`rm -rf "${dirPath}"`);
+        await fs.rm(dirPath, { recursive: true, force: true });
         
         // Verify the directory is actually gone
         try {
@@ -379,15 +375,15 @@ const modelFileUtils = {
           return false;
         } catch (statErr) {
           // This is good - the directory is gone
-          console.log(`Successfully deleted directory: ${dirPath}`);
+          console.log('Successfully deleted directory: %s', dirPath);
           return true;
         }
       } catch (rmErr) {
-        console.error(`Error deleting directory with rm command: ${rmErr.message}`);
+        console.error('Error deleting directory with rm command: %s', rmErr.message);
         return false;
       }
     } catch (err) {
-      console.error(`Force delete error for ${dirPath}: ${err.message}`);
+      console.error('Force delete error for %s: %s', dirPath, err.message);
       return false;
     }
   },
@@ -402,7 +398,7 @@ const modelFileUtils = {
       // First, verify that the path exists and is a directory
       const stats = await fs.stat(dirPath);
       if (!stats.isDirectory()) {
-        console.log(`Not deleting ${dirPath} as it is not a directory`);
+        console.log('Not deleting %s as it is not a directory', dirPath);
         return false;
       }
       
@@ -411,7 +407,7 @@ const modelFileUtils = {
       const normalizedModelsDir = path.normalize(MODELS_DIR);
       
       if (!normalizedDirPath.startsWith(normalizedModelsDir)) {
-        console.log(`Safety check failed: Directory ${dirPath} is not within models directory ${MODELS_DIR}`);
+        console.log('Safety check failed: Directory %s is not within models directory %s', dirPath, MODELS_DIR);
         return false;
       }
       
@@ -429,7 +425,7 @@ const modelFileUtils = {
       
       // Handle empty directory case - we can delete it immediately
       if (files.length === 0) {
-        console.log(`Directory ${dirPath} is empty, deleting it directly`);
+        console.log('Directory %s is empty, deleting it directly', dirPath);
         await fs.rmdir(dirPath);
         return true;
       }
@@ -444,31 +440,31 @@ const modelFileUtils = {
       });
       
       if (!hasModelFiles) {
-        console.log(`Note: Directory ${dirPath} does not contain recognized model files, but will be deleted anyway`);
+        console.log('Note: Directory %s does not contain recognized model files, but will be deleted anyway', dirPath);
       }
       
       // Delete directory contents regardless of whether model files were found
-      console.log(`Deleting model directory contents: ${dirPath}`);
+      console.log('Deleting model directory contents: %s', dirPath);
       
       for (const dirent of files) {
         const filePath = path.join(dirPath, dirent.name);
         try {
           if (dirent.isFile()) {
             await fs.unlink(filePath);
-            console.log(`  Deleted file: ${dirent.name}`);
+            console.log('  Deleted file: %s', dirent.name);
           } else if (dirent.isDirectory()) {
             // Recursively delete subdirectories, but only within the models directory
             const deleted = await modelFileUtils.safeDeleteModelDirectory(filePath);
             if (deleted) {
-              console.log(`  Deleted subdirectory: ${dirent.name}`);
+              console.log('  Deleted subdirectory: %s', dirent.name);
             }
           } else if (dirent.isSymbolicLink()) {
             // Handle symlinks
             await fs.unlink(filePath);
-            console.log(`  Deleted symlink: ${dirent.name}`);
+            console.log('  Deleted symlink: %s', dirent.name);
           }
         } catch (fileErr) {
-          console.log(`  Error handling ${dirent.name}: ${fileErr.message}`);
+          console.log('  Error handling %s: %s', dirent.name, fileErr.message);
         }
       }
       
@@ -476,22 +472,22 @@ const modelFileUtils = {
       try {
         await fs.chmod(dirPath, 0o777);
       } catch (err) {
-        console.log(`Unable to change directory permissions: ${err.message}`);
+        console.log('Unable to change directory permissions: %s', err.message);
       }
       
       // After emptying the directory, try to remove it
       try {
         await fs.rmdir(dirPath);
-        console.log(`Successfully deleted model directory: ${dirPath}`);
+        console.log('Successfully deleted model directory: %s', dirPath);
         return true;
       } catch (rmdirErr) {
-        console.log(`Error removing empty directory ${dirPath}: ${rmdirErr.message}`);
+        console.log('Error removing empty directory %s: %s', dirPath, rmdirErr.message);
         
         // Last resort: try force delete one more time
         return await modelFileUtils.forceDeleteDirectory(dirPath);
       }
     } catch (err) {
-      console.log(`Error in safeDeleteModelDirectory for ${dirPath}: ${err.message}`);
+      console.log('Error in safeDeleteModelDirectory for %s: %s', dirPath, err.message);
       return false;
     }
   }

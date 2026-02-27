@@ -3,7 +3,7 @@
  * Uses a simple character-based estimation for token counting, removing the
  * dependency on a dedicated tokenizer service.
  */
-const { format: defaultFormat } = require('../formatters/defaultFormatter');
+require('../formatters/defaultFormatter');
 
 // Simple token estimation: average of 4 chars per token.
 const estimateTokens = (text) => Math.ceil(text.length / 4);

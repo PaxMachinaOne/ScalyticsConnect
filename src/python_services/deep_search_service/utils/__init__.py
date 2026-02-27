@@ -20,17 +20,17 @@ class FileLock:
             try:
                 self._lock_file = open(self.lock_file_path, 'w')
                 fcntl.flock(self._lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                logger.debug(f"Process {os.getpid()} acquired lock on {self.lock_file_path}.")
+                logger.debug("Process %s acquired lock on %s.", os.getpid(), self.lock_file_path)
                 return self
             except (IOError, BlockingIOError):
                 if self._lock_file:
                     self._lock_file.close()
                 if time.time() - start_time >= self.timeout:
-                    logger.error(f"Process {os.getpid()} timed out after {self.timeout}s waiting for lock on {self.lock_file_path}.")
+                    logger.error("Process %s timed out after %ss waiting for lock on %s.", os.getpid(), self.timeout, self.lock_file_path)
                     raise TimeoutError(f"Could not acquire lock on {self.lock_file_path} within {self.timeout} seconds.")
                 time.sleep(self.delay)
             except Exception as e:
-                logger.error(f"An unexpected error occurred while acquiring lock for process {os.getpid()}: {e}", exc_info=True)
+                logger.error("An unexpected error occurred while acquiring lock for process %s: %s", os.getpid(), e, exc_info=True)
                 if self._lock_file:
                     self._lock_file.close()
                 raise
@@ -41,13 +41,13 @@ class FileLock:
                 fcntl.flock(self._lock_file, fcntl.LOCK_UN)
                 self._lock_file.close()
                 self._lock_file = None
-                logger.debug(f"Process {os.getpid()} released lock on {self.lock_file_path}.")
+                logger.debug("Process %s released lock on %s.", os.getpid(), self.lock_file_path)
                 try:
                     os.remove(self.lock_file_path)
                 except OSError:
-                    pass
+                    pass  # Exception intentionally suppressed
             except Exception as e:
-                logger.error(f"An error occurred while releasing lock for process {os.getpid()}: {e}", exc_info=True)
+                logger.error("An error occurred while releasing lock for process %s: %s", os.getpid(), e, exc_info=True)
 
 def setup_logger(name, level=logging.INFO):
     """Function to set up a logger."""

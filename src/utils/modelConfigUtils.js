@@ -2,7 +2,6 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 const path = require('path');
 const fsPromises = require('fs').promises;
-const { formatFileSize } = require('./modelFileUtils'); // For modelInfo
 
 // Define the directory where config files are stored
 const CONFIG_DIR = path.resolve(__dirname, '../../models/config');
@@ -20,7 +19,7 @@ async function writeModelConfigJson(modelData) {
     throw new Error('Invalid model data provided to writeModelConfigJson. Missing model_path.');
   }
 
-  console.log(`[ConfigWriter] Writing config for model: ${modelData.name} (ID: ${modelData.id})`);
+  console.log('[ConfigWriter] Writing config for model: %s (ID: %s)', modelData.name, modelData.id);
 
   // For vLLM, the model path is the directory itself. The config file should be named after the directory.
   const modelFilename = path.basename(modelData.model_path);
@@ -33,10 +32,10 @@ async function writeModelConfigJson(modelData) {
   try {
     const content = await fsPromises.readFile(configFilePath, 'utf8');
     existingConfig = JSON.parse(content);
-    console.log(`[ConfigWriter] Found existing config file at ${configFilePath}`);
+    console.log('[ConfigWriter] Found existing config file at %s', configFilePath);
   } catch (readError) {
     // File doesn't exist or is invalid, start fresh
-    console.log(`[ConfigWriter] No existing config file found or error reading it at ${configFilePath}. Creating new config.`);
+    console.log('[ConfigWriter] No existing config file found or error reading it at %s. Creating new config.', configFilePath);
     existingConfig = {
       modelInfo: {}, // Initialize modelInfo if creating new
       _meta: {}      // Initialize _meta if creating new
@@ -94,19 +93,19 @@ async function writeModelConfigJson(modelData) {
     await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
 
     // +++ DIAGNOSTIC LOGGING START +++
-    console.log(`[ConfigWriter WARN] Input model_path: ${modelData.model_path}`);
-    console.log(`[ConfigWriter WARN] Resolved modelFilename: ${modelFilename}`);
-    console.log(`[ConfigWriter WARN] Target configFilePath: ${configFilePath}`);
-    console.log(`[ConfigWriter WARN] Payload gpuAssignment: ${configToWrite.gpuAssignment}`);
+    console.log('[ConfigWriter WARN] Input model_path: %s', modelData.model_path);
+    console.log('[ConfigWriter WARN] Resolved modelFilename: %s', modelFilename);
+    console.log('[ConfigWriter WARN] Target configFilePath: %s', configFilePath);
+    console.log('[ConfigWriter WARN] Payload gpuAssignment: %s', configToWrite.gpuAssignment);
     // You can log the entire payload if needed, but be mindful of size/secrets
-    // console.log(`[ConfigWriter WARN] Full Payload: ${JSON.stringify(configToWrite, null, 2)}`);
+    // console.log('[ConfigWriter WARN] Full Payload: %s', JSON.stringify(configToWrite, null, 2));
     // +++ DIAGNOSTIC LOGGING END +++
 
     // Write the file
     await fsPromises.writeFile(configFilePath, JSON.stringify(configToWrite, null, 2), 'utf8');
-    console.log(`[ConfigWriter] Successfully wrote config file to ${configFilePath}`);
+    console.log('[ConfigWriter] Successfully wrote config file to %s', configFilePath);
   } catch (writeError) {
-    console.error(`[ConfigWriter] Error writing config file ${configFilePath}:`, writeError);
+    console.error('[ConfigWriter] Error writing config file %s:', configFilePath, writeError);
     throw new Error(`Failed to write model configuration: ${writeError.message}`);
   }
 }

@@ -24,12 +24,16 @@ const fixJwtSecrets = (envFilePath) => {
   console.log(`[Migration: 000_fix_jwt_secrets] Checking JWT secrets in ${envFilePath}`);
   
   try {
-    if (!fs.existsSync(envFilePath)) {
-      console.error(`[Migration: 000_fix_jwt_secrets] File not found: ${envFilePath}`);
-      return false;
+    let envContent;
+    try {
+      envContent = fs.readFileSync(envFilePath, 'utf8');
+    } catch (readErr) {
+      if (readErr.code === 'ENOENT') {
+        console.error('[Migration: 000_fix_jwt_secrets] File not found: %s', envFilePath);
+        return false;
+      }
+      throw readErr;
     }
-    
-    const envContent = fs.readFileSync(envFilePath, 'utf8');
     const envVars = dotenv.parse(envContent);
     
     let updated = false;

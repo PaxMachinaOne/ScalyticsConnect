@@ -73,7 +73,7 @@ def download_file_with_progress(url, local_path, download_id, file_name, file_in
         
         return True
     except Exception as e:
-        logger.error(f"Failed to download {file_name}: {e}")
+        logger.error("Failed to download %s: %s", file_name, e)
         return False
 
 def main():
@@ -83,7 +83,7 @@ def main():
         try:
             login(token=args.token, add_to_git_credential=False)
         except Exception as e:
-            logger.error(f"Failed to authenticate with Hugging Face Hub: {type(e).__name__}: {str(e)}")
+            logger.error("Failed to authenticate with Hugging Face Hub: %s: %s", type(e).__name__, e)
             print(json.dumps({"success": False, "model_id": args.model_id, "error": f"Authentication failed: {str(e)}"}))
             sys.exit(1)
 
@@ -96,12 +96,12 @@ def main():
         try:
             repo_info = api.repo_info(repo_id=args.model_id, revision=args.revision, token=args.token)
         except Exception as e:
-            logger.error(f"Exception during repo_info: {type(e).__name__}: {str(e)}")
+            logger.error("Exception during repo_info: %s: %s", type(e).__name__, e)
             if "gated" in str(e).lower() or "access" in str(e).lower() or isinstance(e, GatedRepoError):
-                logger.error(f"Access to {args.model_id} is gated. Please accept the license on the Hub.")
+                logger.error("Access to %s is gated. Please accept the license on the Hub.", args.model_id)
                 print(json.dumps({"success": False, "error": "gated_repo", "model_id": args.model_id}))
                 sys.exit(1)
-            logger.error(f"Non-gated error during repo_info, re-raising: {str(e)}")
+            logger.error("Non-gated error during repo_info, re-raising: %s", e)
             raise e
         
         # Get list of files to download
@@ -125,7 +125,7 @@ def main():
             
             try:
                 # Use hf_hub_download for individual files - it handles authentication and caching properly
-                downloaded_path = hf_hub_download(
+                hf_hub_download(
                     repo_id=args.model_id,
                     filename=filename,
                     revision=args.revision,
@@ -138,7 +138,7 @@ def main():
                 report_progress(args.download_id, progress, f"Downloaded {filename}")
                 
             except Exception as e:
-                logger.error(f"Exception during hf_hub_download for {filename}: {type(e).__name__}: {str(e)}")
+                logger.error("Exception during hf_hub_download for %s: %s: %s", filename, type(e).__name__, e)
                 error_str = str(e).lower()
                 if ("gated" in error_str or 
                     "access" in error_str or 
@@ -147,11 +147,11 @@ def main():
                     "forbidden" in error_str or
                     "fine-grained token settings" in error_str or
                     "enable access to public gated repositories" in error_str):
-                    logger.error(f"Access to {args.model_id} is gated. Please accept the license on the Hub or check token permissions.")
+                    logger.error("Access to %s is gated. Please accept the license on the Hub or check token permissions.", args.model_id)
                     print(json.dumps({"success": False, "error": "gated_repo", "model_id": args.model_id}))
                     sys.exit(1)
                 else:
-                    logger.error(f"Failed to download {filename}: {e}")
+                    logger.error("Failed to download %s: %s", filename, e)
                     raise e
         
         report_progress(args.download_id, 95, "Processing model configuration...")
@@ -207,19 +207,19 @@ def main():
                         output_payload['quantization_method'] = quant_config['quant_method']
                         
         except Exception as e:
-            logger.warning(f"Could not read or parse config.json: {e}")
+            logger.warning("Could not read or parse config.json: %s", e)
         
         report_progress(args.download_id, 100, "Download completed successfully!")
         print(json.dumps(output_payload))
         sys.exit(0)
 
     except GatedRepoError:
-        logger.error(f"Access to {args.model_id} is gated. Please accept the license on the Hub.")
+        logger.error("Access to %s is gated. Please accept the license on the Hub.", args.model_id)
         print(json.dumps({"success": False, "error": "gated_repo", "model_id": args.model_id}))
         sys.exit(1)
         
     except Exception as e:
-        logger.error(f"An unexpected error occurred during download: {e}", exc_info=True)
+        logger.error("An unexpected error occurred during download: %s", e, exc_info=True)
         print(json.dumps({"success": False, "model_id": args.model_id, "error": "Download failed."}))
         sys.exit(1)
 

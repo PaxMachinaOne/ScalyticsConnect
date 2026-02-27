@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Any, Set, Tuple, Literal, Union
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 import asyncio # For asyncio.Event
+import functools
 import uuid # Added for ContentChunk.chunk_id
 
 # --- Request and Response Models for API ---
@@ -119,6 +120,7 @@ class ContentChunk(BaseModel):
     depth: int # Hop depth at which this chunk was processed
     vector_metadata: Dict[str, Any] = Field(default_factory=dict) # For LanceDB metadata
 
+@functools.total_ordering
 class CandidateLinkToExplore(BaseModel):
     url: str
     source_page_url: str
@@ -126,6 +128,11 @@ class CandidateLinkToExplore(BaseModel):
     anchor_text: Optional[str] = None
     context_around_link: Optional[str] = None
     priority_score: float = 0.5 # Default, can be updated by LLM
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CandidateLinkToExplore):
+            return NotImplemented
+        return self.priority_score == other.priority_score and self.calculated_depth == other.calculated_depth
 
     def __lt__(self, other: 'CandidateLinkToExplore') -> bool:
         # For heapq, which is a min-heap, we store negative priority

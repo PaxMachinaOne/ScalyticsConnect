@@ -5,10 +5,7 @@
  * Also provides model-specific response filtering and context window management.
  * Assumes tokenizers are loaded locally.
  */
-const fs = require('fs').promises; 
-const path = require('path'); 
 const Model = require('../Model');
-const vllmService = require('../../services/vllmService');
 
 const mistralFormatter = require('./formatters/mistralFormatter');
 const llamaFormatter = require('./formatters/llamaFormatter');
@@ -254,7 +251,7 @@ async function validateContextForModel(modelId, messages) {
 
     // 3. Determine the format type for potential formatting/filtering
     const formatType = determineFormatType(model);
-    const modelLocalPath = (typeof model.model_path === 'string' && model.model_path) ? model.model_path : null;
+    // modelLocalPath not currently needed for context validation/truncation
 
     // 4. Use the standard JS filters for tokenization
     let validationResult;
@@ -327,7 +324,7 @@ async function truncateHistoryForModel(modelId, messages) {
 
     // 3. Determine the format type for potential formatting/filtering
     const formatType = determineFormatType(model);
-    const modelLocalPath = (typeof model.model_path === 'string' && model.model_path) ? model.model_path : null;
+    // modelLocalPath not currently needed for context validation/truncation
 
     const safetyMargin = 0.90; 
     const maxTokens = Math.floor(contextSize * safetyMargin);

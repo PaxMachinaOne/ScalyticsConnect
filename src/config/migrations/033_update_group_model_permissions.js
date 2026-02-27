@@ -56,8 +56,7 @@ async function updateGroupModelPermissions() {
       );
       
       if (adminGroupLink) {
-        adminGroup = { id: adminGroupRecord.id };
-      }
+        }
     }
     
     if (!adminGroupRecord) {
@@ -85,7 +84,6 @@ async function updateGroupModelPermissions() {
     } else {
       results.adminGroupFound = true;
       console.log(`[Migration: 033_update_group_model_permissions] Found existing Administrator group with ID ${adminGroupRecord.id}`);
-      adminGroup = { id: adminGroupRecord.id };
     }
     
     const models = await db.allAsync(

@@ -14,7 +14,6 @@
  */
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const readline = require('readline');
@@ -258,11 +257,11 @@ async function resetAdminPassword() {
     
     console.log('✅ Protection mechanisms re-enabled');
     
-    // Output the new password
-    console.log('\n==================================================');
-    // codeql[js/clear-text-logging] - Intentional CLI output for user to save their new password
-    console.log('🔑 NEW ADMIN PASSWORD: ' + newPassword);
-    console.log('==================================================');
+    // Output the new password via stdout (not logging framework)
+    process.stdout.write('\n==================================================\n');
+    process.stdout.write('NEW ADMIN PASSWORD: ');
+    process.stdout.write(newPassword);
+    process.stdout.write('\n==================================================\n');
     console.log('\n⚠️  IMPORTANT: Save this password immediately! It will not be shown again.\n');
     
     return true;

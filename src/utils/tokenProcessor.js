@@ -132,7 +132,8 @@ const tokenProcessor = {
     let processedMessage = message;
     
     for (const tag of this.specialTags) {
-      processedMessage = processedMessage.replace(new RegExp(tag, 'g'), '');
+      const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      processedMessage = processedMessage.replace(new RegExp(escapedTag, 'g'), '');
     }
     
     processedMessage = processedMessage.replace(/<think>[\s\S]*?<\/think>/g, '');

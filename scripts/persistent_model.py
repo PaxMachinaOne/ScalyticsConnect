@@ -17,7 +17,7 @@ import sys
 import time
 import traceback
 from threading import Thread
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, Optional, Any
 
 # Configure environment for optimal performance
 os.environ['GGML_VERBOSE'] = os.environ.get('GGML_VERBOSE', '0')
@@ -85,9 +85,6 @@ class PersistentModelWorker:
             # Import llama_cpp here to ensure environment variables take effect
             from llama_cpp import Llama
             
-            # Get model name to detect special cases (though not used for batch size anymore)
-            model_name = os.path.basename(self.model_path).lower()
-
             # Use the batch size from the loaded parameters (optimized config)
             # Removed the hardcoded override for DeepSeek
             effective_batch_size = self.model_params.get("batch_size", 512)
@@ -107,8 +104,6 @@ class PersistentModelWorker:
             
             # Update status
             self.status = STATUS_READY
-            load_time = int((time.time() - self.start_time) * 1000)  # in milliseconds
-            
             # Send ready message to parent process
             self.send_message({
                 "type": "ready",
@@ -156,7 +151,6 @@ class PersistentModelWorker:
             
             # Track generated output
             output = ""
-            start_time = time.time()
             token_count = 0 # Tokens generated so far in this response
             
             # Get the model's context window size from parameters

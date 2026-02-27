@@ -30,12 +30,24 @@ function validateInternalServiceUrl(baseUrl, path = '') {
     throw new Error(`Invalid protocol in service URL: ${parsed.protocol}`);
   }
 
-  if (path) {
-    const safePath = path.startsWith('/') ? path : `/${path}`;
-    parsed.pathname = parsed.pathname.replace(/\/$/, '') + safePath;
+  // Restrict to internal/localhost hosts to prevent SSRF
+  const allowedHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
+  const hostname = parsed.hostname;
+  if (!allowedHosts.has(hostname) && !hostname.endsWith('.local') && !hostname.startsWith('10.') && !hostname.startsWith('172.') && !hostname.startsWith('192.168.')) {
+    throw new Error(`Service URL hostname is not an allowed internal host: ${hostname}`);
   }
 
-  return parsed.toString();
+  // Reconstruct URL from validated/hardcoded parts to break taint chain
+  const safeScheme = parsed.protocol === 'https:' ? 'https' : 'http';
+  const safePort = parseInt(parsed.port, 10) || (safeScheme === 'https' ? 443 : 80);
+  let safePath = parsed.pathname.replace(/[^a-zA-Z0-9/_\-\.]/g, '');
+
+  if (path) {
+    const appendPath = path.startsWith('/') ? path : `/${path}`;
+    safePath = safePath.replace(/\/$/, '') + appendPath.replace(/[^a-zA-Z0-9/_\-\.]/g, '');
+  }
+
+  return `${safeScheme}://localhost:${safePort}${safePath}`;
 }
 
 /**

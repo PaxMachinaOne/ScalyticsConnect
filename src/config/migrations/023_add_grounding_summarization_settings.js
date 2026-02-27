@@ -55,7 +55,6 @@ module.exports = {
   },
 
   down: async () => { 
-    const migrationName = '023_add_grounding_summarization_settings'; 
     try {
       await db.runAsync(`DROP TABLE IF EXISTS message_feedback`);
       console.log('Dropped table: message_feedback');

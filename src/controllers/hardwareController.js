@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const util = require('util');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 const os = require('os');
 const fs = require('fs');
 const fsPromises = fs.promises;
@@ -62,7 +62,7 @@ const saveHistoricalData = async () => {
              try {
                return new Date(entry.time).getTime() >= twentyFourHoursAgo;
              } catch (e) {
-               console.warn(`[HardwareCtrl] Discarding invalid date entry in ${type}_history.json:`, entry.time);
+               console.warn('[HardwareCtrl] Discarding invalid date entry in %s_history.json:', type, entry.time);
                return false;
              }
            });
@@ -89,8 +89,6 @@ const loadHistoricalData = async () => {
       return false;
     }
     
-    let dataLoaded = false;
-    
     for (const type of Object.keys(historicalData)) {
       const filePath = dataFiles[type];
       try {
@@ -99,8 +97,7 @@ const loadHistoricalData = async () => {
         
         if (Array.isArray(parsedData)) {
           historicalData[type] = parsedData;
-          dataLoaded = true;
-        }
+          }
       } catch (err) {
       }
     }
@@ -303,7 +300,7 @@ const getMemoryInfo = async () => {
 
   if (os.platform() === 'darwin') {
     try {
-      const { stdout } = await execPromise('vm_stat', { timeout: 5000 });
+      const { stdout } = await execFilePromise('vm_stat', [], { timeout: 5000 });
       const lines = stdout.split('\n').map(line => line.trim()).filter(Boolean);
       
       let pageSize = 4096;
@@ -337,7 +334,7 @@ const getMemoryInfo = async () => {
         usedMemory = totalMemory - freeMemory;
         
         if (usedMemory < 0 || usedMemory > totalMemory) {
-          console.warn(`[HardwareCtrl] Calculated memory values seem incorrect: used=${Math.round(usedMemory/1024/1024)}MB, total=${Math.round(totalMemory/1024/1024)}MB, falling back to os.freemem()`);
+          console.warn('[HardwareCtrl] Calculated memory values seem incorrect: used=%sMB, total=%sMB, falling back to os.freemem()', Math.round(usedMemory/1024/1024), Math.round(totalMemory/1024/1024));
           throw new Error(`Invalid calculated memory values`);
         }
       } else {
@@ -345,7 +342,7 @@ const getMemoryInfo = async () => {
       }
 
     } catch (e) {
-      console.warn(`[HardwareCtrl] vm_stat parsing failed on macOS (${e.message}), falling back to os.freemem()`);
+      console.warn('[HardwareCtrl] vm_stat parsing failed on macOS (%s), falling back to os.freemem()', e.message);
       usedMemory = totalMemory - os.freemem();
     }
   } else {
@@ -372,8 +369,8 @@ const getGpuInfo = async (memoryInfo) => {
     
     if (isMacOS) {
       try {
-        const { stdout } = await execPromise('system_profiler SPDisplaysDataType', { timeout: 5000 });
-        
+        const { stdout } = await execFilePromise('system_profiler', ['SPDisplaysDataType'], { timeout: 5000 });
+
         if (stdout && stdout.includes('Apple') && (
             stdout.includes('M1') || 
             stdout.includes('M2') || 
@@ -414,7 +411,7 @@ const getGpuInfo = async (memoryInfo) => {
     if (!appleGpuDetected) {
       const hasNvidiaSmi = await (async () => {
         try {
-          await execPromise('which nvidia-smi 2>/dev/null', { timeout: 2000 });
+          await execFilePromise('which', ['nvidia-smi'], { timeout: 2000 });
           return true;
         } catch (error) {
           return false;
@@ -423,8 +420,8 @@ const getGpuInfo = async (memoryInfo) => {
       
       if (hasNvidiaSmi) {
         try {
-          const { stdout } = await execPromise(
-            'nvidia-smi --query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null', 
+          const { stdout } = await execFilePromise(
+            'nvidia-smi', ['--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total', '--format=csv,noheader,nounits'],
             { timeout: 5000 }
           );
           
@@ -463,7 +460,7 @@ const getGpuInfo = async (memoryInfo) => {
     let cudaVersion = null;
     if (!appleGpuDetected) {
       try {
-        const { stdout: smiOutput } = await execPromise('nvidia-smi', { timeout: 3000 });
+        const { stdout: smiOutput } = await execFilePromise('nvidia-smi', [], { timeout: 3000 });
         const cudaMatch = smiOutput.match(/CUDA Version:\s+(\d+\.\d+)/i);
         if (cudaMatch && cudaMatch[1]) {
           cudaVersion = cudaMatch[1];
@@ -504,7 +501,6 @@ const ensureDataPointFormat = (dataPoints) => {
   });
 };
 
-const vllmService = require('../services/vllmService');
 const modelPoolManager = require('../services/modelPoolManager');
 const Model = require('../models/Model');
 
@@ -625,15 +621,15 @@ const refreshGpuInfo = async (req, res) => {
 
 const getGpuIndices = async () => {
   try {
-    const { stdout } = await execPromise(
-      'nvidia-smi --query-gpu=index --format=csv,noheader,nounits',
+    const { stdout } = await execFilePromise(
+      'nvidia-smi', ['--query-gpu=index', '--format=csv,noheader,nounits'],
       { timeout: 3000 }
     );
     
     if (stdout && stdout.trim()) {
       const indices = stdout.trim().split('\n').map(s => s.trim()).filter(Boolean);
       if (indices.length > 0) {
-        console.log(`[HardwareCtrl] Detected NVIDIA GPU indices via query: ${indices.join(', ')}`);
+        console.log('[HardwareCtrl] Detected NVIDIA GPU indices via query: %s', indices.join(', '));
         return indices;
       }
     }
@@ -643,13 +639,13 @@ const getGpuIndices = async () => {
 
   if (os.platform() === 'darwin') {
      try {
-       const { stdout: sysProfiler } = await execPromise('system_profiler SPDisplaysDataType', { timeout: 5000 });
+       const { stdout: sysProfiler } = await execFilePromise('system_profiler', ['SPDisplaysDataType'], { timeout: 5000 });
        if (sysProfiler && (sysProfiler.includes('Apple M1') || sysProfiler.includes('Apple M2') || sysProfiler.includes('Apple M3') || sysProfiler.includes('Apple GPU'))) {
            console.log('[HardwareCtrl] Detected Apple Silicon GPU.');
            return ['0'];
        }
      } catch (macError) {
-       console.warn(`[HardwareCtrl] Failed to detect Apple Silicon GPU via system_profiler: ${macError.message}`);
+       console.warn('[HardwareCtrl] Failed to detect Apple Silicon GPU via system_profiler: %s', macError.message);
      }
   }
   
@@ -672,7 +668,7 @@ const getEffectiveGpuVramLimitGb = async () => {
     const primaryGpu = gpuInfo.devices?.find(d => d.id === '0') || gpuInfo.devices?.[0];
 
     let totalAvailableGb = 0;
-    let calculationSource = "Unknown";
+    let calculationSource;
 
     if (primaryGpu?.type === 'Apple') {
       calculationSource = "Apple Silicon (75% System RAM)";
@@ -691,7 +687,7 @@ const getEffectiveGpuVramLimitGb = async () => {
 
     let effectiveLimitGb = 0;
     if (totalAvailableGb <= VRAM_SAFETY_MARGIN_GB) {
-       console.warn(`[HardwareCtrl] Source: ${calculationSource}. Available memory (${totalAvailableGb.toFixed(1)} GB) is less than or equal to safety margin (${VRAM_SAFETY_MARGIN_GB} GB). Setting effective limit to 0 GB.`);
+       console.warn('[HardwareCtrl] Source: %s. Available memory (%s GB) is less than or equal to safety margin (%s GB). Setting effective limit to 0 GB.', calculationSource, totalAvailableGb.toFixed(1), VRAM_SAFETY_MARGIN_GB);
        effectiveLimitGb = 0;
     } else {
        effectiveLimitGb = totalAvailableGb - VRAM_SAFETY_MARGIN_GB;
@@ -701,7 +697,7 @@ const getEffectiveGpuVramLimitGb = async () => {
     return cachedEffectiveVramLimitGb;
 
   } catch (error) {
-    console.error(`[HardwareCtrl] Error getting effective VRAM limit: ${error.message}. Defaulting to 0 GB.`);
+    console.error('[HardwareCtrl] Error getting effective VRAM limit: %s. Defaulting to 0 GB.', error.message);
     cachedEffectiveVramLimitGb = 0;
     return 0;
   }

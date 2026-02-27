@@ -2,9 +2,8 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; 
+import { useNavigate, useLocation } from 'react-router-dom'; 
 import modelService from '../../services/modelService'; 
-import eventBus from '../../utils/eventBus';
 
 const AIAgentsIcon = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -160,11 +159,9 @@ const AgentList = ({
                 </button>
                 ))
               ) : (
-                isAgentsOpen && (
-                  <div className="text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    No MCP agents found.
-                  </div>
-                )
+                <div className="text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  No MCP agents found.
+                </div>
               )}
             </div>
            )}

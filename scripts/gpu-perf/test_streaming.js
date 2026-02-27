@@ -35,7 +35,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { program } = require('commander');
-const { getOptimalParameters, detectModelInfo, getCachedParams } = require('./detect_optimal_params'); // Assuming this doesn't read the config file itself
+const { getCachedParams } = require('./detect_optimal_params'); // Assuming this doesn't read the config file itself
 
 // Define command-line options
 program
@@ -107,7 +107,8 @@ async function benchmarkStreamingPerformance(batchSize, contextSize, tokenCount,
 
   return new Promise((resolve, reject) => {
     // Create a temporary params file like our stream.js service does
-    const paramFile = path.join(require('os').tmpdir(), `test_params_${Date.now()}.json`);
+    const tmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'streaming-test-'));
+    const paramFile = path.join(tmpDir, 'params.json');
     const modelParams = {
       batch_size: batchSize,
       n_ctx: contextSize,
@@ -116,7 +117,7 @@ async function benchmarkStreamingPerformance(batchSize, contextSize, tokenCount,
       temperature: 0.7,
       prompt: standardPrompt
     };
-    
+
     // Write params to temporary file
     fs.writeFileSync(paramFile, JSON.stringify(modelParams));
     
@@ -151,10 +152,11 @@ async function benchmarkStreamingPerformance(batchSize, contextSize, tokenCount,
       const endTime = Date.now();
       const totalTime = (endTime - startTime) / 1000;
 
-      // Clean up the temporary params file
+      // Clean up the temporary params file and directory
       if (!fileDeleted) {
         try {
           fs.unlinkSync(paramFile);
+          fs.rmdirSync(tmpDir);
           fileDeleted = true;
         } catch (err) {
           console.warn(`Could not delete params file: ${err.message}`);
@@ -214,16 +216,17 @@ async function testAntiHallucination() {
     try {
       await new Promise((resolve, reject) => {
         // Create a temporary params file
-        const paramFile = path.join(require('os').tmpdir(), `test_params_${Date.now()}.json`);
+        const hallucinationTmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'hallucination-test-'));
+        const paramFile = path.join(hallucinationTmpDir, 'params.json');
         const modelParams = {
           batch_size: batchSize,
           n_ctx: contextSize,
-          max_tokens: 256, 
+          max_tokens: 256,
           n_threads: parseInt(options.threads, 10),
           temperature: 0.7,
           prompt: test.prompt
         };
-        
+
         // Write params to temporary file
         fs.writeFileSync(paramFile, JSON.stringify(modelParams));
         
@@ -245,16 +248,17 @@ async function testAntiHallucination() {
         
         // Handle process completion
         pythonProcess.on('close', (code) => {
-          // Clean up the temporary file
+          // Clean up the temporary file and directory
           if (!fileDeleted) {
             try {
               fs.unlinkSync(paramFile);
+              fs.rmdirSync(hallucinationTmpDir);
               fileDeleted = true;
             } catch (err) {
               console.warn(`Could not delete params file: ${err.message}`);
             }
           }
-          
+
           if (code !== 0) {
             reject(new Error(`Process failed with code ${code}`));
           } else {
@@ -303,9 +307,8 @@ async function main() {
   
   // Auto-detect parameters if requested
   let testBatchSizes = batchSizes; // Use parsed command-line batch sizes initially
-  let contextSize = parseInt(options.context, 10);
-  let testTokenCount = parseInt(options.tokens, 10);
-  let threads = parseInt(options.threads, 10);
+  // Context, token count, and thread values are configured via options
+  // and applied through baseConfig below
   
   // --- Load model_config.json ---
   let baseConfig = {};

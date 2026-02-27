@@ -5,7 +5,6 @@ Handles text chunking, embedding generation, and vector database operations.
 import json
 import asyncio
 import os
-import traceback
 from typing import Dict, List, Optional, Any
 
 from sentence_transformers import SentenceTransformer
@@ -18,7 +17,6 @@ from ..utils import setup_logger, FileLock
 from pydantic import BaseModel as PydanticBaseModel 
 from typing import List as PyList
 import pyarrow as pa 
-from lancedb.pydantic import pydantic_to_schema # Correct import
 
 logger = setup_logger(__name__, level=app_config.settings.LOG_LEVEL)
 
@@ -90,23 +88,23 @@ class ContentVector:
                 try:
                     # Try to open the table first
                     self.db_table = self.db_connection.open_table(self.table_name)
-                    logger.info(f"Successfully opened existing table '{self.table_name}'.")
+                    logger.info("Successfully opened existing table '%s'.", self.table_name)
                     # Ensure FTS index on existing table
                     lock_file = os.path.join(self.vector_db_uri, ".fts_index.lock")
                     try:
                         with FileLock(lock_file):
-                            logger.info(f"Process {os.getpid()} acquired lock for FTS indexing.")
-                            logger.info(f"Attempting to create/update FTS index on 'textContent' for existing table '{self.table_name}'...")
+                            logger.info("Process %s acquired lock for FTS indexing.", os.getpid())
+                            logger.info("Attempting to create/update FTS index on 'textContent' for existing table '%s'...", self.table_name)
                             self.db_table.create_fts_index("textContent", replace=True)
-                            logger.info(f"FTS index on 'textContent' for table '{self.table_name}' ensured (replace=True).")
+                            logger.info("FTS index on 'textContent' for table '%s' ensured (replace=True).", self.table_name)
                     except (IOError, BlockingIOError):
-                        logger.warning(f"Process {os.getpid()} could not acquire lock, FTS indexing is likely being handled by another process.")
+                        logger.warning("Process %s could not acquire lock, FTS indexing is likely being handled by another process.", os.getpid())
                     except Exception as e_fts_existing:
-                        logger.error(f"Failed to ensure FTS index on 'textContent' for existing table '{self.table_name}': {e_fts_existing}", exc_info=True)
+                        logger.error("Failed to ensure FTS index on 'textContent' for existing table '%s': %s", self.table_name, e_fts_existing, exc_info=True)
                 
                 except ValueError as e_open_table: # LanceDB raises ValueError if table not found
                     if "was not found" in str(e_open_table).lower():
-                        logger.info(f"Table '{self.table_name}' does not exist. Creating with explicit PyArrow schema.")
+                        logger.info("Table '%s' does not exist. Creating with explicit PyArrow schema.", self.table_name)
                         # Manually define the PyArrow schema
                     arrow_schema = pa.schema([
                         pa.field("vector", pa.list_(pa.float32(), list_size=self.embedding_dim)), # Explicit vector type
@@ -140,14 +138,14 @@ class ContentVector:
                     lock_file = os.path.join(self.vector_db_uri, ".fts_index.lock")
                     try:
                         with FileLock(lock_file):
-                            logger.info(f"Process {os.getpid()} acquired lock for FTS indexing on new table.")
-                            logger.info(f"Attempting to create FTS index on 'textContent' for new table '{self.table_name}' with schema...")
+                            logger.info("Process %s acquired lock for FTS indexing on new table.", os.getpid())
+                            logger.info("Attempting to create FTS index on 'textContent' for new table '%s' with schema...", self.table_name)
                             self.db_table.create_fts_index("textContent", replace=True)
-                            logger.info(f"FTS index on 'textContent' for table '{self.table_name}' with schema created successfully.")
+                            logger.info("FTS index on 'textContent' for table '%s' with schema created successfully.", self.table_name)
                     except (IOError, BlockingIOError):
-                        logger.warning(f"Process {os.getpid()} could not acquire lock for new table, FTS indexing is likely being handled by another process.")
+                        logger.warning("Process %s could not acquire lock for new table, FTS indexing is likely being handled by another process.", os.getpid())
                     except Exception as e_fts:
-                        logger.error(f"Failed to create FTS index on 'textContent' for new table '{self.table_name}' with schema: {e_fts}", exc_info=True)
+                        logger.error("Failed to create FTS index on 'textContent' for new table '%s' with schema: %s", self.table_name, e_fts, exc_info=True)
                     
                     self.db_table.delete("\"chatId\" = 'dummy_init_schema'")
                 
@@ -155,7 +153,7 @@ class ContentVector:
                 return True
             except Exception as e:
                 self.status = "error"
-                logger.error(f"Error initializing ContentVector resources: {e}", exc_info=True)
+                logger.error("Error initializing ContentVector resources: %s", e, exc_info=True)
                 return False
 
     async def _ensure_ready(self):
@@ -197,12 +195,12 @@ class ContentVector:
         docs_to_add_to_lancedb = []
         for doc_item in documents:
             if not doc_item.text_content:
-                logger.warning(f"Document ID {doc_item.id} in group {group_id} missing text_content, skipping.")
+                logger.warning("Document ID %s in group %s missing text_content, skipping.", str(doc_item.id).replace('\n', '').replace('\r', ''), str(group_id).replace('\n', '').replace('\r', ''))
                 continue
-            
-            chunks = await self.chunk_text(doc_item.text_content) 
+
+            chunks = await self.chunk_text(doc_item.text_content)
             if not chunks:
-                logger.warning(f"Document ID {doc_item.id} in group {group_id} resulted in no chunks, skipping.")
+                logger.warning("Document ID %s in group %s resulted in no chunks, skipping.", str(doc_item.id).replace('\n', '').replace('\r', ''), str(group_id).replace('\n', '').replace('\r', ''))
                 continue
             
             embeddings = await self.generate_embeddings(chunks)
@@ -214,9 +212,10 @@ class ContentVector:
             for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
                 if not isinstance(emb, list) or not self.embedding_dim or len(emb) != self.embedding_dim:
                     logger.error(
-                        f"Document ID {doc_item.id}, chunk {i} for group {group_id} has an invalid embedding. "
-                        f"Expected dim: {self.embedding_dim}, got: {type(emb)} with len {len(emb) if isinstance(emb, list) else 'N/A'}. "
-                        f"Skipping this chunk."
+                        "Document ID %s, chunk %s for group %s has an invalid embedding. "
+                        "Expected dim: %s, got: %s with len %s. "
+                        "Skipping this chunk.",
+                        str(doc_item.id).replace('\n', '').replace('\r', ''), i, str(group_id).replace('\n', '').replace('\r', ''), self.embedding_dim, type(emb), len(emb) if isinstance(emb, list) else 'N/A'
                     )
                     continue
 
@@ -260,7 +259,7 @@ class ContentVector:
         effective_fts_query_string: Optional[str] = None
         if fts_query and fts_query.strip():
             effective_fts_query_string = str(fts_query.strip())
-            logger.debug(f"LanceDB FTS component of query: {effective_fts_query_string}")
+            logger.debug("LanceDB FTS component of query: %s", effective_fts_query_string)
         else:
             effective_fts_query_string = None
 
@@ -284,11 +283,11 @@ class ContentVector:
 
 
         if query_vector and effective_fts_query_string:
-            logger.debug(f"LanceDB Hybrid Search: Vector + FTS ('{effective_fts_query_string}')")
+            logger.debug("LanceDB Hybrid Search: Vector + FTS ('%s')", effective_fts_query_string)
         elif query_vector:
             logger.debug("LanceDB Vector-Only Search")
         elif effective_fts_query_string:
-            logger.debug(f"LanceDB FTS-Only Search: '{effective_fts_query_string}'")
+            logger.debug("LanceDB FTS-Only Search: '%s'", effective_fts_query_string)
 
         where_conditions = []
         if group_id:
@@ -304,11 +303,11 @@ class ContentVector:
                 elif isinstance(value, (int, float)):
                     where_conditions.append(f"\"{key}\" = {value}")
                 else:
-                    logger.warning(f"Unsupported value type for metadata filter key '{key}': {type(value)}. Skipping this filter condition.")
+                    logger.warning("Unsupported value type for metadata filter key '%s': %s. Skipping this filter condition.", key, type(value))
         
         if where_conditions:
             final_where_clause = " AND ".join(where_conditions)
-            logger.debug(f"LanceDB search with WHERE clause: {final_where_clause}")
+            logger.debug("LanceDB search with WHERE clause: %s", final_where_clause)
             search_query_builder = search_query_builder.where(final_where_clause)
         
         search_query_builder = search_query_builder.limit(limit)
@@ -371,7 +370,7 @@ class ContentVector:
             return []
 
         fts_query_str = " OR ".join(processed_keywords)
-        logger.info(f"Constructed FTS query: {fts_query_str}")
+        logger.info("Constructed FTS query: %s", fts_query_str)
         
         vector_search_results: List[models.VectorSearchResultItem] = await self.search_vectors(
             query_vector=None,
@@ -396,7 +395,7 @@ class ContentVector:
             )
             content_chunks_from_fts.append(chunk_obj)
             
-        logger.info(f"FTS search for keywords '{fts_query_str[:50]}...' yielded {len(content_chunks_from_fts)} chunks.")
+        logger.info("FTS search for keywords '%s...' yielded %s chunks.", fts_query_str[:200], len(content_chunks_from_fts))
         return content_chunks_from_fts
 
     async def delete_vectors_by_group_id(self, group_id: str) -> Dict[str, Any]:
@@ -409,5 +408,5 @@ class ContentVector:
                 await loop.run_in_executor(None, lambda: self.db_table.delete(f"\"chatId\" = '{str(group_id)}'")) 
                 return {"success": True, "message": f"Vectors for group ID {group_id} deleted."}
             except Exception as e:
-                logger.error(f"Error deleting vectors for group ID {group_id}: {e}", exc_info=True)
+                logger.error("Error deleting vectors for group ID %s: %s", str(group_id).replace('\n', '').replace('\r', ''), e, exc_info=True)
                 return {"success": False, "message": f"Error deleting vectors: {str(e)}"}

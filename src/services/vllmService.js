@@ -39,10 +39,10 @@ class VLLMService {
         try {
             const activeModels = await db.allAsync('SELECT id FROM models WHERE is_active = 1 AND external_provider_id IS NULL');
             if (activeModels && activeModels.length > 0) {
-                console.log(`[vLLMService] Found ${activeModels.length} model(s) to activate on startup.`);
+                console.log('[vLLMService] Found %s model(s) to activate on startup.', activeModels.length);
                 for (const model of activeModels) {
                     this.activateModel(model.id).catch(err => {
-                        console.error(`[vLLMService] Error during startup activation for model ${model.id}:`, err.message);
+                        console.error('[vLLMService] Error during startup activation for model %s:', model.id, err.message);
                     });
                 }
             }
@@ -86,7 +86,7 @@ class VLLMService {
             try {
                 dbConfig = JSON.parse(model.config);
             } catch (e) {
-                console.error(`[vLLMService] Error parsing DB config for ${model.name}:`, e);
+                console.error('[vLLMService] Error parsing DB config for %s:', model.name, e);
             }
         }
         const finalConfig = { ...onDiskConfig, ...dbConfig };
@@ -103,16 +103,14 @@ class VLLMService {
         else if (desiredPrecision && desiredPrecision !== 'auto') {
         }
         
-        const requestedContext = model.context_window ? parseInt(model.context_window) : null;
-        let actualContext = requestedContext;
-        const modelFamily = this.detectModelFamily(model.model_path);
+        let actualContext;
         let familyOptimizations = {};
 
         const optimizedConfig = { ...familyOptimizations, ...finalConfig };
         
         if (familyOptimizations.dtype) dtypeArg = familyOptimizations.dtype;
         if (familyOptimizations.quantization && familyOptimizations.quantization !== quantizationArg) {
-            quantizationArg = familyOptimizations.quantization;
+            // familyOptimizations.quantization takes precedence
         }
         actualContext = familyOptimizations.max_model_len;
 
@@ -134,16 +132,16 @@ class VLLMService {
             args.push('--max-model-len', String(actualContext));
         }
 
-        console.log(`[vLLMService] vLLM command prepared: ${pythonWrapperPath} ${args.join(' ')}`);
+        console.log('[vLLMService] vLLM command prepared: %s %s', pythonWrapperPath, args.join(' '));
 
         try {
             const tensorParallelSizeNum = parseInt(tensorParallelSize, 10);            
             await db.runAsync('UPDATE models SET tensor_parallel_size = ? WHERE id = ?', [tensorParallelSizeNum, modelId]);
             await modelPoolManager.startModel(modelId, 0, pythonWrapperPath, args, tensorParallelSizeNum, activationId);
-            console.log(`[vLLMService] Model ${model.name} activation initiated.`);            
+            console.log('[vLLMService] Model %s activation initiated.', model.name);            
             return { success: true, message: `Model ${model.name} activation started`, activationId };
         } catch (error) {
-            console.error(`[vLLMService] Error activating model via pool manager: ${error.message}`);
+            console.error('[vLLMService] Error activating model via pool manager: %s', error.message);
             eventBus.publish('activation:error', activationId, {
                 error: error.message,
                 modelId: modelId,
@@ -154,10 +152,10 @@ class VLLMService {
     }
 
     async deactivateModel(modelId, gpuId = 0) {
-        console.log(`[vLLMService] Deactivating model ${modelId} on GPU ${gpuId}...`);
+        console.log("[vLLMService] Deactivating model %s on GPU %s...", String(modelId).replace(/\n|\r/g, ''), gpuId);
         await modelPoolManager.stopModel(modelId, gpuId);
         await db.runAsync('UPDATE models SET is_active = 0, assigned_gpu_id = 0 WHERE id = ?', [modelId]);
-        console.log(`[vLLMService] Model ${modelId} marked as inactive.`);
+        console.log("[vLLMService] Model %s marked as inactive.", String(modelId).replace(/\n|\r/g, ''));
     }
 
     /**

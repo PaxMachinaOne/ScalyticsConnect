@@ -18,7 +18,7 @@ exports.resetUserPassword = async (req, res) => {
     // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      console.error('[adminUserController.resetUserPassword] User not found with ID:', userId);
+      console.error('[adminUserController.resetUserPassword] User not found with ID: %s', String(userId).replace(/\n|\r/g, ''));
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -397,7 +397,7 @@ exports.registerUser = async (req, res) => {
           'INSERT OR IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)',
           [userId, userGroup.id]
         );
-        console.log(`[Admin Register] Added user ${userId} to group 'User' (ID: ${userGroup.id})`);
+        console.log('[Admin Register] Added user %s to group \'User\' (ID: %s)', userId, userGroup.id);
       } else {
         console.warn("[Admin Register] Could not find default 'User' group to assign new user to.");
       }

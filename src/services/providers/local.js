@@ -7,7 +7,7 @@
  */
 const path = require('path');
 const fs = require('fs');
-const { spawn, execSync } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const os = require('os');
 
 /**
@@ -22,8 +22,9 @@ const os = require('os');
 exports.callModel = async (options) => {
   const { modelPath, prompt, parameters = {} } = options;
   
-  // Create a temporary file to store the parameters
-  const paramFile = path.join(os.tmpdir(), `model_params_${Date.now()}.json`);
+  // Create a secure temporary directory and file to store the parameters
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'model-params-'));
+  const paramFile = path.join(tmpDir, 'params.json');
   
   // Write the parameters to the file
   // Default to using GPU with all layers if not specified
@@ -63,7 +64,7 @@ exports.callModel = async (options) => {
   if (useGpu) {
     try {
       // Try to detect number of GPUs using nvidia-smi
-      const gpuListOutput = execSync('nvidia-smi --list-gpus', { encoding: 'utf8' });
+      const gpuListOutput = execFileSync('nvidia-smi', ['--list-gpus'], { encoding: 'utf8' });
       const gpuCount = gpuListOutput.trim().split('\n').length;
       
       if (gpuCount > 1) {
@@ -129,6 +130,7 @@ exports.callModel = async (options) => {
       // Clean up the parameter file
       try {
         fs.unlinkSync(paramFile);
+        fs.rmdirSync(tmpDir);
       } catch (err) {
         console.warn(`Could not delete parameter file: ${err.message}`);
       }
@@ -178,6 +180,7 @@ exports.callModel = async (options) => {
   // Clean up the parameter file before throwing
   try {
     fs.unlinkSync(paramFile);
+    fs.rmdirSync(tmpDir);
   } catch (err) {
     console.warn(`Could not delete parameter file during error handling: ${err.message}`);
   }

@@ -46,7 +46,7 @@ function setupMiddleware(app) {
           if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
           } else {
-            console.warn(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+            console.warn('CORS blocked origin: %s. Allowed: %s', origin, allowedOrigins.join(', '));
             callback(new Error(`Origin ${origin} not allowed by CORS`));
           }
         },
@@ -105,19 +105,19 @@ function setupMiddleware(app) {
   const uploadDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
-    console.log(`Created uploads directory at ${uploadDir}`);
+    console.log('Created uploads directory at %s', uploadDir);
   }
 
   // Serve uploads directory with specific headers
   app.use('/uploads', (req, res, next) => {
     if (process.env.DEBUG_MODE === 'true') {
-      console.log(`[WARN] Uploads request: ${req.path}`);
+      console.log("[WARN] Uploads request: %s",  String(req.path).replace(/\n|\r/g, ''));
     }
     next();
   }, express.static(path.join(process.cwd(), 'uploads'), {
     setHeaders: (res, filePath) => {
       if (process.env.DEBUG_MODE === 'true') {
-        console.log(`[WARN] Serving file: ${filePath}`);
+        console.log('[WARN] Serving file: %s', filePath);
       }
       
       // Set Cache-Control for different file types

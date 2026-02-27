@@ -9,7 +9,6 @@ const fs = require('fs');
 const path = require('path');
 const Model = require('../../models/Model');
 const diskUtils = require('../../utils/diskUtils');
-const db = require('../../config/database');
 
 // Get models directory path - ensure absolute path is used, especially in production
 const getModelsDir = () => {
@@ -73,7 +72,7 @@ const MODELS_DIR = getModelsDir();
           // as Node.js often lacks permissions for chgrp.
           console.log('Skipping chgrp in Node.js; deployment scripts handle group ownership.');
         } catch (permSetErr) {
-          console.log(`Note: Initial permission setting failed: ${permSetErr.message}`); // Keep chmod error logging
+          console.log('Note: Initial permission setting failed: %s', permSetErr.message); // Keep chmod error logging
           console.log('The maintenance permissions script will handle this during deployment/update');
         }
       }
@@ -85,10 +84,10 @@ const MODELS_DIR = getModelsDir();
       fs.writeFileSync(testFile, 'test');
       fs.unlinkSync(testFile);
     } catch (permErr) {
-      console.error(`Models directory exists but is not writable: ${permErr.message}`);
+      console.error('Models directory exists but is not writable: %s', permErr.message);
     }
   } catch (err) {
-    console.error(`Error managing models directory: ${err.message}`);
+    console.error('Error managing models directory: %s', err.message);
     // Continue execution - we'll handle directory access errors in the specific functions
   }
 
@@ -113,7 +112,7 @@ const directoryContainsModelFiles = async (dirPath) => {
           const extension = path.extname(file).toLowerCase();
           
           if (modelExtensions.includes(extension)) {
-            console.log(`Found model file in directory: ${file}`);
+            console.log('Found model file in directory: %s', file);
             foundModelFiles.push(file);
           }
         } else if (stats.isDirectory()) {
@@ -126,7 +125,7 @@ const directoryContainsModelFiles = async (dirPath) => {
           }
         }
       } catch (statErr) {
-        console.error(`Error accessing file ${file}: ${statErr.message}`);
+        console.error('Error accessing file %s: %s', file, statErr.message);
         continue;
       }
     }
@@ -136,7 +135,7 @@ const directoryContainsModelFiles = async (dirPath) => {
       modelFiles: foundModelFiles
     };
   } catch (error) {
-    console.error(`Error checking directory for model files: ${error.message}`);
+    console.error('Error checking directory for model files: %s', error.message);
     return {
       containsModelFiles: false,
       modelFiles: []
@@ -165,14 +164,14 @@ const isDirectoryReferencedInDatabase = async (dirPath) => {
       
       if (modelPath.startsWith(normalizedDirPath) || 
           modelPath.includes(path.basename(normalizedDirPath).toLowerCase())) {
-        console.log(`Directory is referenced by model in database: ${model.name} (${model.id})`);
+        console.log('Directory is referenced by model in database: %s (%s)', model.name, model.id);
         return true;
       }
     }
     
     return false;
   } catch (error) {
-    console.error(`Error checking if directory is referenced in database: ${error.message}`);
+    console.error('Error checking if directory is referenced in database: %s', error.message);
     return false;
   }
 };
@@ -225,11 +224,11 @@ const listModelDirectories = async () => {
                 totalSize += stats.size;
               }
             } catch (fileErr) {
-              console.log(`Error processing file ${file}: ${fileErr.message}`);
+              console.log('Error processing file %s: %s', file, fileErr.message);
             }
           }
         } catch (err) {
-          console.error(`Error reading directory ${entry.name}: ${err.message}`);
+          console.error('Error reading directory %s: %s', entry.name, err.message);
         }
         
         // Get directory stats
@@ -237,7 +236,7 @@ const listModelDirectories = async () => {
         try {
           stats = fs.statSync(dirPath);
         } catch (err) {
-          console.error(`Error getting stats for ${entry.name}: ${err.message}`);
+          console.error('Error getting stats for %s: %s', entry.name, err.message);
         }
         
         // Check if directory contains model files
@@ -285,26 +284,24 @@ const deleteModelDirectory = async (dirName) => {
     }
     
     // Construct full path and perform safety checks
-    const dirPath = path.join(MODELS_DIR, dirName);
-    
+    const dirPath = path.resolve(MODELS_DIR, dirName);
+
+    // Safety check: Must be within models directory (use path.resolve for robust traversal prevention)
+    const resolvedModelsDir = path.resolve(MODELS_DIR);
+    if (!dirPath.startsWith(resolvedModelsDir + path.sep) || dirPath === resolvedModelsDir) {
+      throw new Error(`Security error: Cannot delete outside of models directory or the models directory itself`);
+    }
+
     // Safety check: Directory must exist
     if (!fs.existsSync(dirPath)) {
       throw new Error(`Directory does not exist: ${dirName}`);
     }
-    
+
     // Safety check: Must be a directory
     if (!fs.statSync(dirPath).isDirectory()) {
       throw new Error(`Not a directory: ${dirName}`);
     }
-    
-    // Safety check: Must be within models directory
-    const normalizedPath = path.normalize(dirPath);
-    const normalizedModelsDir = path.normalize(MODELS_DIR);
-    
-    if (!normalizedPath.startsWith(normalizedModelsDir) || normalizedPath === normalizedModelsDir) {
-      throw new Error(`Security error: Cannot delete outside of models directory or the models directory itself`);
-    }
-    
+
     // Check if directory contains model files
     const containsModelFiles = await directoryContainsModelFiles(dirPath);
     
@@ -317,7 +314,7 @@ const deleteModelDirectory = async (dirName) => {
     }
     
     // Log what we're trying to delete
-    console.log(`Attempting to delete model directory: ${dirPath}`);
+    console.log("Attempting to delete model directory: %s", String(dirPath).replace(/\n|\r/g, ''));
     
     // Use our disk utility for directory removal
     const deleted = await diskUtils.removeDirectory(dirPath);
@@ -338,7 +335,7 @@ const deleteModelDirectory = async (dirName) => {
       }
     };
   } catch (error) {
-    console.error('Error deleting model directory:', error);
+    console.error('Error deleting model directory: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     throw error;
   }
 };
@@ -356,26 +353,24 @@ const forceDeleteModelDirectory = async (dirName) => {
     }
     
     // Construct full path and perform safety checks
-    const dirPath = path.join(MODELS_DIR, dirName);
-    
+    const dirPath = path.resolve(MODELS_DIR, dirName);
+
+    // Safety check: Must be within models directory (use path.resolve for robust traversal prevention)
+    const resolvedModelsDir = path.resolve(MODELS_DIR);
+    if (!dirPath.startsWith(resolvedModelsDir + path.sep) || dirPath === resolvedModelsDir) {
+      throw new Error(`Security error: Cannot delete outside of models directory or the models directory itself`);
+    }
+
     // Safety check: Directory must exist
     if (!fs.existsSync(dirPath)) {
       throw new Error(`Directory does not exist: ${dirName}`);
     }
-    
+
     // Safety check: Must be a directory
     if (!fs.statSync(dirPath).isDirectory()) {
       throw new Error(`Not a directory: ${dirName}`);
     }
-    
-    // Safety check: Must be within models directory
-    const normalizedPath = path.normalize(dirPath);
-    const normalizedModelsDir = path.normalize(MODELS_DIR);
-    
-    if (!normalizedPath.startsWith(normalizedModelsDir) || normalizedPath === normalizedModelsDir) {
-      throw new Error(`Security error: Cannot delete outside of models directory or the models directory itself`);
-    }
-    
+
     // Check if directory contains model files
     const modelFilesResult = await directoryContainsModelFiles(dirPath);
     
@@ -388,7 +383,7 @@ const forceDeleteModelDirectory = async (dirName) => {
     }
     
     // Log what we're trying to delete
-    console.log(`Force deleting model directory (including model files): ${dirPath}`);
+    console.log("Force deleting model directory (including model files): %s", String(dirPath).replace(/\n|\r/g, ''));
     
     // Use our disk utility for directory removal
     const deleted = await diskUtils.removeDirectory(dirPath);
@@ -411,7 +406,7 @@ const forceDeleteModelDirectory = async (dirName) => {
       }
     };
   } catch (error) {
-    console.error('Error force deleting model directory:', error);
+    console.error('Error force deleting model directory: %s', String(error instanceof Error ? error.message : error).replace(/\n|\r/g, ''));
     throw error;
   }
 };

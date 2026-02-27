@@ -5,7 +5,7 @@ const router = express.Router();
 const chatController = require('../controllers/chatController');
 const agentController = require('../controllers/agentController'); 
 const githubController = require('../controllers/githubController');
-const { protect, checkPrivateMode, checkModelAccess, standardAuth } = require('../middleware/authMiddleware');
+const { protect, checkPrivateMode, checkModelAccess } = require('../middleware/authMiddleware');
 
 router.use(protect);
 router.use(checkPrivateMode);

@@ -18,7 +18,7 @@ import time
 import traceback
 import threading # Added for Lock
 from threading import Thread
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, Optional, Any
 
 # Configure environment for optimal performance
 os.environ['GGML_VERBOSE'] = os.environ.get('GGML_VERBOSE', '0')
@@ -76,8 +76,6 @@ class PersistentModelWorker:
             env_n_ctx = os.environ.get("N_CTX")
             env_n_batch = os.environ.get("N_BATCH")
             env_n_gpu_layers = os.environ.get("N_GPU_LAYERS")
-            env_kv_cache_type = os.environ.get("LLAMA_KV_CACHE_TYPE")
-
             # Parse each parameter with robust error handling
             try:
                 if env_n_ctx: self.model_params["n_ctx"] = int(env_n_ctx)
@@ -116,7 +114,6 @@ class PersistentModelWorker:
                 verbose=False
             )
             self.status = STATUS_READY
-            load_time = int((time.time() - self.start_time) * 1000)
 
             self.send_message({
                 "type": "ready",
@@ -157,17 +154,13 @@ class PersistentModelWorker:
             repeat_penalty = parameters.get("repeat_penalty", 1.1)
 
             output = ""
-            start_time = time.time()
             token_count = 0
 
             if not self.model: raise Exception("Model is not loaded")
 
             if self.interrupt_flags.get(request_id):
                 print(f"Interrupt detected for {request_id} before starting generation.", file=sys.stderr)
-                final_status = "cancelled"
-                usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
             else:
-                final_status = "completed"
                 first_token_sent = False # Flag to track if the first token has been processed
                 try:
                     for chunk in self.model(
@@ -176,7 +169,6 @@ class PersistentModelWorker:
                     ):
                         if self.interrupt_flags.get(request_id):
                             print(f"Interrupt detected for {request_id} during generation.", file=sys.stderr)
-                            final_status = "cancelled"
                             break
 
                         if isinstance(chunk, dict) and 'choices' in chunk and len(chunk['choices']) > 0:
@@ -343,7 +335,8 @@ class PersistentModelWorker:
                     print(f"Invalid JSON message: {line}", file=sys.stderr)
                 except Exception as e:
                     print(f"Error processing message: {e}", file=sys.stderr)
-        except KeyboardInterrupt: pass
+        except KeyboardInterrupt:
+            pass  # Exception intentionally suppressed
         except Exception as e:
             print(f"Unexpected error in run loop: {e}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)

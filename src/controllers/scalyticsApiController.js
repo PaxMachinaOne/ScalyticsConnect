@@ -9,8 +9,6 @@ const vllmService = require('../services/vllmService');
 const { formatOpenAIStreamChunk, formatOpenAIResponse } = require('../utils/openaiFormatter');
 const { approximateTokenCount } = require('../utils/tokenizer');
 const { applyFilters } = require('../services/responseFilteringService');
-const providerService = require('../services/providers/index.js');
-const apiKeyService = require('../services/apiKeyService.js');
 
 // --- Validation Schemas ---
 const chatCompletionSchema = Joi.object({
@@ -102,7 +100,7 @@ exports.handleChatCompletion = async (req, res) => {
         res.write('data: [DONE]\n\n');
 
       } catch (e) {
-        console.error(`API Stream Error: ${e.message}`);
+        console.error('API Stream Error: %s', e.message);
       } finally {
         res.end();
       }
@@ -127,7 +125,7 @@ exports.handleChatCompletion = async (req, res) => {
         logTokenUsage(userId, model.id, inputTokens, outputTokens, Date.now() - req.requestStartTime);
 
       } catch (serviceError) {
-        console.error(`API Non-Stream Error: ${serviceError.message}`);
+        console.error('API Non-Stream Error: %s', serviceError.message);
         res.status(500).json({ success: false, error: { message: 'Failed to process request.', type: 'api_error' } });
       }
     }
@@ -148,7 +146,7 @@ async function logTokenUsage(userId, modelId, inputTokens, outputTokens, latency
         latencyMs, source: 'scalyticsApiController'
       });
     } catch (dbError) {
-      console.error(`Failed to log API token usage for user ${userId}, model ${modelId}: ${dbError.message}`);
+      console.error('Failed to log API token usage for user %s, model %s: %s', userId, modelId, dbError.message);
     }
 }
 

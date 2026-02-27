@@ -29,7 +29,7 @@ const authProviderService = {
       // If not found in integrations or not enabled, fall back to environment variables
       return this.getProviderConfigFromEnv(provider);
     } catch (error) {
-      console.error(`Error getting provider config for ${provider}:`, error);
+      console.error("Error getting provider config for %s:", String(provider).replace(/\n|\r/g, ''), error);
       // Fall back to environment variables
       return this.getProviderConfigFromEnv(provider);
     }

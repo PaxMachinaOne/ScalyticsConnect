@@ -5,7 +5,6 @@ import adminService from '../../../services/adminService';
 import integrationService from '../../../services/integrationService';
 import { useDebounce } from '../../../hooks/useDebounce';
 // eslint-disable-next-line no-unused-vars
-import UserModelAccess from './UserModelAccess';
 import UserTable from './UserTable';
 import UserDetailModal from './UserDetailModal';
 import UserRegistrationModal from './UserRegistrationModal';

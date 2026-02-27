@@ -75,7 +75,7 @@ if (require.main === module) {
     process.exit(1);
   }
 
-  const formattedPrompt = applyPromptFormat(modelPath, prompt);
+  applyPromptFormat(modelPath, prompt);
   // console.log('\nFormatted prompt:');
   // console.log('----------------');
   // console.log(formattedPrompt);

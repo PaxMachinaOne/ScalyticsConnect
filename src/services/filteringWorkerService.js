@@ -59,7 +59,7 @@ class FilteringWorkerService extends EventEmitter {
             this.rejectReadyPromise = reject;
         });
 
-        let activeLanguages = ['en']; 
+        let activeLanguages; 
         try {
             const langSetting = getSystemSetting('active_filter_languages', '["en"]');
             try {
@@ -85,7 +85,7 @@ class FilteringWorkerService extends EventEmitter {
                 PYTHONUNBUFFERED: "1"
             };
 
-            console.log(`[FilterWorker] Spawning worker: ${VENV_PYTHON_PATH} ${PYTHON_WORKER_SCRIPT}`);
+            console.log('[FilterWorker] Spawning worker: %s %s', VENV_PYTHON_PATH, PYTHON_WORKER_SCRIPT);
             this.workerProcess = spawn(VENV_PYTHON_PATH, [PYTHON_WORKER_SCRIPT], {
                 env: workerEnv,
                 stdio: ['pipe', 'pipe', 'pipe'] 
@@ -96,7 +96,7 @@ class FilteringWorkerService extends EventEmitter {
 
             this.workerProcess.stdout.on('data', (data) => this._handleWorkerMessage(data));
             this.workerProcess.stderr.on('data', (data) => {
-                console.error(`[FilterWorker STDERR] ${data.toString().trim()}`);
+                console.error('[FilterWorker STDERR] %s', data.toString().trim());
             });
             this.workerProcess.on('error', (error) => this._handleWorkerError(error));
 
@@ -155,20 +155,20 @@ class FilteringWorkerService extends EventEmitter {
                             this.pendingRequests.delete(requestId);
                         }
                     } else {
-                        console.error(`[FilterWorker] Received general error: ${errorMsg}`);
+                        console.error('[FilterWorker] Received general error: %s', errorMsg);
                         this._handleWorkerError(new Error(errorMsg)); 
                     }
                 } else if (message.type === 'pong') {
                 }
 
             } catch (error) {
-                console.error(`[FilterWorker] Error parsing message: ${error}\nRaw data: ${messageStr}`);
+                console.error('[FilterWorker] Error parsing message: %s\nRaw data: %s', error, messageStr);
             }
         }
     }
 
     _handleWorkerError(error) {
-        console.error(`[FilterWorker] Worker process error: ${error.message}`);
+        console.error('[FilterWorker] Worker process error: %s', error.message);
         this.status = 'error';
         this.lastError = error.message;
         if (this.rejectReadyPromise) this.rejectReadyPromise(error);
@@ -181,7 +181,7 @@ class FilteringWorkerService extends EventEmitter {
 
     _handleWorkerExit(code, signal) {
         const reason = signal ? `signal ${signal}` : `code ${code}`;
-        console.warn(`[FilterWorker] Worker process exited with ${reason}. Status was: ${this.status}`);
+        console.warn('[FilterWorker] Worker process exited with %s. Status was: %s', reason, this.status);
         const wasReady = this.status === 'ready';
         this.status = 'stopped';
         this.lastError = `Worker exited unexpectedly (${reason})`;
@@ -200,7 +200,7 @@ class FilteringWorkerService extends EventEmitter {
     _attemptRestart() {
         if (this.restartAttempts < this.maxRestarts) {
             this.restartAttempts++;
-            console.log(`[FilterWorker] Attempting restart ${this.restartAttempts}/${this.maxRestarts} in ${this.restartDelay}ms...`);
+            console.log('[FilterWorker] Attempting restart %s/%s in %sms...', this.restartAttempts, this.maxRestarts, this.restartDelay);
             setTimeout(() => {
                 if (this.status !== 'starting' && this.status !== 'ready') {
                     this.initialize(); 
@@ -287,7 +287,7 @@ class FilteringWorkerService extends EventEmitter {
                 }
                  console.log('[FilterWorker] Worker now ready, proceeding with request.');
             } else {
-                 console.warn(`[FilterWorker] Worker not ready (Status: ${this.status}). Attempting to initialize...`);
+                 console.warn('[FilterWorker] Worker not ready (Status: %s). Attempting to initialize...', this.status);
                  await this.initialize();
                  if (this.status !== 'ready') {
                      throw new Error(`Filtering worker failed to initialize. Status: ${this.status}, Error: ${this.lastError}`);
@@ -325,7 +325,7 @@ class FilteringWorkerService extends EventEmitter {
             } catch (error) {
                 clearTimeout(timeoutId);
                 this.pendingRequests.delete(requestId);
-                console.error(`[FilterWorker] Error sending NER request ${requestId}:`, error.message);
+                console.error('[FilterWorker] Error sending NER request %s:', requestId, error.message);
                 reject(new Error(`Failed to send message to filtering worker: ${error.message}`));
             }
         });

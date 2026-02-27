@@ -12,13 +12,13 @@ const SetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [/* token */, setToken] = useState(''); 
   // eslint-disable-next-line no-unused-vars
-  const [email, setEmail] = useState(''); 
+  const [, setEmail] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [tokenValid, setTokenValid] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   // eslint-disable-next-line no-unused-vars
-  const [showResendForm, setShowResendForm] = useState(false); 
+  const [, setShowResendForm] = useState(false); 
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,57 +33,51 @@ const SetPasswordPage = () => {
       setEmail(emailParam);
     }
     
-    if (tokenParam) {
-      const processedToken = decodeURIComponent(tokenParam);
+    // Always verify token — verifyToken handles missing/empty tokens by setting error state
+    const processedToken = tokenParam ? decodeURIComponent(tokenParam) : '';
+    if (processedToken) {
       setToken(processedToken);
-      
-      const verifyToken = async () => {
-        try {
-          setLoading(true);
-          setError(''); 
-          
-          try {
-            const integrationService = (await import('../services/integrationService')).default;
-            await integrationService.getAuthConfig();
-          } catch (err) {
-          }
-          
-          await tokenService.verifyRegistrationToken(processedToken);
-
-          // Set token valid state
-          setTokenValid(true);
-          setError(''); 
-        } catch (err) {
-          setTokenValid(false);
-          
-          // Extract error message from the error object
-          let errorMessage = 'Failed to verify registration token';
-          if (err.response && err.response.data) {
-            errorMessage = err.response.data.message || errorMessage;
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-          
-          setError(errorMessage);
-          
-          // If we have email but token verification failed, show resend form
-          if (emailParam) {
-            setShowResendForm(true);
-          }
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      verifyToken();
-    } else if (emailParam) {
-      setTokenValid(false);
-      setError('Your registration link is missing required information. Please contact your administrator to resend the invitation.');
-      setShowResendForm(true);
-    } else {
-      setTokenValid(false);
-      setError('No registration information provided');
     }
+
+    const verifyToken = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        try {
+          const integrationService = (await import('../services/integrationService')).default;
+          await integrationService.getAuthConfig();
+        } catch (err) {
+        }
+
+        await tokenService.verifyRegistrationToken(processedToken);
+
+        // Set token valid state
+        setTokenValid(true);
+        setError('');
+      } catch (err) {
+        setTokenValid(false);
+
+        // Extract error message from the error object
+        let errorMessage = 'Failed to verify registration token';
+        if (err.response && err.response.data) {
+          errorMessage = err.response.data.message || errorMessage;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
+        setError(errorMessage);
+
+        // If we have email but token verification failed, show resend form
+        if (emailParam) {
+          setShowResendForm(true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
   }, [location]);
 
   const handleSubmit = async (e) => {

@@ -3,7 +3,7 @@
 const EventSource = require('eventsource');
 const { pythonResearchService } = require('../services/pythonResearchService');
 const { APIError } = require('../utils/errorUtils');
-const { isCancellationRequested, clearCancellationRequest, registerCancellationOnDisconnect } = require('../utils/cancellationManager');
+const { clearCancellationRequest } = require('../utils/cancellationManager');
 const UsageStatsService = require('../services/usageStatsService');
 const Model = require('../models/Model'); 
 const User = require('../models/User'); 
@@ -11,22 +11,20 @@ const { getSystemSetting } = require('../config/systemConfig');
 const apiKeyService = require('../services/apiKeyService'); 
 const { db } = require('../models/db'); 
 const vllmService = require('../services/vllmService');
-const reasoningLoggerService = require('../services/reasoningLoggerService');
 
 const initiateDeepSearchStream = async (req, res, next) => {
-  const { 
+  const {
     query: originalUserQuery,
-    reasoningModelName, 
-    synthesisModelName, 
+    reasoningModelName: initialReasoningModelName,
+    synthesisModelName: initialSynthesisModelName,
     search_providers,
-    max_distinct_search_queries,
-    max_results_per_provider_query,
-    max_url_exploration_depth,
     max_hops,
     chunk_size_words,
     chunk_overlap_words,
     top_k_retrieval_per_hop,
   } = req.body;
+  let reasoningModelName = initialReasoningModelName;
+  let synthesisModelName = initialSynthesisModelName;
 
   const userId = req.user.id; 
   const apiTaskId = `api_ds_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
@@ -53,27 +51,24 @@ const initiateDeepSearchStream = async (req, res, next) => {
     if (reasoningModelInfoFull) {
         const isRequestedModelAccessible = accessibleModels.some(m => m.id === reasoningModelInfoFull.id) || (currentUser && currentUser.is_admin);
         if (!isRequestedModelAccessible) {
-            console.warn(`[DeepSearchAPI:${apiTaskId}] Requested reasoning model '${originalReasoningModelName}' (ID: ${reasoningModelInfoFull.id}) found but is not accessible to user ${userId}. Attempting fallback to local model.`);
+            console.warn("[DeepSearchAPI:%s] Requested reasoning model '%s' (ID: %s) found but is not accessible to user %s. Attempting fallback to local model.", String(apiTaskId).replace(/\n|\r/g, ''), String(originalReasoningModelName).replace(/\n|\r/g, ''), String(reasoningModelInfoFull.id).replace(/\n|\r/g, ''), String(userId).replace(/\n|\r/g, ''));
             performReasoningFallback = true;
         }
     } else {
-        if (originalReasoningModelName && originalReasoningModelName.toLowerCase() !== 'local') {
-            console.warn(`[DeepSearchAPI:${apiTaskId}] Requested reasoning model '${originalReasoningModelName}' not found. Attempting fallback to local model.`);
-            performReasoningFallback = true;
-        } else if (!originalReasoningModelName) {
-            console.log(`[DeepSearchAPI:${apiTaskId}] No reasoningModelName provided. Defaulting to local model for reasoning.`);
+        if (originalReasoningModelName.toLowerCase() !== 'local') {
+            console.warn("[DeepSearchAPI:%s] Requested reasoning model '%s' not found. Attempting fallback to local model.", String(apiTaskId).replace(/\n|\r/g, ''), String(originalReasoningModelName).replace(/\n|\r/g, ''));
             performReasoningFallback = true;
         }
     }
 
     if (performReasoningFallback) {
-        reasoningModelName = "local"; 
+        reasoningModelName = "local";
         reasoningModelInfoFull = null;  
     } else if (reasoningModelInfoFull && reasoningModelInfoFull.external_provider_id && !reasoningModelInfoFull.provider_name) {
        
         const provider = await db.getAsync('SELECT name FROM api_providers WHERE id = ?', [reasoningModelInfoFull.external_provider_id]);
         if (provider) reasoningModelInfoFull.provider_name = provider.name;
-        else console.error(`[DeepSearchAPI:${apiTaskId}] Provider not found for reasoning model ${reasoningModelInfoFull.name}`);
+        else console.error('[DeepSearchAPI:%s] Provider not found for reasoning model %s', apiTaskId, reasoningModelInfoFull.name);
     }
 
     // --- Synthesis Model Handling with Fallback ---
@@ -84,27 +79,24 @@ const initiateDeepSearchStream = async (req, res, next) => {
     if (synthesisModelInfoFull) {
         const isRequestedModelAccessible = accessibleModels.some(m => m.id === synthesisModelInfoFull.id) || (currentUser && currentUser.is_admin);
         if (!isRequestedModelAccessible) {
-            console.warn(`[DeepSearchAPI:${apiTaskId}] Requested synthesis model '${originalSynthesisModelName}' (ID: ${synthesisModelInfoFull.id}) found but is not accessible to user ${userId}. Attempting fallback to local model.`);
+            console.warn("[DeepSearchAPI:%s] Requested synthesis model '%s' (ID: %s) found but is not accessible to user %s. Attempting fallback to local model.", String(apiTaskId).replace(/\n|\r/g, ''), String(originalSynthesisModelName).replace(/\n|\r/g, ''), String(synthesisModelInfoFull.id).replace(/\n|\r/g, ''), String(userId).replace(/\n|\r/g, ''));
             performSynthesisFallback = true;
         }
     } else {
-        if (originalSynthesisModelName && originalSynthesisModelName.toLowerCase() !== 'local') {
-            console.warn(`[DeepSearchAPI:${apiTaskId}] Requested synthesis model '${originalSynthesisModelName}' not found. Attempting fallback to local model.`);
-            performSynthesisFallback = true;
-        } else if (!originalSynthesisModelName) {
-            console.log(`[DeepSearchAPI:${apiTaskId}] No synthesisModelName provided. Defaulting to local model for synthesis.`);
+        if (originalSynthesisModelName.toLowerCase() !== 'local') {
+            console.warn("[DeepSearchAPI:%s] Requested synthesis model '%s' not found. Attempting fallback to local model.", String(apiTaskId).replace(/\n|\r/g, ''), String(originalSynthesisModelName).replace(/\n|\r/g, ''));
             performSynthesisFallback = true;
         }
     }
 
     if (performSynthesisFallback) {
-        synthesisModelName = "local"; 
+        synthesisModelName = "local";
         synthesisModelInfoFull = null;  
     } else if (synthesisModelInfoFull && synthesisModelInfoFull.external_provider_id && !synthesisModelInfoFull.provider_name) {
         
         const provider = await db.getAsync('SELECT name FROM api_providers WHERE id = ?', [synthesisModelInfoFull.external_provider_id]);
         if (provider) synthesisModelInfoFull.provider_name = provider.name;
-        else console.error(`[DeepSearchAPI:${apiTaskId}] Provider not found for synthesis model ${synthesisModelInfoFull.name}`);
+        else console.error('[DeepSearchAPI:%s] Provider not found for synthesis model %s', apiTaskId, synthesisModelInfoFull.name);
     }
 
     async function prepareModelInfoForPython(inputModelNameFromRequest, resolvedModelFullFromDBLookup, isForReasoning) {
@@ -213,7 +205,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
         let isModelConsideredAccessible = false;
         if (performReasoningFallback) { 
             isModelConsideredAccessible = true; 
-            console.log(`[DeepSearchAPI:${apiTaskId}] Fallback to local model '${finalReasoningModelInfo.name}' for reasoning was used. Bypassing standard accessibility check for this fallback model.`);
+            console.log('[DeepSearchAPI:%s] Fallback to local model \'%s\' for reasoning was used. Bypassing standard accessibility check for this fallback model.', apiTaskId, finalReasoningModelInfo.name);
         } else {
             isModelConsideredAccessible = accessibleModels.some(m => m.id === finalReasoningModelInfo.id) || (currentUser && currentUser.is_admin);
         }
@@ -229,7 +221,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
         let isModelConsideredAccessible = false;
         if (performSynthesisFallback) { 
             isModelConsideredAccessible = true;
-            console.log(`[DeepSearchAPI:${apiTaskId}] Fallback to local model '${finalSynthesisModelInfo.name}' for synthesis was used. Bypassing standard accessibility check.`);
+            console.log('[DeepSearchAPI:%s] Fallback to local model \'%s\' for synthesis was used. Bypassing standard accessibility check.', apiTaskId, finalSynthesisModelInfo.name);
         } else {
             isModelConsideredAccessible = accessibleModels.some(m => m.id === finalSynthesisModelInfo.id) || (currentUser && currentUser.is_admin);
         }
@@ -260,7 +252,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
                     } catch (e) { }
                 }
             } else {
-                console.warn(`[DeepSearchAPI:${apiTaskId}] API key NOT found for search provider: ${provider.serviceName} for user ${userId}`);
+                console.warn('[DeepSearchAPI:%s] API key NOT found for search provider: %s for user %s', apiTaskId, provider.serviceName, userId);
             }
         } catch (err) { }
     }
@@ -299,7 +291,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
       if (reasoningApiKeyObj?.key && reasoningApiKeyObj.key.trim()) {
         api_config[configKeyName] = reasoningApiKeyObj.key.trim();
       } else {
-        console.warn(`[DeepSearchAPI:${apiTaskId}] API key not found or empty for reasoning model provider: ${finalReasoningModelInfo.provider_name} (tried service name: ${providerNameForApiKeyService})`);
+        console.warn('[DeepSearchAPI:%s] API key not found or empty for reasoning model provider: %s (tried service name: %s)', apiTaskId, finalReasoningModelInfo.provider_name, providerNameForApiKeyService);
       }
     }
     let shouldFetchSynthesisKey = false;
@@ -341,7 +333,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
       } else if (synthesisApiKeyObj?.key && synthesisApiKeyObj.key.trim() && api_config[configKeyNameSynthesis]) {
       }
       else {
-        console.warn(`[DeepSearchAPI:${apiTaskId}] API key not found or empty for synthesis model provider: ${finalSynthesisModelInfo.provider_name} (tried service name: ${providerNameForApiKeyServiceSynthesis})`);
+        console.warn('[DeepSearchAPI:%s] API key not found or empty for synthesis model provider: %s (tried service name: %s)', apiTaskId, finalSynthesisModelInfo.provider_name, providerNameForApiKeyServiceSynthesis);
       }
     }
 
@@ -365,7 +357,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
     });
 
     if (missingKeys.length > 0) {
-      console.error(`[DeepSearchAPI:${apiTaskId}] Required API keys are missing or invalid.`);
+      console.error('[DeepSearchAPI:%s] Required API keys are missing or invalid.', apiTaskId);
       return next(new APIError(`One or more required API keys are missing or invalid. Please ensure they are configured in your account or system settings.`, 400));
     }
 
@@ -407,7 +399,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
             if (embeddingModelData && (embeddingModelData.huggingface_repo || embeddingModelData.model_path)) {
                 embeddingModelPathForPython = embeddingModelData.huggingface_repo || embeddingModelData.model_path;
             }
-        } catch(e){ console.warn(`[DeepSearchAPI:${apiTaskId}] Could not load preferred embedding model details: ${e.message}`); }
+        } catch(e){ console.warn('[DeepSearchAPI:%s] Could not load preferred embedding model details: %s', apiTaskId, e.message); }
     }
     if (embeddingModelPathForPython) {
         if (!finalPayloadForPython.api_config) finalPayloadForPython.api_config = {};
@@ -470,15 +462,15 @@ const initiateDeepSearchStream = async (req, res, next) => {
                     totalTokens: usage.total_tokens, 
                     source: 'deep_search_api' 
                   });
-                } catch (tokenLogError) { console.error(`[DeepSearchAPI:${apiTaskId}] Failed to log token usage for model ${usage.model_id}:`, tokenLogError); }
+                } catch (tokenLogError) { console.error('[DeepSearchAPI:%s] Failed to log token usage for model %s:', apiTaskId, usage.model_id, tokenLogError); }
               }
             }
-            } catch (parseError) { console.error(`[DeepSearchAPI:${apiTaskId}] Error parsing 'complete' event data for token logging:`, parseError); }
+            } catch (parseError) { console.error('[DeepSearchAPI:%s] Error parsing \'complete\' event data for token logging:', apiTaskId, parseError); }
           }
         } else if (eventTypeToListen === 'error') {
           pythonTaskCompletedSuccessfully = false;
           anErrorWasAlreadySentToClient = true;
-          console.error(`[DeepSearchAPI:${apiTaskId}] Processing 'error' event. Data: ${eventDataString}`);
+          console.error('[DeepSearchAPI:%s] Processing \'error\' event. Data: %s', apiTaskId, eventDataString);
           if (!res.writableEnded) {
             res.write(`id: ${eventId}\n`);
             res.write(`event: error\ndata: ${eventDataString}\n\n`);
@@ -513,12 +505,12 @@ const initiateDeepSearchStream = async (req, res, next) => {
       const errorMessageDetail = error.message || (errorType ? `EventSource error type: ${errorType}` : 'Unknown stream error');
       
       if (pythonTaskCompletedSuccessfully) {
-        console.info(`[DeepSearchAPI:${apiTaskId}] onerror: EventSource error for task ${pythonTaskId} (Type: ${errorType}, Msg: ${errorMessageDetail}). Task had already reported 'complete'. This is likely a normal stream closure event from the client's perspective.`);
+        console.info('[DeepSearchAPI:%s] onerror: EventSource error for task %s (Type: %s, Msg: %s). Task had already reported \'complete\'. This is likely a normal stream closure event from the client\'s perspective.', apiTaskId, pythonTaskId, errorType, errorMessageDetail);
       } else if (anErrorWasAlreadySentToClient) {
-        console.info(`[DeepSearchAPI:${apiTaskId}] onerror: EventSource error for task ${pythonTaskId} (Type: ${errorType}, Msg: ${errorMessageDetail}). A Python-originated error was already processed and sent to the client.`);
+        console.info('[DeepSearchAPI:%s] onerror: EventSource error for task %s (Type: %s, Msg: %s). A Python-originated error was already processed and sent to the client.', apiTaskId, pythonTaskId, errorType, errorMessageDetail);
       } else {
-        console.error(`[DeepSearchAPI:${apiTaskId}] onerror: Unexpected EventSource error for task ${pythonTaskId}. Full error:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        console.error(`[DeepSearchAPI:${apiTaskId}] onerror: Parsed details - Status: ${errorStatus}, Type: ${errorType}, Message: ${errorMessageDetail}`);
+        console.error('[DeepSearchAPI:%s] onerror: Unexpected EventSource error for task %s. Full error:', apiTaskId, pythonTaskId, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        console.error('[DeepSearchAPI:%s] onerror: Parsed details - Status: %s, Type: %s, Message: %s', apiTaskId, errorStatus, errorType, errorMessageDetail);
         
         if (!res.writableEnded) {
             let clientErrorPayload = {
@@ -526,7 +518,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
                 details: errorMessageDetail,
                 status: errorStatus || 'Stream Error' 
             };
-            console.error(`[DeepSearchAPI:${apiTaskId}] onerror: Relaying new stream error to client.`);
+            console.error('[DeepSearchAPI:%s] onerror: Relaying new stream error to client.', apiTaskId);
             res.write(`event: error\ndata: ${JSON.stringify(clientErrorPayload)}\n\n`);
             anErrorWasAlreadySentToClient = true; 
         }
@@ -547,7 +539,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
             clientDisconnected = true; 
             if (pythonTaskCompletedSuccessfully) {
             } else if (!anErrorWasAlreadySentToClient) {
-                console.warn(`[DeepSearchAPI:${apiTaskId}] onclose: Python SSE stream closed BEFORE 'complete' event was received and no prior error sent. Sending 'stream ended prematurely' error to client.`);
+                console.warn('[DeepSearchAPI:%s] onclose: Python SSE stream closed BEFORE \'complete\' event was received and no prior error sent. Sending \'stream ended prematurely\' error to client.', apiTaskId);
                 if (!res.writableEnded) {
                     res.write(`event: error\ndata: ${JSON.stringify({ message: 'Backend stream ended prematurely.', details: 'The deep search task did not signal completion before the stream closed, and no specific Python error was received.', status: 'N/A' })}\n\n`);
                 }
@@ -564,7 +556,7 @@ const initiateDeepSearchStream = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error(`[DeepSearchAPI:${apiTaskId}] Failed to initiate deep search or stream:`, error);
+    console.error('[DeepSearchAPI:%s] Failed to initiate deep search or stream:', apiTaskId, error);
     if (!res.headersSent) {
       return next(new APIError(error.message || 'Failed to start deep search task.', error.statusCode || 500));
     } else if (!res.writableEnded && !anErrorWasAlreadySentToClient) {

@@ -7,7 +7,6 @@
 
 const { db } = require('../src/models/db');
 const providerManager = require('../src/services/providers');
-const modelDiscoveryService = require('../src/services/modelDiscoveryService');
 
 async function resetGoogleModels() {
   try {

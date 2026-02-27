@@ -272,7 +272,7 @@ const apiService = {
 
 // Error handler with improved error sanitization
 const handleApiError = (error) => {
-  let message = 'An unexpected error occurred';
+  let message;
   
   if (error.response) {
     // The server responded with a status code outside the 2xx range

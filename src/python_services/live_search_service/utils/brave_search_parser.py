@@ -81,7 +81,7 @@ class BraveResponseParser:
                 return self._handle_unexpected_response(response_data)
                 
         except Exception as e:
-            logger.error(f"Exception while parsing Brave response: {e}", exc_info=True)
+            logger.error("Exception while parsing Brave response: %s", e, exc_info=True)
             return self._create_error_result(
                 BraveResponseType.UNEXPECTED,
                 f"Parser exception: {str(e)}",
@@ -159,7 +159,7 @@ class BraveResponseParser:
             if 'query' in data: metadata['query'] = data['query']
             if 'mixed' in data: metadata['mixed'] = data['mixed']
             
-            logger.info(f"Successfully parsed Brave response: {len(results)} results extracted")
+            logger.info("Successfully parsed Brave response: %s results extracted", len(results))
             
             return BraveAPIResult(
                 response_type=BraveResponseType.SUCCESS,
@@ -170,7 +170,7 @@ class BraveResponseParser:
             )
             
         except Exception as e:
-            logger.error(f"Error processing success response: {e}", exc_info=True)
+            logger.error("Error processing success response: %s", e, exc_info=True)
             return self._create_error_result(
                 BraveResponseType.UNEXPECTED,
                 f"Error processing success response: {str(e)}",
@@ -252,7 +252,7 @@ class BraveResponseParser:
         return self._create_error_result(BraveResponseType.AUTH_ERROR, error_message, data)
     
     def _handle_unexpected_response(self, data: Dict) -> BraveAPIResult:
-        logger.warning(f"Unexpected Brave API response structure: {list(data.keys())}")
+        logger.warning("Unexpected Brave API response structure: %s", list(data.keys()))
         results = []
         for _, value in data.items():
             if isinstance(value, list) and value and isinstance(value[0], dict) and \

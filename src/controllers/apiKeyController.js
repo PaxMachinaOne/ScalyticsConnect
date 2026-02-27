@@ -4,7 +4,6 @@ const { db } = require('../models/db');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const apiService = require('../services/apiService');
-const apiKeyService = require('../services/apiKeyService');
 const { encryptionHelpers } = require('../utils/encryptionUtils');
 const { triggerPythonServiceRestart } = require('../utils/pythonServiceUtils');
 
@@ -448,7 +447,7 @@ exports.setApiKey = async (req, res) => {
          );
 
        } catch (discoveryError) {
-         console.error(`Error auto-discovering models: ${discoveryError.message}`);
+         console.error('Error auto-discovering models: %s', discoveryError.message);
         // Continue despite discovery error - we don't want to fail the API key addition
       }
 
@@ -611,7 +610,7 @@ exports.setGlobalApiKey = async (req, res) => {
          );
 
        } catch (discoveryError) {
-         console.error(`Error auto-discovering models: ${discoveryError.message}`);
+         console.error('Error auto-discovering models: %s', discoveryError.message);
         // Continue despite discovery error - we don't want to fail the API key addition
       }
 
@@ -846,7 +845,7 @@ exports.getApiKeyByProvider = async (userId, providerName) => {
     const provider = await db.getAsync('SELECT id, name FROM api_providers WHERE name = ?', [providerName]);
 
     if (!provider) {
-      console.error(`Provider not found with name: ${providerName}`);
+      console.error('Provider not found with name: %s', providerName);
       return null;
     }
 
@@ -879,7 +878,7 @@ exports.getApiKeyByProvider = async (userId, providerName) => {
 
     return { key };
   } catch (error) {
-    console.error(`Error getting API key for user ${userId} and provider ${providerName}:`, error);
+    console.error('Error getting API key for user %s and provider %s:', userId, providerName, error);
     return null;
   }
 };
@@ -1159,7 +1158,7 @@ exports.generateScalyticsApiKey = async (req, res) => {
 
     const provider = await db.getAsync('SELECT id FROM api_providers WHERE name = ?', [SCALYTICS_API_PROVIDER_NAME]);
     if (!provider) {
-      console.error(`Critical: Provider '${SCALYTICS_API_PROVIDER_NAME}' not found in database.`);
+      console.error('Critical: Provider \'%s\' not found in database.', SCALYTICS_API_PROVIDER_NAME);
       return res.status(500).json({
         success: false,
         message: `API provider '${SCALYTICS_API_PROVIDER_NAME}' not configured.`
@@ -1168,7 +1167,7 @@ exports.generateScalyticsApiKey = async (req, res) => {
     const providerId = provider.id;
 
     // Generate a secure random key (sk-scalytics-<random_base62_chars>)
-    const randomBytes = crypto.randomBytes(24);
+    crypto.randomBytes(24);
     const base62Chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let randomString = '';
     while (randomString.length < 32) {
@@ -1217,7 +1216,7 @@ exports.generateScalyticsApiKey = async (req, res) => {
   } catch (error) {
      // Catch UNIQUE constraint violation specifically for Scalytics API key generation
      if (error.message && error.message.includes('UNIQUE constraint failed: api_keys.provider_id, api_keys.user_id, api_keys.is_global')) {
-        console.warn(`Attempt to create duplicate Scalytics API key for user ${req.user?.id}: ${error.message}`);
+        console.warn('Attempt to create duplicate Scalytics API key for user %s: %s', req.user?.id, error.message);
         return res.status(409).json({
           success: false,
           // More accurate error message

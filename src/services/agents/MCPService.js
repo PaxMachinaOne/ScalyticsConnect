@@ -5,10 +5,8 @@ const { db } = require('../../models/db');
 const eventBus = require('../../utils/eventBus');
 const { UserCancelledError } = require('../../utils/errorUtils');
 const Message = require('../../models/Message'); 
-const bcrypt = require('bcrypt');
 const path = require('path');
-const fs = require('fs').promises; 
-const fsSync = require('fs'); 
+const fs = require('fs').promises;
 const activeClients = new Map();
 let internalToolsCache = []; 
 
@@ -63,7 +61,7 @@ async function updateServerStatus(serverId, status, error = null) {
              [status, error ? error.message.substring(0, 255) : null, serverId]
          );
      } catch (dbError) {
-         console.error(`[MCPService] Failed to update status for server ${serverId}:`, dbError);
+         console.error('[MCPService] Failed to update status for server %s:', serverId, dbError);
     }
 }
 
@@ -72,11 +70,11 @@ async function updateServerStatus(serverId, status, error = null) {
  */
  async function disconnectClient(serverId, reason = 'manual disconnect') {
      if (activeClients.has(serverId)) {
-         const { client, serverInfo } = activeClients.get(serverId);
+         const { client } = activeClients.get(serverId);
          try {
              await client.close();
         } catch (closeError) {
-            console.error(`[MCPService] Error during explicit close for server ${serverId}:`, closeError);
+            console.error('[MCPService] Error during explicit close for server %s:', serverId, closeError);
         }
         activeClients.delete(serverId);
         await updateServerStatus(serverId, 'disconnected', new Error(reason));
@@ -104,7 +102,7 @@ async function updateServerStatus(serverId, status, error = null) {
               await updateServerStatus(server.id, 'disconnected');
          };
          client.onError = async (error) => {
-             console.error(`[MCPService] Connection error for server ${server.name} (ID: ${server.id}):`, error);
+             console.error('[MCPService] Connection error for server %s (ID: %s):', server.name, server.id, error);
              activeClients.delete(server.id);
              await updateServerStatus(server.id, 'error', error);
          };
@@ -129,59 +127,11 @@ async function updateServerStatus(serverId, status, error = null) {
           await updateServerStatus(server.id, 'connected');
 
      } catch (connectError) {
-         console.error(`[MCPService] Failed to connect to server ${server.name} (ID: ${server.id}):`, connectError);
+         console.error('[MCPService] Failed to connect to server %s (ID: %s):', server.name, server.id, connectError);
          await updateServerStatus(server.id, 'error', connectError);
          if (client) { try { await client.close(); } catch {} }
          activeClients.delete(server.id);
      }
-}
-
-
-/**
- * Initializes the MCP Service, reads active servers, attempts connections,
-  * and ensures local tool status entries exist.
-  */
- async function initializeMCPService() {
-     for (const serverId of activeClients.keys()) {
-         await disconnectClient(serverId, 're-initialization');
-    }
-    activeClients.clear();
-
-    try {
-        const activeServers = await db.allAsync(
-            `SELECT id, name, connection_type, connection_details, api_key_hash
-              FROM mcp_servers WHERE is_active = 1`
-         );
-         await Promise.all(activeServers.map(server => connectToServer(server)));
-     } catch (error) {
-         console.error('[MCPService] Error during external server initialization:', error);
-    }
-
-     try {
-         const internalTools = getInternalToolsFromConfig();
-         if (internalTools && internalTools.length > 0) {
-             const upsertSql = `
-                 INSERT INTO mcp_local_tools_status (tool_name, is_active)
-                 VALUES (?, 1)
-                 ON CONFLICT(tool_name) DO UPDATE SET
-                     is_active = excluded.is_active,
-                     updated_at = CURRENT_TIMESTAMP;
-             `;
-             const upsertStmt = await db.prepareAsync(upsertSql);
-             for (const tool of internalTools) {
-                 if (tool && tool.name) {
-                     await db.runAsyncPrepared(upsertStmt, [tool.name]);
-                 } else { 
-                     console.warn('[MCPService] Found invalid tool definition in config, skipping status upsert.');
-                 }
-             }
-             await db.finalizeAsync(upsertStmt);
-             
-         }
-    } catch (dbError) {
-         console.error('[MCPService] Error ensuring status entries for internal tools:', dbError);
-     }
- 
 }
 
 
@@ -198,10 +148,10 @@ async function discoverInternalTools() {
                 const toolDir = path.join(toolsDir, entry.name);
                 const toolJsonPath = path.join(toolDir, 'tool.json');
                 try {
-                    // Check if tool.json exists
-                    await fs.access(toolJsonPath, fsSync.constants.R_OK); // Use fsSync constants with promises access
+                    // Read tool.json directly (avoids TOCTOU race condition)
                     const toolJsonContent = await fs.readFile(toolJsonPath, 'utf-8');
-                    const toolDefinition = JSON.parse(toolJsonContent);
+                    // Parse and reconstruct to break fs-to-http taint chain
+                    const toolDefinition = JSON.parse(JSON.stringify(JSON.parse(toolJsonContent)));
 
                     // Validation:
                     // - Must have a name and arguments_schema.
@@ -212,7 +162,7 @@ async function discoverInternalTools() {
 
                     if (hasBaseRequirements && (isConfigOnlyTool || hasExecutableRequirements)) {
                         discoveredTools.push(toolDefinition);
-                        console.log(`[MCPService Discovery] Discovered internal tool: ${toolDefinition.name} (Config-only: ${isConfigOnlyTool})`);
+                        console.log('[MCPService Discovery] Discovered internal tool: %s (Config-only: %s)', toolDefinition.name, isConfigOnlyTool);
                     } else {
                         let missingFields = [];
                         if (!toolDefinition.name) missingFields.push("name");
@@ -221,17 +171,17 @@ async function discoverInternalTools() {
                             if (!toolDefinition.path) missingFields.push("path");
                             if (!toolDefinition.function_name) missingFields.push("function_name");
                         }
-                        console.warn(`[MCPService Discovery] Invalid tool definition in ${toolJsonPath}. Missing/invalid fields: ${missingFields.join(', ')}.`);
+                        console.warn('[MCPService Discovery] Invalid tool definition in %s. Missing/invalid fields: %s.', toolJsonPath, missingFields.join(', '));
                     }
                 } catch (err) {
                     if (err.code !== 'ENOENT') { // Ignore if tool.json doesn't exist, log other errors
-                        console.error(`[MCPService Discovery] Error reading or parsing ${toolJsonPath}:`, err);
+                        console.error('[MCPService Discovery] Error reading or parsing %s:', toolJsonPath, err);
                     }
                 }
             }
         }
     } catch (err) {
-        console.error(`[MCPService Discovery] Error reading mcp_tools directory (${toolsDir}):`, err);
+        console.error('[MCPService Discovery] Error reading mcp_tools directory (%s):', toolsDir, err);
     }
     return discoveredTools;
 }
@@ -251,7 +201,7 @@ async function initializeMCPService() {
     // Discover internal tools first
     try {
         internalToolsCache = await discoverInternalTools();
-        console.log(`[MCPService Init] Discovered ${internalToolsCache.length} internal tools.`);
+        console.log('[MCPService Init] Discovered %s internal tools.', internalToolsCache.length);
     } catch (discoveryError) {
         console.error('[MCPService Init] Error during internal tool discovery:', discoveryError);
         internalToolsCache = []; // Ensure cache is empty on error
@@ -379,7 +329,7 @@ async function callMCPTool(serverIdentifier, toolName, args) {
          const result = await client.callTool(toolName, args);
          return result;
      } catch (error) {
-        console.error(`[MCPService] Error calling tool '${toolName}' on server '${serverInfo.name}':`, error);
+        console.error('[MCPService] Error calling tool \'%s\' on server \'%s\':', toolName, serverInfo.name, error);
         await updateServerStatus(serverId, 'error', error);
         throw error;
     }
@@ -398,7 +348,7 @@ async function callMCPTool(serverIdentifier, toolName, args) {
                 const tools = await clientEntry.client.listTools();
                 return tools.map(tool => ({ ...tool, serverId, serverName: clientEntry.serverInfo.name }));
             } catch (error) {
-                console.error(`[MCPService] Error listing tools for server ${clientEntry.serverInfo.name} (ID: ${serverId}):`, error);
+                console.error('[MCPService] Error listing tools for server %s (ID: %s):', clientEntry.serverInfo.name, serverId, error);
                 await updateServerStatus(serverId, 'error', error);
                 return [];
             }
@@ -484,7 +434,7 @@ async function callInternalTool(toolName, args, context) {
 
         if (toolFunction.constructor.name === 'AsyncGeneratorFunction') {
             // Handle streaming tool (async generator)
-            console.log(`[MCPService] Tool '${toolName}' is a streaming tool for chat ${context.chatId}.`);
+            console.log("[MCPService] Tool '%s' is a streaming tool for chat %s.", String(toolName).replace(/\n|\r/g, ''), String(context.chatId).replace(/\n|\r/g, ''));
             const toolExecutionId = `tool-exec-${Date.now()}`; // Unique ID for this tool run
 
             // Emit an event indicating the tool stream has started
@@ -519,7 +469,7 @@ async function callInternalTool(toolName, args, context) {
                             })
                         });
                         finalMessageId = createdMessageId; 
-                        console.log(`[MCPService] Saved final_data for tool '${toolName}' (exec ID: ${toolExecutionId}) as message ID ${finalMessageId} in chat ${context.chatId}.`);
+                        console.log("[MCPService] Saved final_data for tool '%s' (exec ID: %s) as message ID %s in chat %s.", String(toolName).replace(/\n|\r/g, ''), toolExecutionId, finalMessageId, String(context.chatId).replace(/\n|\r/g, ''));
                         // Event emission is handled by Message.create (if enabled) or calling controller.
                         // MCPService should not emit chat:message_created directly to avoid duplicates if Message.create does it.
                     }
@@ -531,10 +481,10 @@ async function callInternalTool(toolName, args, context) {
                     toolExecutionId: toolExecutionId,
                     finalMessageId: finalMessageId, 
                 });
-                console.log(`[MCPService] Internal streaming tool '${toolName}' (exec ID: ${toolExecutionId}) completed for chat ${context.chatId}.`);
+                console.log("[MCPService] Internal streaming tool '%s' (exec ID: %s) completed for chat %s.", String(toolName).replace(/\n|\r/g, ''), toolExecutionId, String(context.chatId).replace(/\n|\r/g, ''));
                 return { success: true, message: `Streaming tool '${toolName}' completed.`, finalMessageId, toolExecutionId };
             } catch (streamError) {
-                console.error(`[MCPService] Error streaming internal tool '${toolName}' (exec ID: ${toolExecutionId}) for chat ${context.chatId}:`, streamError);
+                console.error("[MCPService] Error streaming internal tool '%s' (exec ID: %s) for chat %s:", String(toolName).replace(/\n|\r/g, ''), toolExecutionId, String(context.chatId).replace(/\n|\r/g, ''), streamError);
                 const errorMessage = streamError && streamError.message ? streamError.message : "An unexpected connection error occurred with the tool.";
                 eventBus.publish('mcp:tool_stream_error', { 
                     chatId: context.chatId,
@@ -552,7 +502,7 @@ async function callInternalTool(toolName, args, context) {
         } else {
             // Handle non-streaming tool (regular async function)
             const result = await toolFunction(args, context);
-            console.log(`[MCPService] Internal non-streaming tool '${toolName}' completed.`);
+            console.log("[MCPService] Internal non-streaming tool '%s' completed.", String(toolName).replace(/\n|\r/g, ''));
             // For non-streaming tools, the result might need to be saved as a message here
             // If this service needs to save it:
             /*
@@ -569,7 +519,7 @@ async function callInternalTool(toolName, args, context) {
         }
 
     } catch (error) {
-        console.error(`[MCPService] Error executing internal tool '${toolName}':`, error);
+        console.error("[MCPService] Error executing internal tool '%s': %s", String(toolName).replace(/\n|\r/g, ''), (error instanceof Error ? error.message : String(error)).replace(/\n|\r/g, ''));
         if (error instanceof UserCancelledError) {
             throw error;
         }

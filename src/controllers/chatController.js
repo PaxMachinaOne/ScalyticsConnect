@@ -7,11 +7,6 @@ const Message = require('../models/Message');
 const Model = require('../models/Model');
 const UsageStatsService = require('../services/usageStatsService'); 
 const { createChatCompletion } = require('../services/chatService');
-const fileProcessingService = require('../services/fileProcessingService');
-const { validateContextForModel } = require('../models/prompting');
-const { applyFilters } = require('../services/responseFilteringService');
-const fs = require('fs').promises;
-const path = require('path');
 const summarizationService = require('../services/summarizationService'); 
 const User = require('../models/User'); 
 const eventBus = require('../utils/eventBus'); 
@@ -112,7 +107,7 @@ exports.summarizeChatHistory = async (req, res) => {
     }
 
     if (!summaryContent) {
-      console.error(`[ChatCtrl /sum] Summarization service did not return a usable summary for chat ${chatId}.`);
+      console.error('[ChatCtrl /sum] Summarization service did not return a usable summary for chat %s.', chatId);
       return res.status(500).json({ success: false, message: 'Failed to generate summary content.' });
     }
 
@@ -175,7 +170,7 @@ exports.summarizeChatHistory = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[ChatCtrl /sum] Error summarizing chat history for chat %s:', req.params.id, error);
+    console.error('[ChatCtrl /sum] Error summarizing chat history for chat %s:',  String(req.params.id).replace(/\n|\r/g, ''), error);
     res.status(500).json({
       success: false,
       message: `Error summarizing chat: ${error.message || 'Internal server error'}`
@@ -272,7 +267,7 @@ exports.getChat = async (req, res) => {
         );
         is_shared_by_owner = shareCount.count > 0;
       } catch (shareCheckError) {
-        console.error(`Error checking share status for chat ${chat.id}:`, shareCheckError);
+        console.error('Error checking share status for chat %s:', chat.id, shareCheckError);
       }
     }
 
@@ -483,10 +478,10 @@ exports.acceptShare = async (req, res) => {
           ownerUsername: chatDetails.ownerUsername
         });
       } else {
-         console.warn('[acceptShare] Could not fetch chat details for chat ID %s after accepting share %s. Notification not sent.', share.chat_id, shareId);
+         console.warn('[acceptShare] Could not fetch chat details for chat ID %s after accepting share %s. Notification not sent.', share.chat_id, String(shareId).replace(/\n|\r/g, ''));
       }
     } catch (notifyError) {
-      console.error('[acceptShare] Error emitting chat:share_accepted event for user %s, share %s:', userId, shareId, notifyError);
+      console.error('[acceptShare] Error emitting chat:share_accepted event for user %s, share %s:', String(userId).replace(/\n|\r/g, ''), String(shareId).replace(/\n|\r/g, ''), notifyError);
     }
 
     res.status(200).json({ success: true, message: 'Share invitation accepted.' });
@@ -672,9 +667,9 @@ exports.deleteChat = async (req, res) => {
       const pythonServiceBaseUrl = getSystemSetting('PYTHON_DEEP_SEARCH_BASE_URL', 'http://localhost:8001');
       const deleteVectorDocsUrl = validateInternalServiceUrl(pythonServiceBaseUrl, '/vector/delete_by_group');
       await axios.post(deleteVectorDocsUrl, { group_id: chatIdToDelete.toString() }); // lgtm[js/request-forgery]
-      console.log('[ChatCtrl Delete] Successfully requested deletion of vector documents for chat group %s from Python service.', chatIdToDelete);
+      console.log('[ChatCtrl Delete] Successfully requested deletion of vector documents for chat group %s from Python service.', String(chatIdToDelete).replace(/\n|\r/g, ''));
     } catch (vectorDeleteError) {
-      console.error('[ChatCtrl Delete] Error requesting vector document deletion for chat group %s from Python service:', chatIdToDelete, vectorDeleteError.response ? vectorDeleteError.response.data : vectorDeleteError.message);
+      console.error('[ChatCtrl Delete] Error requesting vector document deletion for chat group %s from Python service:', String(chatIdToDelete).replace(/\n|\r/g, ''), vectorDeleteError.response ? vectorDeleteError.response.data : vectorDeleteError.message);
       }
 
     const archiveEnabled = getSystemSetting('archive_deleted_chats_for_refinement', '0') === 'true';
@@ -848,7 +843,7 @@ exports.sendMessage = async (req, res) => {
         if (typeof fileId === 'number' || (typeof fileId === 'string' && fileId.trim() !== '')) {
            await associateFileWithMessage(userMessageId, fileId);
         } else {
-           console.warn(`[ChatController] Skipping invalid file ID during association: ${fileId}`);
+           console.warn("[ChatController] Skipping invalid file ID during association: %s", String(fileId).replace(/\n|\r/g, ''));
         }
       }
     }
@@ -891,10 +886,6 @@ exports.sendMessage = async (req, res) => {
             await Chat.update(chatId, {}); 
             return; 
           }
-
-          const endTime = Date.now();
-          const startTime = Date.parse(asyncTaskData.streamingContext.startTime);
-          const latency = endTime - startTime;
 
           const originalMessage = completion.message;
 
@@ -943,7 +934,7 @@ exports.sendMessage = async (req, res) => {
               }
             }
           } catch (renameError) {
-            console.error('[Chat Ctrl] Error during auto-rename for chat %s:', chatId, renameError);
+            console.error('[Chat Ctrl] Error during auto-rename for chat %s:', String(chatId).replace(/\n|\r/g, ''), renameError);
           }
 
         })
@@ -966,7 +957,7 @@ exports.sendMessage = async (req, res) => {
                timestamp: new Date().toISOString()
             });
           } catch (updateError) {
-             console.error(`[Async Task] CRITICAL: Failed to update placeholder message ${placeholderAssistantMessageId} with error state:`, updateError);
+             console.error('[Async Task] CRITICAL: Failed to update placeholder message %s with error state:', placeholderAssistantMessageId, updateError);
           }
 
           await db.runAsync(
@@ -1040,30 +1031,6 @@ async function getFilesForMessage(messageId) {
   } catch (error) {
     console.error('Error getting files for message:', error);
     return [];
-  }
-}
-
-async function processFilesForContext(fileIds, userId) {
-  try {
-    if (!fileIds || fileIds.length === 0) return '';
-
-    const fileResults = await Promise.all(
-      fileIds.map(async (fileId) => {
-        try {
-          const fileData = await fileProcessingService.processFileForModel(fileId, userId);
-
-          return `--- File: ${fileData.filename} (${fileData.type}) ---\n${fileData.contents}\n`;
-        } catch (error) {
-          console.error(`Error processing file ${fileId}:`, error);
-          return `[Error processing file]`;
-        }
-      })
-    );
-
-    return fileResults.join('\n');
-  } catch (error) {
-    console.error('Error processing files for context:', error);
-    return '[Error processing attached files]';
   }
 }
 

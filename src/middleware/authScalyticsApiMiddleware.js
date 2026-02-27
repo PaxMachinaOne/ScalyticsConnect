@@ -54,7 +54,7 @@ const authScalyticsApi = async (req, res, next) => {
       }
 
       if (!matchedKey) {
-        console.warn(`Scalytics API auth failed: Token does not match any active key for provider ${providerId}. Token prefix: ${token.slice(0, 15)}...`);
+        console.warn("Scalytics API auth failed: Token does not match any active key for provider %s. Token prefix: %s...", String(providerId).replace(/\n|\r/g, ''), String(token.slice(0, 15)).replace(/\n|\r/g, ''));
         return res.status(401).json({ success: false, message: 'Not authorized, invalid token' });
       }
 

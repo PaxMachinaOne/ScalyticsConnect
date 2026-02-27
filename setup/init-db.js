@@ -3,7 +3,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
 
 // Check for --check flag
 const isCheckMode = process.argv.includes('--check');
@@ -377,11 +376,7 @@ const preserveAdminPassword = process.env.PRESERVE_ADMIN_PASSWORD === 'true'
 
 if (preserveAdminPassword) {
   console.log('🔒 Admin password preservation enabled - password will NOT be reset');
-  // codeql[js/clear-text-logging] - Intentional logging of environment flags for system administrator visibility during setup
-  console.log('🔒 Environment settings: PRESERVE_ADMIN_PASSWORD=' +
-              (process.env.PRESERVE_ADMIN_PASSWORD || 'not set') +
-              ', NEVER_RESET_ADMIN_PASSWORD=' +
-              (process.env.NEVER_RESET_ADMIN_PASSWORD || 'not set'));
+  console.log('Admin password preservation flags are active (see environment config)');
 }
 
 // Main execution - simplified and using async/await
