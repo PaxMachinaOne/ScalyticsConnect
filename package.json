@@ -56,7 +56,7 @@
     "remark-mermaidjs": "^7.0.0",
     "sqlite-vec": "^0.1.7-alpha.2",
     "sqlite-vss": "^0.1.2",
-    "sqlite3": "^5.1.6",
+    "sqlite3": "^6.0.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "tokenizers": "^0.13.3",
