@@ -1,0 +1,27 @@
+# Dependabot version updates. Low-risk bumps are auto-approved and
+# merged by our chore bot (PaxMachinaOne) once checks are green.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "pip"
+    directory: "/scripts"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
