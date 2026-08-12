@@ -21,7 +21,7 @@ jobs:
           node-version: '22'
 
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Backend deps check
         run: |
