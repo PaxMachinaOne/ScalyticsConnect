@@ -28,7 +28,7 @@ const ChatErrorToast = ({ inlineError, onDismiss }) => {
         }`}
       >
         <div className="flex items-start">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {inlineError.type === 'api_key' && (
               <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v-1l2-2H7a6 6 0 110-12h6a6 6 0 011 12zm-6-4a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
@@ -84,16 +84,16 @@ const ChatErrorToast = ({ inlineError, onDismiss }) => {
               <div className="mt-3">
                 <a
                   href={inlineError.actionUrl}
-                  className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-sm text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {inlineError.type === 'api_key' ? 'Add API Key' : 'Fix issue'}
                 </a>
               </div>
             )}
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
+          <div className="ml-4 shrink-0 flex">
             <button
-              className="bg-transparent rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="bg-transparent rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               onClick={onDismiss}
             >
               <span className="sr-only">Close</span>

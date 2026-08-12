@@ -31,7 +31,7 @@ const IntegrationsManager = () => {
           <select
             id="integration-tabs"
             name="integration-tabs"
-            className="block w-full rounded-md border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:text-dark-text-primary"
+            className="block w-full rounded-md border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-hidden focus:ring-blue-500 dark:text-dark-text-primary"
             value={activeTab}
             onChange={(e) => handleTabChange(e.target.value)}
           >

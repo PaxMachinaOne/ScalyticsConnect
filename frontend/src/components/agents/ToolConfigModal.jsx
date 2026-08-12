@@ -250,14 +250,14 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
         };
 
          return (
-           <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded">
+           <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded-sm">
              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{prop.description || "Search Providers"}</label>
              <div className="mt-1 space-y-2">
                {renderableProviders.length > 0 ? renderableProviders.map(pKey => (
                  <label key={pKey} className="flex items-center space-x-2">
                    <input type="checkbox" checked={currentProviders.includes(pKey)}
                      onChange={(e) => handleConfigChange(key, e.target.checked ? [...currentProviders, pKey] : currentProviders.filter(p => p !== pKey))}
-                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-700" disabled={loading} />
+                     className="h-4 w-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-700" disabled={loading} />
                    <span className="text-sm text-gray-700 dark:text-gray-300">{getProviderDisplayName(pKey)}</span>
                  </label>
                )) : <p className="text-xs text-gray-500 dark:text-gray-400">No API keys for web search. Deep Search uses DuckDuckGo.</p>}
@@ -275,21 +275,21 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
             handleConfigChange(key, val);
          };
          return (
-            <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded">
+            <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded-sm">
                 <label htmlFor={`config-${key}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{prop.description || "Max Iterations"}</label>
                 <input id={`config-${key}`} type="number" min={min} max={max} value={currentVal} onChange={handleIterChange}
-                     className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" disabled={loading} />
+                     className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm" disabled={loading} />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Max search/reasoning cycles (Min: {min}, Max: {max}).</p>
             </div>
          );
        }
        if (tool.name !== 'deep-search' && tool.name !== 'image_gen') {
          return (
-           <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded">
+           <div key={key} className="mt-2 p-2 border dark:border-gray-600 rounded-sm">
              <label htmlFor={`config-${key}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{prop.description || key} (Type: {prop.type})</label>
              <input id={`config-${key}`} type="text" value={configValues[key] === undefined ? (prop.default !== undefined ? prop.default : '') : configValues[key]}
                 onChange={(e) => handleConfigChange(key, e.target.value)} placeholder={`Enter value for ${key}`}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
              {prop.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{prop.description}</p>}
            </div>
          );
@@ -311,8 +311,8 @@ const ToolConfigModal = ({ isOpen, onClose, tool }) => {
                    {error && <div className="mt-4 text-red-500 dark:text-red-400 text-sm">{error}</div>}
                    {!loading && !error && tool && <div className="mt-4 space-y-4">{renderConfigFields()}</div>}
                 <div className="mt-6 flex justify-end space-x-3">
-                  <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none" onClick={onClose}>Cancel</button>
-                  <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 dark:bg-blue-800 px-4 py-2 text-sm font-medium text-blue-900 dark:text-dark-text-primary hover:bg-blue-200 dark:hover:bg-blue-700 focus:outline-none disabled:opacity-50" onClick={handleSave} disabled={loading || isSaving}>
+                  <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-hidden" onClick={onClose}>Cancel</button>
+                  <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 dark:bg-blue-800 px-4 py-2 text-sm font-medium text-blue-900 dark:text-dark-text-primary hover:bg-blue-200 dark:hover:bg-blue-700 focus:outline-hidden disabled:opacity-50" onClick={handleSave} disabled={loading || isSaving}>
                     {isSaving ? 'Saving...' : 'Save'}
                   </button>
                 </div>

@@ -12,7 +12,7 @@ const WelcomeCard = ({ username }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 rounded-lg shadow-lg overflow-hidden mb-4">
+    <div className="bg-linear-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 rounded-lg shadow-lg overflow-hidden mb-4">
       <div className="px-4 py-5 sm:p-6">
         <div className="sm:flex sm:items-center sm:justify-between">
           <div>

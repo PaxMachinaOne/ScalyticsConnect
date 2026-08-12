@@ -87,7 +87,7 @@ const RuleEditModal = ({ rule, group, onClose, onSave }) => {
               onChange={handleChange}
               required
               disabled={isSystemRule} 
-              className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="regex">Regex</option>
               <option value="ner_PERSON">NER: Person</option>
@@ -110,7 +110,7 @@ const RuleEditModal = ({ rule, group, onClose, onSave }) => {
               onChange={handleChange}
               required
               disabled={isSystemRule} 
-              className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`mt-1 block w-full shadow-xs sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder={formData.rule_type === 'regex' ? '/\\b\\d{16}\\b/gi' : 'PERSON'}
             />
              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -127,7 +127,7 @@ const RuleEditModal = ({ rule, group, onClose, onSave }) => {
               value={formData.replacement}
               onChange={handleChange}
               disabled={isSystemRule} 
-              className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`mt-1 block w-full shadow-xs sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder="[REDACTED]"
             />
              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Leave blank for default '[REDACTED]' or '[ENTITY_LABEL]'.</p>
@@ -142,7 +142,7 @@ const RuleEditModal = ({ rule, group, onClose, onSave }) => {
               value={formData.description}
               onChange={handleChange}
               disabled={isSystemRule} 
-              className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`mt-1 block w-full shadow-xs sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary rounded-md ${isSystemRule ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
 
@@ -153,7 +153,7 @@ const RuleEditModal = ({ rule, group, onClose, onSave }) => {
               type="checkbox"
               checked={formData.is_active}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded-sm cursor-pointer"
             />
             <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
               Rule Active

@@ -104,7 +104,7 @@ const AgentList = ({
         <div className="py-1">
             <button
               onClick={() => setIsTasksOpen(!isTasksOpen)}
-              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm"
             >
               <span>Tools</span>
               <svg className={`w-4 h-4 transform transition-transform ${isTasksOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -117,12 +117,12 @@ const AgentList = ({
                    className={`
                      flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors group text-left
                      ${currentSelection === 'scalytics-seek'
-                       ? 'bg-teal-100 dark:bg-teal-800/50 text-teal-900 dark:text-teal-100 shadow-sm'
+                       ? 'bg-teal-100 dark:bg-teal-800/50 text-teal-900 dark:text-teal-100 shadow-xs'
                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/70'}
                    `}
                    onClick={() => handleAgentTaskClick('scalytics-seek')}
                  >
-                   <ScalyticsSeekIcon className="flex-shrink-0 h-5 w-5 mr-3 text-teal-500 dark:text-teal-400" />
+                   <ScalyticsSeekIcon className="shrink-0 h-5 w-5 mr-3 text-teal-500 dark:text-teal-400" />
                    <span className="truncate">Scalytics Deep Search</span>
                  </button>
               </div>
@@ -134,7 +134,7 @@ const AgentList = ({
         <div className="py-1">
            <button
              onClick={() => setIsAgentsOpen(!isAgentsOpen)}
-             className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+             className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm"
            >
              <span>MCP Agents ({agents.length})</span>
              <svg className={`w-4 h-4 transform transition-transform ${isAgentsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -148,12 +148,12 @@ const AgentList = ({
                   className={`
                     flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors group text-left
                     ${String(currentSelection) === String(agent.id) 
-                      ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-dark-text-primary shadow-sm'
+                      ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-dark-text-primary shadow-xs'
                       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/70'}
                   `}
                   onClick={() => handleAgentTaskClick(agent.id)}
                 >
-                  <AIAgentsIcon className="flex-shrink-0 h-5 w-5 mr-3 text-gray-400 dark:text-gray-500" />
+                  <AIAgentsIcon className="shrink-0 h-5 w-5 mr-3 text-gray-400 dark:text-gray-500" />
                   <span className="truncate">{agent.name || 'Unnamed Agent'}</span>
                   {/* No delete button needed here */}
                 </button>

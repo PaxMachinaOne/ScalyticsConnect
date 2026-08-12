@@ -17,7 +17,7 @@ const GpuPanel = ({ gpuStats, models }) => {
   }
 
   return (
-    <div className="mb-6 p-4 bg-white dark:bg-dark-primary shadow rounded-lg">
+    <div className="mb-6 p-4 bg-white dark:bg-dark-primary shadow-sm rounded-lg">
       <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary mb-4">GPU Status</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {gpuStats.map((gpu) => {

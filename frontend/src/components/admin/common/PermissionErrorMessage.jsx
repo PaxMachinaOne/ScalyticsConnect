@@ -13,7 +13,7 @@ const PermissionErrorMessage = ({ resourceType = 'resource', error }) => {
   return (
     <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4 mb-4">
       <div className="flex">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <svg
             className="h-5 w-5 text-yellow-400 dark:text-yellow-300"
             xmlns="http://www.w3.org/2000/svg"

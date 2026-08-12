@@ -202,7 +202,7 @@ const FileUploader = ({
             <button 
               type="button"
               onClick={triggerFileInput}
-              className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+              className="font-medium text-blue-600 hover:text-blue-500 focus:outline-hidden"
             >
               browse
             </button>
@@ -215,7 +215,7 @@ const FileUploader = ({
           )}
           <button
             onClick={triggerFileInput}
-            className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-sm hover:bg-blue-700 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             {buttonText}
           </button>

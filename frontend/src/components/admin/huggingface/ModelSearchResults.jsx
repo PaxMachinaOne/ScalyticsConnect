@@ -19,7 +19,7 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
   // If no results or still loading initial search, show appropriate message
   if (filteredResults.length === 0) { 
     return (
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg p-6 mt-4">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-6 mt-4">
         {loading ? (
           <div className="text-center py-10">
             <svg className="mx-auto animate-spin h-8 w-8 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
   };
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow sm:rounded-md mt-4">
+    <div className="bg-white dark:bg-dark-primary shadow-sm sm:rounded-md mt-4">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
         <h3 className="text-sm font-medium leading-6 text-gray-900 dark:text-dark-text-primary">
           Found {filteredResults.length} model{filteredResults.length === 1 ? '' : 's'}
@@ -71,7 +71,7 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
             <div className="px-4 py-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -86,26 +86,26 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
                 <div className="flex flex-col ml-2 text-right">
                   <div className="flex justify-end space-x-1">
                     {model.tags?.includes('text-generation') && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-dark-text-primary">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-dark-text-primary">
                         Text Generation
                       </span>
                     )}
                   </div>
                   <div className="mt-2 flex text-sm text-gray-500 dark:text-gray-400 space-x-4 justify-end">
                     <span className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                       {(model.stars || 0).toLocaleString()}
                     </span>
                     <span className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                       {(model.downloads || 0).toLocaleString()}
                     </span>
                     <span className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
                       {model.lastModified ? 
@@ -144,11 +144,11 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
 
           {/* Pagination controls */}
           <div className="flex justify-center w-full">
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm mx-auto w-full max-w-2xl" aria-label="Pagination">
+            <nav className="relative z-0 inline-flex rounded-md shadow-xs mx-auto w-full max-w-2xl" aria-label="Pagination">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`relative inline-flex items-center px-6 py-3 rounded-l-md border text-base font-medium shadow-sm ${
+                className={`relative inline-flex items-center px-6 py-3 rounded-l-md border text-base font-medium shadow-xs ${
                   currentPage === 1
                     ? 'text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-700 cursor-not-allowed'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -161,12 +161,12 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
               </button>
               
               {/* Page buttons */}
-              <div className="flex flex-grow">
+              <div className="flex grow">
                 {[...Array(totalPages)].map((_, index) => (
                   <button
                     key={index}
                     onClick={() => handlePageChange(index + 1)}
-                    className={`relative flex-grow inline-flex items-center justify-center px-6 py-3 border text-base font-medium shadow-sm ${
+                    className={`relative grow inline-flex items-center justify-center px-6 py-3 border text-base font-medium shadow-xs ${
                       currentPage === index + 1
                         ? 'z-10 bg-blue-100 dark:bg-blue-900/30 border-blue-500 dark:border-blue-700 text-blue-600 dark:text-dark-text-primary'
                         : 'bg-white dark:bg-dark-primary border-gray-300 dark:border-dark-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -180,7 +180,7 @@ const ModelSearchResults = ({ results = [], onSelectModel, selectedModelId, load
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`relative inline-flex items-center px-6 py-3 rounded-r-md border text-base font-medium shadow-sm ${
+                className={`relative inline-flex items-center px-6 py-3 rounded-r-md border text-base font-medium shadow-xs ${
                   currentPage === totalPages
                     ? 'text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-700 cursor-not-allowed'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700'

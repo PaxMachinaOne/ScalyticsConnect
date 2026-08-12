@@ -102,7 +102,7 @@ const ModelRefinementTab = () => {
       <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-dark-text-primary mb-4">
         Model Refinement Settings
       </h3>
-      <div className="bg-white dark:bg-dark-primary shadow sm:rounded-lg p-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm sm:rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
             <h4 className="text-md font-medium text-gray-900 dark:text-dark-text-secondary">
@@ -166,7 +166,7 @@ const ModelRefinementTab = () => {
           value={confirmInput}
           onChange={(e) => setConfirmInput(e.target.value)}
           placeholder={`Type "${CONFIRM_PHRASE}"`}
-          className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-primary dark:text-dark-text-primary"
+          className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-primary dark:text-dark-text-primary"
           disabled={isLoading}
         />
       </ConfirmationModal>

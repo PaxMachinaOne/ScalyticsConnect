@@ -140,7 +140,7 @@ const ChatPage = () => {
 
   return (
     <Sidebar>
-      <div className="h-full grid grid-cols-[0fr,1fr] md:grid-cols-[288px,1fr] overflow-hidden pt-1 bg-white dark:bg-dark-primary">
+      <div className="h-full grid grid-cols-[0fr_1fr] md:grid-cols-[288px_1fr] overflow-hidden pt-1 bg-white dark:bg-dark-primary">
         {/* Chat list sidebar with fixed positioning - left side */}
         <div className="hidden md:block h-full overflow-hidden">
           <div className="fixed w-72 h-[calc(100vh-4rem)] bg-gray-50 dark:bg-dark-primary border-r border-gray-200 dark:border-dark-border shadow-md overflow-hidden">
@@ -169,7 +169,7 @@ const ChatPage = () => {
                 </div>
                 
                 <div className="mt-4 space-y-4">
-                  <div className="rounded-md shadow-sm">
+                  <div className="rounded-md shadow-xs">
                     <ModelSelector 
                       selectedModelId={selectedModelId}
                       onModelSelect={handleModelSelect}

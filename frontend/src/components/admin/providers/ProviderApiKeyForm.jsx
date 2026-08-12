@@ -136,7 +136,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="px-4 py-5 sm:p-6">
         <h3 className="text-lg font-medium text-gray-900">
           {provider.name} {getKeyLabel()}
@@ -160,12 +160,12 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
               onChange={(e) => setKeyName(e.target.value)}
               disabled={loading}
               placeholder="e.g. Production Key"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
           
           {currentKey ? (
-            <div className="px-3 py-2 bg-gray-50 rounded border border-gray-200 dark:border-dark-border text-sm">
+            <div className="px-3 py-2 bg-gray-50 rounded-sm border border-gray-200 dark:border-dark-border text-sm">
               <span className="font-semibold">{getKeyLabel()} saved</span> • 
               Created: {new Date(currentKey.created_at).toLocaleString()}
               {currentKey.is_encrypted && <span className="ml-2 text-green-600 text-xs font-medium">•&nbsp;Encrypted</span>}
@@ -182,7 +182,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                 onChange={(e) => setKeyValue(e.target.value)}
                 disabled={loading}
                 placeholder={`Enter your ${provider.name} ${getKeyLabel().toLowerCase()}`}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
               <div className="mt-2">
                 <div className="flex items-center">
@@ -192,7 +192,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                     type="checkbox"
                     checked={encrypt}
                     onChange={(e) => setEncrypt(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded-sm border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="encrypt" className="ml-2 block text-sm text-gray-900">
                     Encrypt key in database
@@ -206,9 +206,9 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
           )}
           
           {testResult && (
-            <div className={`p-3 rounded ${testResult.valid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+            <div className={`p-3 rounded-sm ${testResult.valid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
               <div className="flex">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   {testResult.valid ? (
                     <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -233,7 +233,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                   type="button"
                   onClick={handleDelete}
                   disabled={loading}
-                  className="mr-3 inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="mr-3 inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 >
                   Delete
                 </button>
@@ -242,7 +242,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                 type="button"
                 onClick={handleTest}
                 disabled={loading || testing || (!currentKey && !keyValue)}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 {testing ? 'Testing...' : 'Test Key'}
               </button>
@@ -252,7 +252,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="mr-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="mr-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>
@@ -260,7 +260,7 @@ const ProviderApiKeyForm = ({ provider, onKeyUpdated, onCancel }) => {
                 type="button"
                 onClick={handleSave}
                 disabled={loading || (!currentKey && !keyValue)}
-                className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 {loading ? 'Saving...' : 'Save Key'}
               </button>

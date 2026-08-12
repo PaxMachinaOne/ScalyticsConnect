@@ -261,14 +261,14 @@ const ContentFilteringManager = () => {
       </p>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-sm relative" role="alert">
           <strong className="font-bold">Error:</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
       )}
 
       {/* Section for Enabling/Disabling Languages */}
-      <div className="p-4 border rounded-md dark:border-dark-border bg-white dark:bg-dark-primary shadow-sm">
+      <div className="p-4 border rounded-md dark:border-dark-border bg-white dark:bg-dark-primary shadow-xs">
          <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-dark-text-primary">Active Filter Languages (NER)</h3>
          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Select which languages the NER filtering worker should load models for.</p>
          <div className="space-y-2">
@@ -278,7 +278,7 @@ const ContentFilteringManager = () => {
                   type="checkbox"
                   checked={activeLanguages.includes(lang.code)}
                   onChange={() => handleLanguageToggle(lang.code)}
-                  className="form-checkbox h-5 w-5 text-blue-600 dark:text-dark-link bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2"
+                  className="form-checkbox h-5 w-5 text-blue-600 dark:text-dark-link bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2"
                 />
                 <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">{lang.name} ({lang.code})</span>
               </label>
@@ -288,7 +288,7 @@ const ContentFilteringManager = () => {
            <button
              onClick={handleSaveLanguages}
              disabled={isSavingLanguages}
-             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
            >
              {isSavingLanguages ? 'Saving...' : 'Save Active Languages'}
            </button>
@@ -297,7 +297,7 @@ const ContentFilteringManager = () => {
 
 
       {/* Section for Filter Groups */}
-      <div className="p-4 border rounded-md dark:border-dark-border bg-white dark:bg-dark-primary shadow-sm">
+      <div className="p-4 border rounded-md dark:border-dark-border bg-white dark:bg-dark-primary shadow-xs">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Filter Groups</h3>
           {/* Cannot create conceptual groups via UI */}
@@ -325,7 +325,7 @@ const ContentFilteringManager = () => {
                   <td className="px-4 py-3 text-center text-sm">
                      <input
                        type="checkbox"
-                       className="form-checkbox h-5 w-5 text-blue-600 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer"
+                       className="form-checkbox h-5 w-5 text-blue-600 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-sm focus:ring-blue-500 cursor-pointer"
                        checked={!!group.is_enabled}
                        onChange={() => handleGroupToggle(group.id, !!group.is_enabled)}
                        title={group.is_enabled ? 'Click to disable this filter group' : 'Click to enable this filter group'}
@@ -353,7 +353,7 @@ const ContentFilteringManager = () => {
 
       {/* Section for Filter Rules (conditionally rendered) */}
       {selectedGroupForRules && (
-        <div className="p-4 border rounded-md dark:border-dark-border mt-6 bg-white dark:bg-dark-primary shadow-sm">
+        <div className="p-4 border rounded-md dark:border-dark-border mt-6 bg-white dark:bg-dark-primary shadow-xs">
            <div className="flex justify-between items-center mb-4">
              <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-dark-text-primary">
                Filter Rules for <span className="font-semibold">{selectedGroupForRules.name}</span>
@@ -395,7 +395,7 @@ const ContentFilteringManager = () => {
                          {/* TODO: Make rule active toggle interactive - Allow toggle for system rules */}
                          <input
                            type="checkbox"
-                           className={`form-checkbox h-5 w-5 text-blue-600 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer`}
+                           className={`form-checkbox h-5 w-5 text-blue-600 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-sm focus:ring-blue-500 cursor-pointer`}
                            checked={!!rule.is_active}
                            onChange={() => handleRuleToggle(rule.id, !!rule.is_active)}
                            title={rule.is_active ? 'Click to deactivate rule' : 'Click to activate rule'}

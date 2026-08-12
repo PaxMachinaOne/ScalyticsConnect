@@ -164,7 +164,7 @@ const ShareChatModal = ({ isOpen, onClose, chatId, chatTitle }) => {
           placeholder="Search by username or email..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-dark-text-primary"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-dark-text-primary"
           disabled={isSubmitting}
         />
         {isLoadingSearch && <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Searching...</div>}
@@ -180,7 +180,7 @@ const ShareChatModal = ({ isOpen, onClose, chatId, chatTitle }) => {
                   </div>
                   <button
                     onClick={() => handleInviteUser(user.id)}
-                    className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded disabled:opacity-50"
+                    className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-sm disabled:opacity-50"
                     disabled={isSubmitting}
                   >
                     Invite
@@ -208,13 +208,13 @@ const ShareChatModal = ({ isOpen, onClose, chatId, chatTitle }) => {
                 <div>
                   <span className="font-medium dark:text-dark-text-primary">{user.username}</span>
                   <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({user.email})</span>
-                  <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                  <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-sm ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                     {user.status}
                   </span>
                 </div>
                 <button
                   onClick={() => handleRemoveShare(user.shared_with_user_id)} // Use the correct user ID field
-                  className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded disabled:opacity-50"
+                  className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-sm disabled:opacity-50"
                   disabled={isSubmitting}
                   title={user.status === 'pending' ? 'Cancel Invitation' : 'Remove Access'}
                 >

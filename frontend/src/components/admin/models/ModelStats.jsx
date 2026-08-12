@@ -26,7 +26,7 @@ const ModelStats = ({ modelStats, onClose }) => {
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Top Users</h4>
                     {modelStats.userUsage && modelStats.userUsage.length > 0 ? (
-                      <div className="mt-2 overflow-hidden shadow border border-gray-200 dark:border-dark-border md:rounded-lg">
+                      <div className="mt-2 overflow-hidden shadow-sm border border-gray-200 dark:border-dark-border md:rounded-lg">
                         <table className="min-w-full divide-y divide-gray-300 dark:divide-dark-border">
                           <thead className="bg-gray-50 dark:bg-dark-secondary">
                             <tr>
@@ -57,7 +57,7 @@ const ModelStats = ({ modelStats, onClose }) => {
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Daily Usage</h4>
                     {modelStats.dailyUsage && modelStats.dailyUsage.length > 0 ? (
-                      <div className="mt-2 overflow-hidden shadow border border-gray-200 dark:border-dark-border md:rounded-lg">
+                      <div className="mt-2 overflow-hidden shadow-sm border border-gray-200 dark:border-dark-border md:rounded-lg">
                         <table className="min-w-full divide-y divide-gray-300 dark:divide-dark-border">
                           <thead className="bg-gray-50 dark:bg-dark-secondary">
                             <tr>
@@ -91,7 +91,7 @@ const ModelStats = ({ modelStats, onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-dark-border shadow-sm px-4 py-2 bg-white dark:bg-dark-primary text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-dark-border shadow-xs px-4 py-2 bg-white dark:bg-dark-primary text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
             >
               Close
             </button>

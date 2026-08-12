@@ -81,14 +81,14 @@ const MermaidBlock = memo(({ diagramId, code, theme }) => {
 
   if (error) {
     return (
-      <div className="mermaid-error p-3 my-2 bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700/60 rounded-md text-xs shadow-sm">
+      <div className="mermaid-error p-3 my-2 bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700/60 rounded-md text-xs shadow-xs">
         <p className="font-semibold text-sm mb-1">⚠️ Diagram Error</p>
         <p className="text-xs mb-2">The diagram could not be displayed due to errors in its definition.</p>
         <details className="text-xs">
           <summary className="cursor-pointer hover:underline text-gray-600 dark:text-gray-400">Show Details & Code</summary>
-          <pre className="mt-1 whitespace-pre-wrap bg-red-100 dark:bg-red-800/30 p-2 rounded text-xs">{error}</pre>
+          <pre className="mt-1 whitespace-pre-wrap bg-red-100 dark:bg-red-800/30 p-2 rounded-sm text-xs">{error}</pre>
           <p className="mt-2 font-medium text-gray-700 dark:text-gray-300">Original Code:</p>
-          <pre className="whitespace-pre-wrap bg-gray-100 dark:bg-gray-700/50 p-2 mt-1 rounded text-xs">{code}</pre>
+          <pre className="whitespace-pre-wrap bg-gray-100 dark:bg-gray-700/50 p-2 mt-1 rounded-sm text-xs">{code}</pre>
         </details>
       </div>
     );
@@ -99,7 +99,7 @@ const MermaidBlock = memo(({ diagramId, code, theme }) => {
   }
 
   return (
-    <div className="mermaid-placeholder p-2 my-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-dark-border rounded text-xs text-center">
+    <div className="mermaid-placeholder p-2 my-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-dark-border rounded-sm text-xs text-center">
       Rendering diagram...
     </div>
   );
@@ -334,7 +334,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
     if (isBlock && language.toLowerCase() === 'mermaid') {
       if (isCurrentlyStreaming) {
         return (
-          <pre className="mermaid-streaming-placeholder my-2 p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-dark-border rounded text-xs">
+          <pre className="mermaid-streaming-placeholder my-2 p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-dark-border rounded-sm text-xs">
             <code className={`language-mermaid`}>{`Diagram will render when complete:\n${codeContent}`}</code>
           </pre>
         );
@@ -348,7 +348,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
         <div className="relative group not-prose">
           <button
             onClick={() => copyCodeToClipboard(codeContent)}
-            className="absolute top-2 right-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs"
+            className="absolute top-2 right-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs"
             title="Copy code"
           >
             {codeCopied ? (
@@ -360,7 +360,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
           <SyntaxHighlighter 
             style={vscDarkPlus} 
             language={language} 
-            className="!my-4 !text-sm !leading-relaxed" 
+            className="my-4! text-sm! leading-relaxed!" 
             customStyle={{ 
               background: 'transparent', 
               color: theme === 'dark' ? 'rgb(209, 213, 219)' : 'rgb(55, 65, 81)', 
@@ -391,7 +391,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
         </div>
       );
     }
-    return <code className="not-prose bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-dark-text-secondary px-1 py-0.5 rounded text-xs font-mono" {...props}>{codeContent.trim()}</code>;
+    return <code className="not-prose bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-dark-text-secondary px-1 py-0.5 rounded-sm text-xs font-mono" {...props}>{codeContent.trim()}</code>;
   }, [codeCopied, theme, message?.id, isCurrentlyStreaming, copyCodeToClipboard]);
 
   const reactMarkdownComponents = useMemo(() => ({
@@ -416,7 +416,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
       <img 
         src={src} 
         alt={alt} 
-        className="max-w-full h-auto rounded-md my-2 border border-gray-200 dark:border-dark-border shadow-sm" 
+        className="max-w-full h-auto rounded-md my-2 border border-gray-200 dark:border-dark-border shadow-xs" 
         {...props} 
       />
     ),
@@ -467,7 +467,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
         <div className="flex flex-wrap gap-2">
           {message.files.map((file) => (
             <div key={file.id} className="flex items-center bg-gray-50 dark:bg-dark-primary border border-gray-200 dark:border-dark-border rounded-md px-2 py-1 text-xs text-gray-700 dark:text-gray-300">
-              <span className="mr-1 flex-shrink-0">{chatService.getFileIcon(file.file_type || file.type)}</span>
+              <span className="mr-1 shrink-0">{chatService.getFileIcon(file.file_type || file.type)}</span>
               <span className="truncate max-w-[150px]">{file.original_name || file.name}</span>
             </div>
           ))}
@@ -491,7 +491,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
               <li key={index}>
                 <button
                   onClick={() => onSuggestionClick(suggestion)}
-                  className="w-full text-left px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-left px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors duration-150 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 >
                   - {suggestion}
                 </button>
@@ -549,7 +549,7 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
             : message.is_preflight
             ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
             : 'bg-white dark:bg-dark-primary text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-dark-border'
-        } rounded-lg px-4 py-3 shadow-sm w-full relative`}>
+        } rounded-lg px-4 py-3 shadow-xs w-full relative`}>
           {message.is_preflight && (
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">[Initial Answer]</div>
           )}
@@ -602,27 +602,27 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
                   )}
                 </div>
               )}
-              {!isLoading && <div className="flex-grow"></div>}
+              {!isLoading && <div className="grow"></div>}
 
               {!isLoading && finalProcessedContent && (
                 <div className="flex items-center space-x-1.5">
                   {downloadableUrl && !isUser && (
                     <div className="relative group/download">
                       <button
-                        className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm"
+                        className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-xs"
                         onClick={handleDownload}
                         title="Download"
                       >
                         <DownloadIcon className="w-3.5 h-3.5" />
                       </button>
-                       <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/download:opacity-100 transition-opacity pointer-events-none">
+                       <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-sm opacity-0 group-hover/download:opacity-100 transition-opacity pointer-events-none">
                         Download File
                       </span>
                     </div>
                   )}
                   <div className="relative group/markdown">
                     <button 
-                      className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm" 
+                      className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-xs" 
                       onClick={copyMarkdownToClipboard} 
                       title="Copy Markdown"
                     >
@@ -641,35 +641,35 @@ const ChatBubble = ({ message, isLoading, streamingContent, onSuggestionClick, r
                         </svg>
                       )}
                     </button>
-                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/markdown:opacity-100 transition-opacity pointer-events-none">
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-sm opacity-0 group-hover/markdown:opacity-100 transition-opacity pointer-events-none">
                       Copy Markdown
                     </span>
                   </div>
                   <div className="relative group/text">
                     <button 
-                      className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm" 
+                      className="p-1.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-xs" 
                       onClick={copyToClipboard} 
                       title="Copy Text"
                     >
                       {copied ? <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>}
                     </button>
-                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/text:opacity-100 transition-opacity pointer-events-none">
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-sm opacity-0 group-hover/text:opacity-100 transition-opacity pointer-events-none">
                       Copy Text
                     </span>
                   </div>
                   <div className="relative group/positive">
-                    <button className={`p-1.5 rounded-full border shadow-sm ${feedbackSent === 'up' ? 'bg-green-100 dark:bg-green-800 border-green-300 dark:border-green-600 text-green-600 dark:text-green-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'}`} onClick={() => handleFeedback(1)} title="Positive Feedback">
+                    <button className={`p-1.5 rounded-full border shadow-xs ${feedbackSent === 'up' ? 'bg-green-100 dark:bg-green-800 border-green-300 dark:border-green-600 text-green-600 dark:text-green-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'}`} onClick={() => handleFeedback(1)} title="Positive Feedback">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"><rect width="4.2" height="13.296" x="3.25" y="7.201" rx="1.5"/><path d="M7.45 9.526v7.97a3 3 0 0 0 3 3h6.873a2.5 2.5 0 0 0 2.412-1.842l1.958-7.188a2.5 2.5 0 0 0-2.412-3.157h-4.095V4.5a2 2 0 0 0-2-2h-.036a2 2 0 0 0-1.67.9z"/></g></svg>
                     </button>
-                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/positive:opacity-100 transition-opacity pointer-events-none">
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-sm opacity-0 group-hover/positive:opacity-100 transition-opacity pointer-events-none">
                       Positive Feedback
                     </span>
                   </div>
                   <div className="relative group/negative">
-                    <button className={`p-1.5 rounded-full border shadow-sm ${feedbackSent === 'down' ? 'bg-red-100 dark:bg-red-800 border-red-300 dark:border-red-600 text-red-600 dark:text-red-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'}`} onClick={() => handleFeedback(-1)} title="Negative Feedback">
+                    <button className={`p-1.5 rounded-full border shadow-xs ${feedbackSent === 'down' ? 'bg-red-100 dark:bg-red-800 border-red-300 dark:border-red-600 text-red-600 dark:text-red-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'}`} onClick={() => handleFeedback(-1)} title="Negative Feedback">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"><rect width="4.2" height="13.296" x="21.25" y="16.799" rx="1.5" transform="rotate(180 21.25 16.8)"/><path d="M17.05 14.475V6.503a3 3 0 0 0-3-3H7.177a2.5 2.5 0 0 0-2.412 1.843l-1.958 7.188a2.5 2.5 0 0 0 2.412 3.157h4.095V19.5a2 2 0 0 0 2 2h.036a2 2 0 0 0 1.67-.9z"/></g></svg>
                     </button>
-                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/negative:opacity-100 transition-opacity pointer-events-none">
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-sm opacity-0 group-hover/negative:opacity-100 transition-opacity pointer-events-none">
                       Negative Feedback
                     </span>
                   </div>

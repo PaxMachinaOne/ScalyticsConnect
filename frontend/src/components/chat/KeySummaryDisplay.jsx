@@ -16,19 +16,19 @@ const KeySummaryDisplay = ({ summaries, isActive = false }) => {
   const StatusIndicator = ({ isCompleted, isRunning }) => {
     if (isCompleted) {
       return (
-        <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0 mr-2" 
+        <div className="w-3 h-3 rounded-full bg-green-500 shrink-0 mr-2" 
              title="Completed">
         </div>
       );
     } else if (isRunning) {
       return (
-        <div className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0 mr-2 animate-pulse" 
+        <div className="w-3 h-3 rounded-full bg-orange-500 shrink-0 mr-2 animate-pulse" 
              title="Running">
         </div>
       );
     }
     return (
-      <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 mr-2" 
+      <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0 mr-2" 
            title="Pending">
       </div>
     );
@@ -43,7 +43,7 @@ const KeySummaryDisplay = ({ summaries, isActive = false }) => {
       {/* Header */}
       <button
         onClick={toggleExpansion}
-        className="w-full px-4 py-3 flex items-center justify-between bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+        className="w-full px-4 py-3 flex items-center justify-between bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-inset"
       >
         <div className="flex items-center space-x-3">
           {isExpanded ? (

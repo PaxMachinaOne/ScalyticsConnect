@@ -13,7 +13,7 @@ const ToggleSwitch = ({ enabled, onChange, label }) => {
       type="button"
       className={`${
         enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-      } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500`}
+      } relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500`}
       onClick={handleToggle}
       aria-pressed={enabled}
       aria-label={label || 'Toggle'}

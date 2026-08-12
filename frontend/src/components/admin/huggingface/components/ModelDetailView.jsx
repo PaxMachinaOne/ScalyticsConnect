@@ -22,7 +22,7 @@ const ModelDetailView = ({
 
   return (
     <div className="w-full mt-8" id="model-details-section">
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
             Model Details

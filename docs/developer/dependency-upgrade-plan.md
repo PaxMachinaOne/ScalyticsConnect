@@ -28,8 +28,8 @@ Commands:
 - Validate runtime behavior of auth, providers, model activation, and chat streaming.
 
 ## Phase 4: Toolchain Modernization
-- Plan migration off `react-scripts` to a modern build tool (Vite/Next) separately.
-- Upgrade lint/test infrastructure once toolchain migration is complete.
+- Done: frontend builds with Vite, tests run on Vitest, Tailwind is on v4.
+- Remaining: replace the frontend ESLint setup (the CRA `react-app` config is gone).
 
 ## Release Gate
 A dependency PR is merge-ready only when:

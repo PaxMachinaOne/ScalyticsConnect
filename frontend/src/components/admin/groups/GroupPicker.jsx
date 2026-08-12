@@ -60,7 +60,7 @@ const GroupPicker = ({ selectedGroupId, onGroupSelect }) => {
         onChange={(e) => onGroupSelect(e.target.value)}
         className={`
           mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 
-          focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md
+          focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md
           bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200
           ${loading ? 'opacity-50 cursor-not-allowed' : ''}
         `}

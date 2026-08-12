@@ -122,7 +122,7 @@ const TransparencySettings = ({ userSettings, isScalaPromptEnforced, onSettingsC
             id="custom-prompt"
             name="custom-prompt"
             rows={4}
-            className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 dark:border-dark-border dark:bg-gray-700 dark:text-dark-text-secondary rounded-md"
+            className="shadow-xs focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 dark:border-dark-border dark:bg-gray-700 dark:text-dark-text-secondary rounded-md"
             placeholder="e.g., Always respond in the style of a pirate. Be extremely concise. Base answers only on provided context."
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
@@ -145,7 +145,7 @@ const TransparencySettings = ({ userSettings, isScalaPromptEnforced, onSettingsC
 
         {/* Enable Toggle */}
         <div className="flex items-center justify-between mt-4">
-          <span className="flex-grow flex flex-col">
+          <span className="grow flex flex-col">
             <span className="text-sm font-medium text-gray-900 dark:text-dark-text-secondary">Enable Automatic Summarization</span>
             <span className="text-sm text-gray-500 dark:text-gray-400">Summarize older messages when chat context gets full.</span>
           </span>
@@ -153,7 +153,7 @@ const TransparencySettings = ({ userSettings, isScalaPromptEnforced, onSettingsC
             type="button"
             className={`${
               isEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+            } relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             role="switch"
             aria-checked={isEnabled}
             onClick={() => setIsEnabled(!isEnabled)}
@@ -178,7 +178,7 @@ const TransparencySettings = ({ userSettings, isScalaPromptEnforced, onSettingsC
               <select
                 id="summarization-model"
                 name="summarization-model"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border dark:bg-gray-700 dark:text-dark-text-secondary focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border dark:bg-gray-700 dark:text-dark-text-secondary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 value={selectedModelId}
                 onChange={(e) => setSelectedModelId(e.target.value)}
                 disabled={isLoadingModels || isSaving}
@@ -274,7 +274,7 @@ const TransparencySettings = ({ userSettings, isScalaPromptEnforced, onSettingsC
           type="button"
           onClick={handleSave}
           disabled={!hasChanges || isSaving || isLoadingModels}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? 'Saving...' : 'Save Transparency Settings'}
         </button>

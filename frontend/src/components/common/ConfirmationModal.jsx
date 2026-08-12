@@ -65,7 +65,7 @@ const ConfirmationModal = ({
             onClick={onConfirm}
             disabled={isConfirmDisabled}
             className={[
-              'w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 font-medium text-base focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm',
+              'w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 font-medium text-base focus:outline-hidden focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm',
               confirmButtonClass,
               isConfirmDisabled && 'opacity-50 cursor-not-allowed',
             ]
@@ -79,7 +79,7 @@ const ConfirmationModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-dark-border px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-dark-text-primary hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-dark-border px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-dark-text-primary hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
             >
               Cancel
             </button>

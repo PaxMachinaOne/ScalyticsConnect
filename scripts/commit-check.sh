@@ -21,9 +21,8 @@ echo -e "✅ Backend checks passed.\n"
 # 2. Frontend Checks
 echo -e "${CYAN}🖼️ [2/5] Checking Frontend...${NC}"
 cd frontend
-# Skip exit on frontend linting as it's often noisy in early stages
-npm run lint || { echo -e "${YELLOW}⚠️ Frontend Linting had warnings/errors${NC}" ; }
-CI=true npm test -- --passWithNoTests || { echo -e "${RED}❌ Frontend Tests Failed${NC}"; exit 1; }
+npm test || { echo -e "${RED}❌ Frontend Tests Failed${NC}"; exit 1; }
+npm run build || { echo -e "${RED}❌ Frontend Build Failed${NC}"; exit 1; }
 cd ..
 echo -e "✅ Frontend checks passed.\n"
 

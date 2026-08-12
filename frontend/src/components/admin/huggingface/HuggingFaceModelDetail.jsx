@@ -135,7 +135,7 @@ const HuggingFaceModelDetail = ({
           </div>
         </div>
       )}
-      <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm overflow-hidden">
         <div className="px-4 py-5 sm:px-6 bg-gray-50 dark:bg-dark-secondary border-b border-gray-200 dark:border-dark-border">
         <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">{model.modelId}</h3>
         <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Configure and download this model for local use with vLLM.</p>
@@ -163,7 +163,7 @@ const HuggingFaceModelDetail = ({
             </label>
             <input
               type="text" name="name" id="name" value={config.name} onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required
             />
           </div>
@@ -187,7 +187,7 @@ const HuggingFaceModelDetail = ({
                   id="quantization_method"
                   value={config.quantization_method}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   {(() => {
                     const modelSize = getModelSize(model?.modelId || '');
@@ -266,7 +266,7 @@ const HuggingFaceModelDetail = ({
           <div className="sm:col-span-3 flex items-center">
             <input
               id="autoInstallDeps" name="autoInstallDeps" type="checkbox" checked={config.autoInstallDeps} onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded-sm"
             />
             <label htmlFor="autoInstallDeps" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
               Auto-install dependencies
@@ -286,7 +286,7 @@ const HuggingFaceModelDetail = ({
             type="button"
             onClick={handleDownload}
             disabled={model.gated}
-            className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${model.gated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-medium`}
+            className={`inline-flex items-center px-4 py-2 rounded-md shadow-xs ${model.gated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-medium`}
           >
             Download & Install (Torch/vLLM)
           </button>

@@ -216,7 +216,7 @@ const ChatList = ({
       <div className="p-4">
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
         >
           <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -233,7 +233,7 @@ const ChatList = ({
           <div className="py-2"> {/* Added padding */}
             <button
               onClick={() => setIsInvitationsOpen(!isInvitationsOpen)}
-              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm"
             >
               <span>Invitations ({pendingShares.length})</span>
               <svg className={`w-4 h-4 transform transition-transform ${isInvitationsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -252,14 +252,14 @@ const ChatList = ({
                       <button
                         onClick={() => handleAcceptShare(share.share_id)}
                         disabled={actionLoading === share.share_id}
-                        className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {actionLoading === share.share_id ? 'Accepting...' : 'Accept'}
                       </button>
                       <button
                         onClick={() => handleDeclineShare(share.share_id)}
                         disabled={actionLoading === share.share_id}
-                        className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {actionLoading === share.share_id ? 'Declining...' : 'Decline'}
                       </button>
@@ -275,7 +275,7 @@ const ChatList = ({
         <div className="py-2"> {/* Added padding */}
            <button
              onClick={() => setIsMyChatsOpen(!isMyChatsOpen)}
-             className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+             className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm"
            >
              <span>My Chats ({ownedChats.length})</span>
              <svg className={`w-4 h-4 transform transition-transform ${isMyChatsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -291,18 +291,18 @@ const ChatList = ({
                       className={`
                         flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors group
                         ${Number(selectedChatId) === chat.id
-                          ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-blue-100 shadow-sm'
+                          ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-blue-100 shadow-xs'
                           : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/70'}
                       `}
                       onClick={() => handleChatClick(chat.id)}
                     >
                       <div className="flex-1 flex items-center overflow-hidden">
                         {chat.is_shared ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 h-5 w-5 mr-3 text-green-500 dark:text-green-400" viewBox="0 0 256 256">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-5 w-5 mr-3 text-green-500 dark:text-green-400" viewBox="0 0 256 256">
                             <path fill="currentColor" d="M234.38 111.08a12 12 0 0 0-10.76 11.3l-.1 1.62H192a12 12 0 0 0 0 24h31.52l.1 1.62a12 12 0 0 0 21.52 7.38l16-28a12 12 0 0 0 0-14.76l-16-28a12 12 0 0 0-21.52 7.38ZM128 108a44 44 0 1 0-44-44a44.05 44.05 0 0 0 44 44Zm0-72a28 28 0 1 1-28 28a28 28 0 0 1 28-28Zm0 108c-41.16 0-76.4 24.21-86.32 59.17a12 12 0 0 0 11.14 14.75h150.36a12 12 0 0 0 11.14-14.75C204.4 168.21 169.16 144 128 144Zm-70.86 60a84.11 84.11 0 0 1 141.72 0Z"/>
                           </svg>
                         ) : (
-                          <svg className="flex-shrink-0 h-5 w-5 mr-3 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="shrink-0 h-5 w-5 mr-3 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                           </svg>
                         )}
@@ -314,7 +314,7 @@ const ChatList = ({
                       <div className="ml-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => handleDeleteChat(e, chat.id)}
-                          className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 focus:outline-none p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/20"
+                          className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 focus:outline-hidden p-0.5 rounded-sm hover:bg-red-100 dark:hover:bg-red-900/20"
                           title="Delete Chat"
                         >
                           <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -339,7 +339,7 @@ const ChatList = ({
           <div className="py-2"> {/* Added padding */}
             <button
               onClick={() => setIsSharedOpen(!isSharedOpen)}
-              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="flex items-center justify-between w-full px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm"
             >
               <span>Shared With Me ({sharedWithMeChats.length})</span>
               <svg className={`w-4 h-4 transform transition-transform ${isSharedOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -353,14 +353,14 @@ const ChatList = ({
                   className={`
                     flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors group
                     ${Number(selectedChatId) === chat.id // Use === and ensure type consistency
-                      ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-blue-100 shadow-sm'
+                      ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-900 dark:text-blue-100 shadow-xs'
                       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/70'}
                   `}
                   onClick={() => handleChatClick(chat.id)}
                 >
                   <div className="flex-1 flex items-center overflow-hidden">
                     {/* New Shared Chat Icon */}
-                    <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 h-5 w-5 mr-3 text-purple-500 dark:text-purple-400" viewBox="0 0 256 256">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-5 w-5 mr-3 text-purple-500 dark:text-purple-400" viewBox="0 0 256 256">
                       <path fill="currentColor" d="M164 128a4 4 0 0 1-4 4H96a4 4 0 0 1 0-8h64a4 4 0 0 1 4 4Zm-4 28H96a4 4 0 0 0 0 8h64a4 4 0 0 0 0-8Zm52-108v152a28 28 0 0 1-28 28H72a28 28 0 0 1-28-28V48a12 12 0 0 1 12-12h20V24a4 4 0 0 1 8 0v12h40V24a4 4 0 0 1 8 0v12h40V24a4 4 0 0 1 8 0v12h20a12 12 0 0 1 12 12Zm-8 0a4 4 0 0 0-4-4h-20v12a4 4 0 0 1-8 0V44h-40v12a4 4 0 0 1-8 0V44H84v12a4 4 0 0 1-8 0V44H56a4 4 0 0 0-4 4v152a20 20 0 0 0 20 20h112a20 20 0 0 0 20-20Z"/>
                     </svg>
                     <div className="flex flex-col overflow-hidden">

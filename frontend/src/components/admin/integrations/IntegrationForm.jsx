@@ -148,7 +148,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
           id="name"
           value={formData.name}
           onChange={handleChange}
-          className={`mt-1 block w-full rounded-md shadow-sm 
+          className={`mt-1 block w-full rounded-md shadow-xs 
             ${errors.name 
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
               : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500'}
@@ -171,7 +171,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
           id="provider"
           value={formData.provider}
           onChange={handleChange}
-          className={`mt-1 block w-full rounded-md shadow-sm 
+          className={`mt-1 block w-full rounded-md shadow-xs 
             ${errors.provider 
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
               : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500'}
@@ -206,7 +206,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
             id="custom_provider"
             value={formData.provider === 'custom' ? '' : formData.provider}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
             placeholder="e.g., azure, auth0, etc."
             disabled={isLoading}
           />
@@ -224,7 +224,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
           id="client_id"
           value={formData.client_id}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
           placeholder="Enter client ID"
           disabled={isLoading}
         />
@@ -242,7 +242,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
             id="client_secret"
             value={formData.client_secret}
             onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
+            className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-dark-text-primary sm:text-sm"
             placeholder={integration ? "Leave blank to keep current secret" : "Enter client secret"}
             disabled={isLoading || validating}
           />
@@ -250,7 +250,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
             <button
               type="button"
               onClick={validateApiKey}
-              className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               disabled={isLoading || validating || !formData.client_secret}
             >
               {validating ? (
@@ -289,7 +289,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
           rows="5"
           value={formData.additional_config}
           onChange={handleChange}
-          className={`mt-1 block w-full rounded-md shadow-sm 
+          className={`mt-1 block w-full rounded-md shadow-xs 
             ${errors.additional_config 
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
               : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500'}
@@ -314,7 +314,7 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
             type="checkbox"
             checked={formData.enabled}
             onChange={handleChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded-sm"
             disabled={isLoading}
           />
         </div>
@@ -333,14 +333,14 @@ const IntegrationForm = ({ integration, onSave, onCancel, isLoading }) => {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           disabled={isLoading}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           disabled={isLoading}
         >
           {isLoading ? (

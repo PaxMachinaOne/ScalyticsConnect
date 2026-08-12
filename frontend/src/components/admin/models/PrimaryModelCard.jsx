@@ -151,7 +151,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden mb-4">
+      <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm overflow-hidden mb-4">
         <PrimaryModelHeader />
         <div className="px-4 py-5 sm:px-6 flex justify-center">
           <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
   // No primary model set
   if (!primaryModelData?.has_primary_model) {
     return (
-      <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden mb-4">
+      <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm overflow-hidden mb-4">
         <PrimaryModelHeader />
         <div className="px-4 py-5 sm:px-6">
           {error && (
@@ -191,7 +191,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
                       type="button"
                       onClick={handleSetPrimary}
                       disabled={isSettingPrimary}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
                     >
                       {isSettingPrimary ? (
                         <>
@@ -222,7 +222,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
   
   // Primary model is set
   return (
-    <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden mb-4">
+    <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm overflow-hidden mb-4">
       <div className="px-4 py-5 sm:px-6 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
@@ -354,7 +354,7 @@ const PrimaryModelCard = ({ model, onStatusChange }) => {
             type="button"
             onClick={handleUnsetPrimary}
             disabled={isUnsettingPrimary}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-dark-border shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-dark-border shadow-xs text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
           >
             {isUnsettingPrimary ? (
               <>

@@ -166,7 +166,7 @@ const DashboardPage = () => {
           {error && (
             <div className="mt-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
               <div className="flex">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -185,7 +185,7 @@ const DashboardPage = () => {
               </div>
               
               {/* Stats cards */}
-              <div className="bg-white dark:bg-dark-primary overflow-hidden shadow rounded-lg border dark:border-dark-border">
+              <div className="bg-white dark:bg-dark-primary overflow-hidden shadow-sm rounded-lg border dark:border-dark-border">
                 <Stats 
                   loading={loading.stats} 
                   totalChats={stats.totalChats} 
@@ -195,7 +195,7 @@ const DashboardPage = () => {
               </div>
               
               {/* Start a new chat card */}
-              <div className="bg-white dark:bg-dark-primary overflow-hidden shadow rounded-lg border dark:border-dark-border">
+              <div className="bg-white dark:bg-dark-primary overflow-hidden shadow-sm rounded-lg border dark:border-dark-border">
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-dark-text-primary">Start a new chat</h3>
                   <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-dark-text-secondary">
@@ -209,7 +209,7 @@ const DashboardPage = () => {
                       id="model-selector"
                       value={selectedModel || ''}
                       onChange={(e) => handleModelSelect(e.target.value)}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text-primary dark:bg-dark-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
+                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text-primary dark:bg-dark-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
                     >
                       <option value="" disabled>Select a model</option>
                       
@@ -299,7 +299,7 @@ const DashboardPage = () => {
                         type="button"
                         onClick={handleStartChat}
                         disabled={!selectedModel}
-                        className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 ${
+                        className={`inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 ${
                           !selectedModel ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
@@ -314,7 +314,7 @@ const DashboardPage = () => {
               </div>
               
               {/* Recent chats */}
-              <div className="sm:col-span-2 bg-white dark:bg-dark-primary overflow-hidden shadow rounded-lg border dark:border-dark-border">
+              <div className="sm:col-span-2 bg-white dark:bg-dark-primary overflow-hidden shadow-sm rounded-lg border dark:border-dark-border">
                 <RecentChats
                   loading={loading.chats}
                   chats={recentChats}
@@ -323,12 +323,12 @@ const DashboardPage = () => {
             </div>
             
             {/* Quick actions */}
-            <div className="mt-6 bg-white dark:bg-dark-primary shadow px-4 py-5 sm:px-6 rounded-lg border dark:border-dark-border">
+            <div className="mt-6 bg-white dark:bg-dark-primary shadow-sm px-4 py-5 sm:px-6 rounded-lg border dark:border-dark-border">
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-dark-text-primary">Quick actions</h3>
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Link
                   to="/settings"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-dark-border shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-dark-border shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
                 >
                   <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400 dark:text-dark-text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
@@ -337,7 +337,7 @@ const DashboardPage = () => {
                 </Link>
                 <Link
                   to="/settings/api-keys"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-dark-border shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-dark-border shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
                 >
                   <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400 dark:text-dark-text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />

@@ -464,7 +464,7 @@ const UserManager = () => {
       )}
 
       {/* Users table */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
           <div className="flex justify-between items-start mb-4"> {/* Top row for title and buttons */}
             <div>
@@ -489,11 +489,11 @@ const UserManager = () => {
                 </div>
               )}
             </div>
-            <div className="flex items-center flex-shrink-0"> {/* Buttons aligned to the right */}
+            <div className="flex items-center shrink-0"> {/* Buttons aligned to the right */}
               {!activeOAuthProvider && (
                 <button
                   onClick={() => setShowRegisterModal(true)}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 mr-3"
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 mr-3"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -518,7 +518,7 @@ const UserManager = () => {
               placeholder="Search by username or email..."
               value={inputSearchTerm} 
               onChange={handleSearchChange} 
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-dark-text-secondary focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary"
+              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs placeholder-gray-400 dark:placeholder-dark-text-secondary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary"
             />
           </div>
 
@@ -569,7 +569,7 @@ const UserManager = () => {
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav className="relative z-0 inline-flex rounded-md shadow-xs -space-x-px" aria-label="Pagination">
                   <button
                     onClick={handlePreviousPage}
                     disabled={pagination.offset === 0}

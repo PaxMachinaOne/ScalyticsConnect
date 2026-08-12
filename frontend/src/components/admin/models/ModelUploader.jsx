@@ -189,7 +189,7 @@ const ModelUploader = ({
   };
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
           Upload Model
@@ -203,7 +203,7 @@ const ModelUploader = ({
         {error && (
           <div className="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 p-4">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
@@ -218,7 +218,7 @@ const ModelUploader = ({
         {success && (
           <div className="mb-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-700 p-4">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-green-400 dark:text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
@@ -313,7 +313,7 @@ const ModelUploader = ({
                 id="modelName"
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
                 placeholder="e.g., Llama 2 7B"
                 required
               />
@@ -331,7 +331,7 @@ const ModelUploader = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
                 placeholder="Optional description of the model, its capabilities, and any special instructions"
               />
             </div>
@@ -340,7 +340,7 @@ const ModelUploader = ({
               <label htmlFor="contextWindow" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Context Window Size
               </label>
-              <div className="mt-1 flex rounded-md shadow-sm">
+              <div className="mt-1 flex rounded-md shadow-xs">
                 <input
                   type="number"
                   id="contextWindow"
@@ -349,7 +349,7 @@ const ModelUploader = ({
                   min={1024}
                   max={128000}
                   step={1024}
-                  className="block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 dark:border-dark-border shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary sm:text-sm"
                 />
                 <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-dark-border bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 sm:text-sm">
                   tokens
@@ -364,7 +364,7 @@ const ModelUploader = ({
               <button
                 type="submit"
                 disabled={uploading || !file || !modelName}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? 'Uploading...' : 'Upload Model'}
               </button>

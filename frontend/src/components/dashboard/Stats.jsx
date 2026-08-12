@@ -7,12 +7,12 @@ const Stats = ({ loading = false, totalChats = 0, monthlyTokenUsage = 0 }) => {
   if (loading) {
     return (
       <div className="animate-pulse px-4 py-5 sm:p-6 space-y-3">
-        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4"></div>
         <div className="flex space-x-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div> 
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3"></div> 
         </div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/2"></div>
       </div>
     );
   }
@@ -50,7 +50,7 @@ const Stats = ({ loading = false, totalChats = 0, monthlyTokenUsage = 0 }) => {
       </div>
       <div className="mt-5">
         <div className="relative">
-          <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200 dark:bg-blue-800">
+          <div className="overflow-hidden h-2 text-xs flex rounded-sm bg-blue-200 dark:bg-blue-800">
             {totalChats > 0 ? (
               <div 
                 style={{ width: `${Math.min(totalChats * 5, 100)}%` }} 

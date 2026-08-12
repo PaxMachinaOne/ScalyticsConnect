@@ -146,7 +146,7 @@ const DocSidebar = ({ currentDocId }) => {
         </h2>
         <button
           onClick={toggleSidebar}
-          className="rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
         >
           <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {sidebarOpen 
@@ -198,7 +198,7 @@ const DocSidebar = ({ currentDocId }) => {
   );
 
   return (
-    <div className="bg-white dark:bg-dark-primary rounded-lg shadow overflow-hidden">
+    <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm overflow-hidden">
       {mobileBar}
       {desktopContent}
     </div>

@@ -23,7 +23,7 @@ const OAuthLoginSection = ({ activeOAuthProvider, handleOAuthLogin }) => {
       <button
         type="button"
         onClick={handleOAuthLogin}
-        className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900"
+        className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900"
       >
         {getOAuthProviderIcon(activeOAuthProvider.provider)}
         <span className="ml-2">Continue with {activeOAuthProvider.displayName}</span>

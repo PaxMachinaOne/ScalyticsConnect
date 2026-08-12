@@ -52,7 +52,7 @@ const UserTable = ({
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-dark-secondary">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-600 dark:bg-blue-700 flex items-center justify-center text-white">
+                      <div className="shrink-0 h-10 w-10 rounded-full bg-blue-600 dark:bg-blue-700 flex items-center justify-center text-white">
                         {user.username.charAt(0).toUpperCase()}
                       </div>
                       <div className="ml-4">

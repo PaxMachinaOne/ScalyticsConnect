@@ -332,7 +332,7 @@ const ModelDownloadProgress = ({
             setIsDismissed(true);
             if (onDismiss) onDismiss(); 
           }}
-          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 rounded-md"
+          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 rounded-md"
           aria-label="Close download status"
         >
           <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -363,9 +363,9 @@ const ModelDownloadProgress = ({
 
       {/* Enhanced status message with icons */}
       {!hideStatusMessage && (
-        <div className="status-message text-sm mt-3 p-4 border dark:border-dark-border rounded-lg bg-white dark:bg-dark-primary shadow-sm min-h-[60px]">
+        <div className="status-message text-sm mt-3 p-4 border dark:border-dark-border rounded-lg bg-white dark:bg-dark-primary shadow-xs min-h-[60px]">
           <div className="flex items-center">
-            <div className="flex-shrink-0 mr-3">
+            <div className="shrink-0 mr-3">
               {step === 3 ? (
                 <div className="h-5 w-5 text-green-500">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -393,7 +393,7 @@ const ModelDownloadProgress = ({
                 </div>
               )}
             </div>
-            <div className="flex-grow">
+            <div className="grow">
               <p className={`font-medium ${
                 step === 3 ? 'text-green-700 dark:text-green-300' :
                 step === -1 ? 'text-red-700 dark:text-red-300' :
@@ -411,7 +411,7 @@ const ModelDownloadProgress = ({
         <div className="mt-3">
           {/* File Info Card (Only show if currentFile is known) */}
           {currentFile && (
-            <div className="file-card bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-dark-border shadow-sm overflow-hidden mb-3">
+            <div className="file-card bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-dark-border shadow-xs overflow-hidden mb-3">
               <div className="px-3 py-2 flex items-center justify-between bg-gray-50 dark:bg-dark-primary border-b border-gray-200 dark:border-dark-border">
                 <div className="flex items-center">
               <span className="file-icon mr-2">
@@ -467,7 +467,7 @@ const ModelDownloadProgress = ({
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mb-1 overflow-hidden"> {/* Added overflow-hidden */}
             <div
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-none" // Add transition-none
+              className="bg-linear-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-none" // Add transition-none
               style={{ width: `${progressPercent}%` }} // Use state directly
             ></div>
           </div>
@@ -499,7 +499,7 @@ const ModelDownloadProgress = ({
             <button
               onClick={handleCancelDownload}
               disabled={cancelling}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {cancelling ? (
                 <>

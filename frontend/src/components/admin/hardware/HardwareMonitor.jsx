@@ -329,13 +329,13 @@ const HardwareMonitor = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Hardware Monitoring</h2>
-        <button onClick={() => fetchHardwareInfo()} disabled={loading} className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+        <button onClick={() => fetchHardwareInfo()} disabled={loading} className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
           <svg className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           Refresh
         </button>
       </div>
       {hardwareInfo && (
-        <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+        <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
           <div className="border-b border-gray-200 dark:border-dark-border">
             <nav className="-mb-px flex space-x-8 px-6 py-3" aria-label="Tabs">
               <button onClick={() => setActiveTab('overview')} className={`whitespace-nowrap py-2 px-3 font-medium text-sm rounded-md ${activeTab === 'overview' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>Overview</button>

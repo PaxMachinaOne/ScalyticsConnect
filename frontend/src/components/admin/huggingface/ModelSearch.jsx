@@ -45,7 +45,7 @@ const ModelSearch = ({
               name="family"
               value={selectedFamily}
               onChange={handleSelectChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
               disabled={isLoading || isAirGapped} 
             >
               {/* Add default non-selectable option */}
@@ -68,7 +68,7 @@ const ModelSearch = ({
               name="sortBy"
               value={sortBy}
               onChange={handleSelectChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
               disabled={isLoading || isAirGapped} 
             >
               <option value="downloads">Downloads</option>
@@ -87,7 +87,7 @@ const ModelSearch = ({
               name="sortOrder"
               value={sortOrder}
               onChange={handleSelectChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border bg-white dark:bg-dark-primary text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
               disabled={isLoading || isAirGapped} 
             >
               <option value="desc">Descending</option>

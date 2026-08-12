@@ -75,7 +75,7 @@ const ModelDiscovery = ({
       )}
 
       {/* Global actions */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Global Model Actions</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -84,7 +84,7 @@ const ModelDiscovery = ({
           <div className="mt-4 space-y-4">
                           <button
                             type="button"
-                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-xs text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                             onClick={() => handleDiscoverClick('huggingface', 'microsoft/phi-2')}
                             disabled={discoveryInProgress}
                           >
@@ -98,7 +98,7 @@ const ModelDiscovery = ({
       </div>
 
       {/* Providers for model discovery */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">API Providers</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -110,14 +110,14 @@ const ModelDiscovery = ({
           {loading ? (
             <div className="animate-pulse px-4 py-5 sm:p-6">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+                <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-sm mb-3"></div>
               ))}
             </div>
           ) : !providersAvailable ? (
              <div className="px-4 py-5 sm:p-6">
                <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-4">
                  <div className="flex">
-                   <div className="flex-shrink-0">
+                   <div className="shrink-0">
                      <svg className="h-5 w-5 text-blue-400 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
                      </svg>
@@ -146,7 +146,7 @@ const ModelDiscovery = ({
                          type="button"
                          onClick={() => handleDiscoverModels('local')}
                          disabled={discoveryInProgress}
-                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                        >
                          {discoveryInProgress ? 'Discovering...' : 'Discover Local Models'}
                        </button>
@@ -167,7 +167,7 @@ const ModelDiscovery = ({
                            value={localModelOptions.basePath}
                            onChange={handleLocalOptionChange}
                            placeholder="Leave empty for default"
-                           className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                           className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                          />
                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                            Path to models directory. Leave empty to use the default.
@@ -180,7 +180,7 @@ const ModelDiscovery = ({
                            type="checkbox"
                            checked={localModelOptions.recursive}
                            onChange={handleLocalOptionChange}
-                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded-sm"
                          />
                          <label htmlFor="recursive" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                            Search recursively in subdirectories
@@ -200,7 +200,7 @@ const ModelDiscovery = ({
               {providers
                 .filter(provider => provider.category !== 'Search' && provider.name?.toLowerCase() !== 'courtlistener') // Filter out search providers and CourtListener by name
                 .map((provider) => (
-                  <li key={provider.id} className="px-4 py-5 sm:p-6 hover:bg-gray-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-dark-border rounded-md shadow-sm">
+                  <li key={provider.id} className="px-4 py-5 sm:p-6 hover:bg-gray-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-dark-border rounded-md shadow-xs">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">{provider.name}</h3>
@@ -214,7 +214,7 @@ const ModelDiscovery = ({
                               type="button"
                               onClick={() => handleDiscoverClick('huggingface', 'TheBloke/phi-2-GGUF')} 
                               disabled={discoveryInProgress}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                             >
                               {discoveryInProgress ? 'Browsing...' : 'Browse Model Files'}
                             </button>
@@ -222,7 +222,7 @@ const ModelDiscovery = ({
                               type="button"
                               onClick={() => handleDiscoverModels(provider.id)}
                               disabled={discoveryInProgress}
-                              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                             >
                               Discover All
                             </button>
@@ -232,7 +232,7 @@ const ModelDiscovery = ({
                             type="button"
                             onClick={() => handleDiscoverModels(provider.id)}
                             disabled={discoveryInProgress}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                           >
                             {discoveryInProgress ? 'Discovering...' : 'Discover Models'}
                           </button>
@@ -243,7 +243,7 @@ const ModelDiscovery = ({
                 ))}
               {/* Add Local provider if it doesn't exist in the DB providers list */}
               {!providers.some(p => p.name === 'Local') && (
-                <li className="px-4 py-5 sm:p-6 hover:bg-gray-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-dark-border rounded-md shadow-sm">
+                <li className="px-4 py-5 sm:p-6 hover:bg-gray-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-dark-border rounded-md shadow-xs">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -255,7 +255,7 @@ const ModelDiscovery = ({
                           type="button"
                           onClick={() => handleDiscoverModels('local')}
                           disabled={discoveryInProgress}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                         >
                           {discoveryInProgress ? 'Discovering...' : 'Discover Local Models'}
                         </button>
@@ -276,7 +276,7 @@ const ModelDiscovery = ({
                             value={localModelOptions.basePath}
                             onChange={handleLocalOptionChange}
                             placeholder="Leave empty for default"
-                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                           />
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Path to models directory. Leave empty to use the default.
@@ -289,7 +289,7 @@ const ModelDiscovery = ({
                             type="checkbox"
                             checked={localModelOptions.recursive}
                             onChange={handleLocalOptionChange}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded-sm"
                           />
                           <label htmlFor="recursive" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                             Search recursively in subdirectories

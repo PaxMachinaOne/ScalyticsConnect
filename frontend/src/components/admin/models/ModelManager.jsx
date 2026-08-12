@@ -155,7 +155,7 @@ const ModelManagerContent = ({
         <GpuPanel gpuStats={gpuStats} models={models} />
       )}
 
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg mb-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg mb-6">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Model Management</h3>

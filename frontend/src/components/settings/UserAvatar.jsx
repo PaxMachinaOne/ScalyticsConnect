@@ -168,7 +168,7 @@ const UserAvatar = ({ user, editable = false, onAvatarUpdate, size = 'md' }) => 
       <div 
         className={`relative ${sizeClasses[size] || sizeClasses.md} rounded-full overflow-hidden ${
           editable ? 'cursor-pointer' : ''
-        } bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 flex items-center justify-center text-white font-medium border-2 border-white dark:border-gray-800 shadow-sm`}
+        } bg-linear-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 flex items-center justify-center text-white font-medium border-2 border-white dark:border-gray-800 shadow-xs`}
         onClick={handleOpenFileDialog}
         title={editable ? "Click to change avatar" : ""}
       >

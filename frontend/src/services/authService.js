@@ -10,7 +10,7 @@
 import authService from './auth';
 
 // Only show warning in development mode
-if (process.env.NODE_ENV !== 'production') {
+if (import.meta.env.DEV) {
   console.warn(
     'Warning: Importing directly from "services/authService" is deprecated. ' +
     'Please update your imports to use "services/auth" instead.'
