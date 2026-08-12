@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { createContext, useState, useEffect, useContext, useMemo, useCallback, useRef } from 'react';
+import socketService from '../services/socketService';
 
 const DownloadStatusContext = createContext({
   activeDownloads: new Set(),
@@ -69,7 +70,6 @@ export const DownloadStatusProvider = ({ children }) => {
     activeDownloads.forEach(id => downloadsToRemove.delete(id));
 
     downloadsToRemove.forEach(downloadId => {
-      const socketService = require('../services/socketService').default;
       socketService.unsubscribeFromDownload(downloadId);
     });
 
