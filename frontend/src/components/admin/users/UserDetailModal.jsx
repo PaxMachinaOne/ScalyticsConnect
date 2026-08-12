@@ -43,9 +43,9 @@ const UserDetailModal = ({
 
                 {selectedUser.loading ? (
                   <div className="animate-pulse mt-4 space-y-3">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-3/4"></div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -139,7 +139,7 @@ const UserDetailModal = ({
                                     setLoading(false);
                                   }
                                 }}
-                                className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                                className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-xs text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                                 disabled={loading} // Disable button while loading
                               >
                                 {loading ? 'Resending...' : 'Resend Invitation'}
@@ -148,7 +148,7 @@ const UserDetailModal = ({
                             
                             <button
                               onClick={() => setShowResetPasswordModal(true)}
-                              className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-yellow-600 dark:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-offset-gray-800"
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-xs text-white bg-yellow-600 dark:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-offset-gray-800"
                             >
                               Reset Password
                             </button>
@@ -249,7 +249,7 @@ const UserDetailModal = ({
                             {selectedUser.recentActivity && selectedUser.recentActivity.length > 0 ? (
                               <ul className="divide-y dark:divide-dark-border">
                                 {selectedUser.recentActivity.slice(0, 5).map((activity, index) => (
-                                  <li key={index} className="py-3 hover:bg-gray-50 dark:hover:bg-dark-secondary px-2 -mx-2 rounded">
+                                  <li key={index} className="py-3 hover:bg-gray-50 dark:hover:bg-dark-secondary px-2 -mx-2 rounded-sm">
                                     <div className="flex justify-between items-center">
                                       <div>
                                         <h3 className="text-sm font-medium text-gray-800 dark:text-gray-300">{activity.action}</h3>
@@ -296,7 +296,7 @@ const UserDetailModal = ({
             <button
               type="button"
               onClick={() => setShowUserModal(false)}
-              className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+              className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-xs px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
             >
               Close
             </button>

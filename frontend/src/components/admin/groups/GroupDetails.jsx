@@ -46,9 +46,9 @@ const GroupDetails = ({ groupId, onClose }) => {
   if (loading) {
     return (
       <div className="animate-pulse p-6 space-y-4">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
       </div>
     );
   }
@@ -57,7 +57,7 @@ const GroupDetails = ({ groupId, onClose }) => {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md">
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
@@ -80,7 +80,7 @@ const GroupDetails = ({ groupId, onClose }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow sm:rounded-lg">
+    <div className="bg-white dark:bg-dark-primary shadow-sm sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
@@ -92,7 +92,7 @@ const GroupDetails = ({ groupId, onClose }) => {
         </div>
         <button
           onClick={onClose}
-          className="rounded-md p-2 inline-flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400"
+          className="rounded-md p-2 inline-flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400"
         >
           <span className="sr-only">Close panel</span>
           <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">

@@ -13,7 +13,7 @@ const ModelDropdown = ({
   availableModels = [], 
   disabled = false,
   labelClasses = "block text-sm font-medium text-gray-700 dark:text-dark-text-primary",
-  selectClasses = "mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+  selectClasses = "mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
   placeholder = "-- Select Model --"
 }) => {
 

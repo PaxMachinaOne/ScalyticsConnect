@@ -153,7 +153,7 @@ const ServiceIntegrationsPanel = () => {
       
       {/* Integration Listing */}
       {!isCreating && !selectedIntegration && integrations.length > 0 && (
-        <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">OAuth Service Integrations (Experimental)</h2>
             <button
@@ -182,7 +182,7 @@ const ServiceIntegrationsPanel = () => {
       
       {/* Form */}
       {(isCreating || selectedIntegration) && (
-        <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm p-4">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary mb-4">
             {isCreating ? 'Add New Integration' : 'Edit Integration'}
           </h2>
@@ -197,7 +197,7 @@ const ServiceIntegrationsPanel = () => {
       )}
       {/* Empty State */}
       {!isCreating && !selectedIntegration && integrations.length === 0 && (
-        <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm p-6">
           <div className="text-center">
             <svg 
               className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" 
@@ -216,7 +216,7 @@ const ServiceIntegrationsPanel = () => {
               <button
                 type="button"
                 onClick={handleCreateIntegration}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <svg 
                   className="-ml-1 mr-2 h-5 w-5" 
@@ -251,10 +251,10 @@ const ServiceIntegrationsPanel = () => {
                   Configure the following redirect URIs in your provider's dashboard:
                 </p>
                 <ul className="ml-5 mt-1 space-y-1 font-mono text-xs text-gray-500 dark:text-gray-400">
-                  <li>Google: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://yourdomain.com/auth/google/callback</span></li>
-                  <li>GitHub: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://yourdomain.com/auth/github/callback</span></li>
-                  <li>Microsoft: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://yourdomain.com/auth/microsoft/callback</span></li>
-                  <li>Azure AD: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://yourdomain.com/auth/azure/callback</span></li>
+                  <li>Google: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">https://yourdomain.com/auth/google/callback</span></li>
+                  <li>GitHub: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">https://yourdomain.com/auth/github/callback</span></li>
+                  <li>Microsoft: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">https://yourdomain.com/auth/microsoft/callback</span></li>
+                  <li>Azure AD: <span className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">https://yourdomain.com/auth/azure/callback</span></li>
                 </ul>
               </div>
               <div>
@@ -270,10 +270,10 @@ const ServiceIntegrationsPanel = () => {
                   For Azure AD, the "Tenant ID" field is important. Use:
                 </p>
                 <ul className="ml-5 mt-1 text-gray-500 dark:text-gray-400">
-                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">organizations</code> - Allow any organizational account</li>
-                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">consumers</code> - Allow only personal accounts</li>
-                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">common</code> - Allow any Microsoft account</li>
-                  <li>Your specific tenant ID (e.g., <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">a1b2c3d4-e5f6...</code>) - Restrict to your organization only</li>
+                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">organizations</code> - Allow any organizational account</li>
+                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">consumers</code> - Allow only personal accounts</li>
+                  <li><code className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">common</code> - Allow any Microsoft account</li>
+                  <li>Your specific tenant ID (e.g., <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded-sm">a1b2c3d4-e5f6...</code>) - Restrict to your organization only</li>
                 </ul>
               </div>
               <div>

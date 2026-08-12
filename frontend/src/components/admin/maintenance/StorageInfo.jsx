@@ -6,7 +6,7 @@ import { formatBytes } from './utils';
 const StorageInfo = ({ storageInfo, loading }) => {
   if (loading) {
     return (
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg mb-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg mb-6">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-dark-border">
           <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Storage Information</h3>
         </div>
@@ -19,7 +19,7 @@ const StorageInfo = ({ storageInfo, loading }) => {
 
   if (!storageInfo || !storageInfo.diskInfo) {
     return (
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg mb-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg mb-6">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-dark-border">
           <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Storage Information</h3>
         </div>
@@ -34,7 +34,7 @@ const StorageInfo = ({ storageInfo, loading }) => {
   const { total = 0, used = 0, available = 0 } = diskInfo;
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow rounded-lg mb-6">
+    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg mb-6">
       <div className="px-6 py-5 border-b border-gray-200 dark:border-dark-border">
         <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Storage Information</h3>
       </div>

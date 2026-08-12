@@ -222,26 +222,26 @@ const GlobalApiKeysManager = () => {
 
   if (loading && globalApiKeys.length === 0) {
     return (
-      <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/2"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-dark-primary rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-dark-primary rounded-lg shadow-sm p-6">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary mb-6">Global API Keys</h2>
       
       {/* Privacy mode alert */}
       {privacyModeEnabled && (
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-dark-text-primary">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -277,7 +277,7 @@ const GlobalApiKeysManager = () => {
               id="provider"
               value={selectedProvider}
               onChange={(e) => setSelectedProvider(e.target.value)}
-              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               disabled={submitting}
             >
               <option value="">Select a provider</option>
@@ -298,7 +298,7 @@ const GlobalApiKeysManager = () => {
               id="apiKey"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Enter the API key"
               disabled={submitting}
             />
@@ -315,7 +315,7 @@ const GlobalApiKeysManager = () => {
                 id="cxId"
                 value={cxId}
                 onChange={(e) => setCxId(e.target.value)}
-                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="Enter your Google CX ID"
                 disabled={submitting}
               />
@@ -329,7 +329,7 @@ const GlobalApiKeysManager = () => {
         <div className="mt-4">
           <button
             type="submit"
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-purple-500 ${
+            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-purple-600 hover:bg-purple-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-purple-500 ${
               submitting ? 'opacity-70 cursor-not-allowed' : ''
             }`}
             disabled={submitting}

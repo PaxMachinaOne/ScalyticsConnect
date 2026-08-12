@@ -5,7 +5,7 @@ import React from 'react';
 const SimpleAlert = ({ message, type, onClose }) => {
   if (!message) return null;
 
-  const baseClasses = "px-4 py-3 rounded relative mb-4 border";
+  const baseClasses = "px-4 py-3 rounded-sm relative mb-4 border";
   const typeClasses = {
     error: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900 text-red-700 dark:text-red-400",
     success: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900 text-green-700 dark:text-green-400",

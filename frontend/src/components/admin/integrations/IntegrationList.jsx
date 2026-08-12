@@ -40,7 +40,7 @@ const IntegrationList = ({ integrations, onEdit, onDelete, onToggle }) => {
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   {/* Icon based on provider */}
-                  <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-secondary">
+                  <div className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-secondary">
                     {integration.provider === 'google' && (
                       <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.545 12.151L12.545 12.151L12.545 12.151Q11.222 12.151 10.257 11.534Q9.293 10.917 8.887 9.812L8.887 9.812L8.887 9.812Q8.85 9.711 8.85 9.535Q8.85 9.36 8.899 9.198L8.899 9.198L8.899 9.198Q9.688 9.198 10.581 9.413Q11.475 9.628 12.343 10.069L12.343 10.069L12.343 10.069Q12.407 10.108 12.471 10.335Q12.534 10.562 12.534 10.666L12.534 10.666L12.534 10.666Q12.534 11.136 12.179 11.644Q11.823 12.151 11.12 12.151L11.12 12.151L11.12 12.151Q11.823 12.151 12.184 12.151Q12.545 12.151 12.545 12.151Z" />

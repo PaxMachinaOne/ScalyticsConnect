@@ -85,7 +85,7 @@ const AIAgentsIcon = (props) => (
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             {sidebarOpen && (
               <button
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
                 onClick={() => setSidebarOpen(false)}
               >
                 <span className="sr-only">Close sidebar</span>
@@ -112,7 +112,7 @@ const AIAgentsIcon = (props) => (
                     <item.icon
                       className={classNames(
                         item.current ? 'text-gray-500 dark:text-dark-text-primary' : 'text-gray-400 dark:text-dark-text-secondary group-hover:text-gray-500 dark:group-hover:text-dark-text-primary',
-                        'mr-3 flex-shrink-0 h-6 w-6'
+                        'mr-3 shrink-0 h-6 w-6'
                       )}
                       aria-hidden="true"
                     />
@@ -138,7 +138,7 @@ const AIAgentsIcon = (props) => (
                   <item.icon
                     className={classNames(
                       item.current ? 'text-gray-500 dark:text-dark-text-primary' : 'text-gray-400 dark:text-dark-text-secondary group-hover:text-gray-500 dark:group-hover:text-dark-text-primary',
-                      'mr-3 flex-shrink-0 h-6 w-6'
+                      'mr-3 shrink-0 h-6 w-6'
                     )}
                     aria-hidden="true"
                   />
@@ -150,7 +150,7 @@ const AIAgentsIcon = (props) => (
         </div>
       </div>
 
-      <div className="hidden md:flex md:flex-shrink-0">
+      <div className="hidden md:flex md:shrink-0">
         <div className="flex flex-col w-64 border-r border-gray-200 dark:border-dark-border bg-white dark:bg-dark-primary">
           <div className="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <nav className="mt-5 flex-1 px-2 bg-white dark:bg-dark-primary space-y-1">
@@ -209,7 +209,7 @@ const AIAgentsIcon = (props) => (
       <div className="flex flex-col w-0 flex-1"> 
         <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 z-30">
           <button
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 dark:text-dark-text-secondary hover:text-gray-900 dark:hover:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 dark:text-dark-text-secondary hover:text-gray-900 dark:hover:text-dark-text-primary focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-blue-500"
             onClick={toggleSidebar}
           >
             <span className="sr-only">Open sidebar</span>
@@ -219,7 +219,7 @@ const AIAgentsIcon = (props) => (
           </button>
         </div>
 
-        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
+        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-hidden">
           {children}
         </main>
       </div>

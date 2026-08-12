@@ -64,13 +64,13 @@ const FileList = ({
   if (loading) {
     return (
       <div className="animate-pulse p-4">
-        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded-sm w-1/2 mb-2"></div>
         {[1, 2, 3].map((_, index) => (
           <div key={index} className="flex items-center space-x-4 my-2">
             <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
             <div className="flex-1">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2 mt-2"></div>
+              <div className="h-4 bg-gray-200 rounded-sm w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded-sm w-1/2 mt-2"></div>
             </div>
           </div>
         ))}
@@ -80,7 +80,7 @@ const FileList = ({
 
   if (error) {
     return (
-      <div className="text-red-500 p-4 bg-red-50 rounded">
+      <div className="text-red-500 p-4 bg-red-50 rounded-sm">
         {error}
       </div>
     );
@@ -124,7 +124,7 @@ const FileList = ({
                 e.stopPropagation();
                 handleDeleteFile(file.id);
               }}
-              className="text-red-500 hover:text-red-700 focus:outline-none"
+              className="text-red-500 hover:text-red-700 focus:outline-hidden"
               title="Delete file"
             >
               <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

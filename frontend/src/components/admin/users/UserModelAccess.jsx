@@ -174,10 +174,10 @@ const UserModelAccess = ({ userId, username }) => {
   if (loading) {
     return (
       <div className="p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
           ))}
         </div>
       </div>
@@ -187,7 +187,7 @@ const UserModelAccess = ({ userId, username }) => {
   const providerNames = Object.keys(modelAccess);
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+    <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Model Access for {username}</h3>
@@ -199,7 +199,7 @@ const UserModelAccess = ({ userId, username }) => {
           {!showGroupOptions && (
             <button
               onClick={() => setShowGroupOptions(true)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
             >
               Add User to Group
             </button>
@@ -212,7 +212,7 @@ const UserModelAccess = ({ userId, username }) => {
         <div className="bg-gray-50 dark:bg-dark-secondary px-4 py-4 sm:px-6 border-b border-gray-200 dark:border-dark-border">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Group Operations</h4>
           <div className="flex space-x-4">
-            <div className="flex-grow">
+            <div className="grow">
               <GroupPicker
                 selectedGroupId={selectedGroup}
                 onGroupSelect={setSelectedGroup}
@@ -223,8 +223,8 @@ const UserModelAccess = ({ userId, username }) => {
                 onClick={() => handleGroupAction('add')}
                 disabled={!selectedGroup || saving}
                 className={`
-                  inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium 
-                  rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 
+                  inline-flex items-center px-3 py-2 border border-transparent shadow-xs text-sm leading-4 font-medium 
+                  rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-hidden focus:ring-2 
                   focus:ring-offset-2 focus:ring-green-500
                   ${(!selectedGroup || saving) ? 'opacity-50 cursor-not-allowed' : ''} dark:bg-green-700 dark:hover:bg-green-800
                 `}
@@ -236,8 +236,8 @@ const UserModelAccess = ({ userId, username }) => {
                 onClick={() => handleGroupAction('copy')}
                 disabled={!selectedGroup || saving}
                 className={`
-                  inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium 
-                  rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 
+                  inline-flex items-center px-3 py-2 border border-transparent shadow-xs text-sm leading-4 font-medium 
+                  rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 
                   focus:ring-offset-2 focus:ring-blue-500
                   ${(!selectedGroup || saving) ? 'opacity-50 cursor-not-allowed' : ''} dark:bg-blue-700 dark:hover:bg-blue-800
                 `}
@@ -309,7 +309,7 @@ const UserModelAccess = ({ userId, username }) => {
       {error && (
         <div className="mx-4 mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
@@ -324,7 +324,7 @@ const UserModelAccess = ({ userId, username }) => {
       {success && (
         <div className="mx-4 mb-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 dark:border-green-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-green-400 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -355,7 +355,7 @@ const UserModelAccess = ({ userId, username }) => {
                       <div
                         key={model.id}
                         className={`
-                          relative rounded-lg px-6 py-5 shadow-sm flex items-center space-x-3
+                          relative rounded-lg px-6 py-5 shadow-xs flex items-center space-x-3
                           ${model.can_access
                             ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-700'
                             : 'border-2 border-red-300 bg-white dark:bg-dark-primary dark:border-red-700'

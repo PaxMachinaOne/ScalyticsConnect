@@ -78,7 +78,7 @@ const ThemeSettings = ({ user: initialUser }) => {
   return (
     <div className="space-y-6">
       {/* Theme selection */}
-      <div className="bg-white dark:bg-dark-primary shadow sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Appearance</h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
@@ -93,7 +93,7 @@ const ThemeSettings = ({ user: initialUser }) => {
                   type="button"
                   onClick={() => handleThemeChange(theme.id)}
                   className={`
-                    flex items-center px-4 py-3 border rounded-md focus:outline-none
+                    flex items-center px-4 py-3 border rounded-md focus:outline-hidden
                     ${currentTheme === theme.id
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-400'
                       : 'border-gray-300 dark:border-dark-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}
@@ -136,7 +136,7 @@ const ThemeSettings = ({ user: initialUser }) => {
           type="button"
           onClick={handleSaveSettings}
           disabled={saving}
-          className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 ${
+          className={`inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 ${
             saving ? 'opacity-75 cursor-not-allowed' : ''
           }`}
         >

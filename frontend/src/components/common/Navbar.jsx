@@ -63,13 +63,13 @@ const Navbar = () => {
   const finalAvatarSrc = customAvatarSrc || defaultAvatarPath; 
 
   return (
-    <nav className="bg-white dark:bg-dark-primary shadow-sm fixed top-0 w-full z-50">
+    <nav className="bg-white dark:bg-dark-primary shadow-xs fixed top-0 w-full z-50">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
+            <div className="shrink-0 flex items-center">
               <div className="flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center" style={{ height: '40px' }}>
+                <div className="shrink-0 flex items-center justify-center" style={{ height: '40px' }}>
                   <Link to="/" className="block">
                     <Logo size="sm" asLink={false} />
                   </Link>
@@ -119,7 +119,7 @@ const Navbar = () => {
                 <div>
                   <button
                     type="button"
-                    className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                    className="flex text-sm rounded-full focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                     id="user-menu-button"
                     aria-expanded={menuOpen}
                     aria-haspopup="true"
@@ -151,7 +151,7 @@ const Navbar = () => {
                 {menuOpen && (
                   <div
                     ref={dropdownRef} 
-                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-dark-secondary ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border dark:border-dark-border"
+                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-dark-secondary ring-1 ring-black ring-opacity-5 focus:outline-hidden z-50 border dark:border-dark-border"
                     role="menu"
                     aria-orientation="vertical"
                     aria-labelledby="user-menu-button"
@@ -184,7 +184,7 @@ const Navbar = () => {
           <div className="flex items-center sm:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-expanded="false"
               onClick={toggleMenu}
             >
@@ -244,7 +244,7 @@ const Navbar = () => {
           
           <div className="pt-4 pb-3 border-t border-gray-200 dark:border-dark-border">
             <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
                   {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>

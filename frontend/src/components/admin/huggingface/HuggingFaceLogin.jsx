@@ -92,7 +92,7 @@ const HuggingFaceLogin = () => {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Enter your Hugging Face Token"
-                className="flex-grow bg-gray-700 text-white rounded-l-md p-2 border border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
+                className="grow bg-gray-700 text-white rounded-l-md p-2 border border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
                 disabled={isLoading}
               />
               <button

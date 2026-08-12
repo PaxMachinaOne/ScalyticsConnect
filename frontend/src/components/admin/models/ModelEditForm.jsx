@@ -149,7 +149,7 @@ const ModelEditForm = ({
       </h3>
 
       <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="space-y-6">
-        <div className="text-sm p-2 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+        <div className="text-sm p-2 rounded-sm bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
           <span className="font-medium text-blue-700 dark:text-dark-text-primary">
             {isExternalModel ? 'External API Model' : 'Local Model'}
           </span>
@@ -166,7 +166,7 @@ const ModelEditForm = ({
               id="name"
               value={formData.name}
               onChange={onInputChange}
-              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
+              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
               required
               readOnly 
             />
@@ -182,7 +182,7 @@ const ModelEditForm = ({
               rows={2}
               value={formData.description}
               onChange={onInputChange}
-              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
             />
           </div>
 
@@ -196,7 +196,7 @@ const ModelEditForm = ({
                   type="checkbox"
                   checked={formData.enable_scala_prompt || false} 
                   onChange={onInputChange} 
-                  className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:checked:bg-blue-500 rounded"
+                  className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:checked:bg-blue-500 rounded-sm"
                 />
               </div>
               <div className="ml-3 text-sm">
@@ -224,7 +224,7 @@ const ModelEditForm = ({
                   name="external_provider_id"
                   value={formData.external_provider_id}
                   onChange={onInputChange}
-                  className="mt-1 block w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                  className="mt-1 block w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   required={isExternalModel}
                 >
                   <option value="">Select Provider</option>
@@ -256,7 +256,7 @@ const ModelEditForm = ({
                   value={formData.external_model_id}
                   onChange={onInputChange}
                   placeholder="e.g., gpt-4, claude-3-opus-20240229"
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   required={isExternalModel}
                 />
               </div>
@@ -275,7 +275,7 @@ const ModelEditForm = ({
                   value={formData.model_path}
                   onChange={onInputChange}
                   placeholder="./models/your-model-folder"
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-gray-100 dark:bg-dark-primary text-gray-900 dark:text-gray-400 focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm cursor-not-allowed"
                   required={!isExternalModel}
                   readOnly 
                 />
@@ -294,7 +294,7 @@ const ModelEditForm = ({
                     id="context_window"
                     value={formData.context_window || ''}
                     onChange={onInputChange}
-                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   >
                     <option value="">Auto-detected ({formData.auto_detected_context || 'Unknown'})</option>
                     <option value="512">512 tokens (512) - Development Testing</option>
@@ -325,7 +325,7 @@ const ModelEditForm = ({
                     id="model_precision"
                     value={effectivePrecision}
                     onChange={onInputChange}
-                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                   >
                     <option value="auto">Auto (Use On-Disk: {fullConfig.torch_dtype || 'Unknown'})</option>
                     
@@ -360,7 +360,7 @@ const ModelEditForm = ({
               </div>
 
               {/* VRAM Impact Warning - Spans full width below the dropdowns */}
-              <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded p-3">
+              <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-sm p-3">
                 <div className="font-medium text-amber-800 dark:text-amber-300 mb-2">VRAM Impact</div>
                 <div className="text-amber-700 dark:text-amber-300 space-y-1">
                   <div>• <strong>512 tokens:</strong> Minimal VRAM (perfect for 8GB systems)</div>
@@ -448,17 +448,17 @@ const ModelEditForm = ({
                               </span>
                             </div>
                             {isRecommended && isClickable && (
-                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                               <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                  Recommended
                                </span>
                             )}
                             {isSufficient && !isRecommended && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                 ✓ Fits
                               </span>
                             )}
                             {!isSufficient && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
                                 ✗ Too Small
                               </span>
                             )}
@@ -486,7 +486,7 @@ const ModelEditForm = ({
                         id="gpu_memory_utilization"
                         value={currentGpuMemoryUtilization}
                         onChange={onInputChange}
-                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-xs py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
                       >
                         <option value="auto">Auto (System Recommended)</option>
                         <option value="0.95">95% (Max Performance)</option>
@@ -506,7 +506,7 @@ const ModelEditForm = ({
                   {/* Hardware info */}
                   <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-start">
-                      <svg className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="h-4 w-4 text-blue-500 mt-0.5 mr-2 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
                       <div className="text-xs text-blue-700 dark:text-blue-300">
@@ -524,7 +524,7 @@ const ModelEditForm = ({
               ) : (
                 <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
                   <div className="flex items-start">
-                    <svg className="h-4 w-4 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-4 w-4 text-yellow-500 mt-0.5 mr-2 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <div className="text-xs text-yellow-700 dark:text-yellow-300">
@@ -543,7 +543,7 @@ const ModelEditForm = ({
         {!isExternalModel && (
           <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-md p-3">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
@@ -568,14 +568,14 @@ const ModelEditForm = ({
           <button
             type="button"
             onClick={resetForm}
-            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-xs text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 ${
+            className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 ${
               saving ? 'opacity-75 cursor-not-allowed' : ''
             }`}
           >
@@ -587,7 +587,7 @@ const ModelEditForm = ({
               onClick={onActivateAndSave} 
               disabled={saving || activating || (poolStatus?.activeModelId && poolStatus?.activeModelId !== formData.id)} 
               title={poolStatus?.activeModelId && poolStatus?.activeModelId !== formData.id ? "Another model is active" : "Save configuration and activate model"}
-              className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 ${
+              className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 ${
                 (saving || activating || (poolStatus?.activeModelId && poolStatus?.activeModelId !== formData.id)) ? 'opacity-75 cursor-not-allowed' : ''
               }`}
             >

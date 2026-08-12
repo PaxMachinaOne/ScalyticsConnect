@@ -75,7 +75,7 @@ const DownloadProgressIndicator = ({
 
   return (
     <div className="mt-6">
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
             Download Progress
@@ -125,7 +125,7 @@ const DownloadProgressIndicator = ({
               {progress.status === 'error' && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500">
                   <div className="flex">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <svg className="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
@@ -148,7 +148,7 @@ const DownloadProgressIndicator = ({
               <button
                 onClick={handleCancelDownload}
                 disabled={cancelling}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cancelling ? (
                   <>
@@ -171,7 +171,7 @@ const DownloadProgressIndicator = ({
             
             <button
               onClick={onRefresh}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Refresh Model List
             </button>

@@ -172,7 +172,7 @@ const AIAgentsPage = () => {
               const isConfigurable = true; 
 
               return (
-                <div key={tool.name} className="bg-white dark:bg-dark-primary shadow-sm rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden">
+                <div key={tool.name} className="bg-white dark:bg-dark-primary shadow-xs rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden">
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-3">
@@ -189,7 +189,7 @@ const AIAgentsPage = () => {
                        </p>
                       <button
                         onClick={() => handleConfigureClick(tool)}
-                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-dark-border shadow-sm text-xs font-medium rounded text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-dark-border shadow-xs text-xs font-medium rounded-sm text-gray-700 dark:text-dark-text-primary bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         disabled={!isConfigurable}
                       >
                          Configure

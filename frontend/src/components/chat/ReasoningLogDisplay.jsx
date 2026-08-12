@@ -26,7 +26,7 @@ const ReasoningLogDisplay = ({ steps }) => {
           <div className="space-y-1 mb-4">
             {reasoningSteps.map((step, index) => (
               <div key={step.id} className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 flex-shrink-0 mt-1.5"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 shrink-0 mt-1.5"></div>
                 <div className="flex-1">
                   <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
                     {step.explanation_message}
@@ -54,7 +54,7 @@ const ReasoningLogDisplay = ({ steps }) => {
             <div className="space-y-1">
               {completionSteps.map((step, index) => (
                 <div key={step.id} className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 flex-shrink-0 mt-1.5"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 shrink-0 mt-1.5"></div>
                   <div className="flex-1">
                     <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
                       {step.explanation_message}

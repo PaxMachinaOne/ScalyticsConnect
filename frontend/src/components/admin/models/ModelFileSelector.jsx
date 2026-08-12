@@ -78,7 +78,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
   
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-6">
         <div className="flex justify-center items-center h-48">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
           <p className="ml-3 text-gray-600 dark:text-gray-300">Loading available model files...</p>
@@ -89,12 +89,12 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
   
   if (error) {
     return (
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-6">
         <div className="text-center">
           <div className="text-red-500 dark:text-red-400 text-xl">⚠️ {error}</div>
           <button
             onClick={onCancel}
-            className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
           >
             Go Back
           </button>
@@ -104,7 +104,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
   }
   
   return (
-    <div className="bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
         <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
           Select a Model File to Download
@@ -122,7 +122,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
             <input
               type="text"
               id="search"
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-xs p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400"
               placeholder="Search files..."
               value={filters.search}
               onChange={(e) => setFilters({...filters, search: e.target.value})}
@@ -131,7 +131,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
         </div>
         
         {/* File listing */}
-        <div className="mt-4 overflow-hidden shadow border-b border-gray-200 dark:border-dark-border sm:rounded-lg">
+        <div className="mt-4 overflow-hidden shadow-sm border-b border-gray-200 dark:border-dark-border sm:rounded-lg">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
             <thead className="bg-gray-50 dark:bg-dark-secondary">
               <tr>
@@ -192,7 +192,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
           >
             Cancel
           </button>
@@ -200,7 +200,7 @@ const ModelFileSelector = ({ modelId, onFileSelect, onCancel }) => {
             type="button"
             onClick={handleSelect}
             disabled={!selectedFile}
-            className={`px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 ${
+            className={`px-4 py-2 shadow-xs text-sm font-medium rounded-md text-white focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 ${
               selectedFile ? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800' : 'bg-blue-300 dark:bg-blue-800/50 cursor-not-allowed'
             }`}
           >

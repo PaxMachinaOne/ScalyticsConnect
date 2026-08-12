@@ -19,7 +19,7 @@ const ChatHeader = ({
 }) => {
 
   return (
-    <div className="sticky top-0 z-10 bg-white dark:bg-dark-primary border-b border-gray-200 dark:border-gray-800 px-4 py-3 backdrop-blur-sm">
+    <div className="sticky top-0 z-10 bg-white dark:bg-dark-primary border-b border-gray-200 dark:border-gray-800 px-4 py-3 backdrop-blur-xs">
       <div className="max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between">
           {/* Left side: Title Editing */}
@@ -32,7 +32,7 @@ const ChatHeader = ({
                   value={newTitle}
                   onChange={onTitleChange}
                   onKeyDown={onTitleKeyPress} // Changed from onKeyPress for better consistency
-                  className="text-lg font-medium text-gray-800 dark:text-dark-text-secondary border-b-2 border-blue-500 dark:border-blue-400 focus:outline-none focus:border-blue-600 dark:focus:border-blue-300 w-full max-w-md mr-2 bg-transparent px-1"
+                  className="text-lg font-medium text-gray-800 dark:text-dark-text-secondary border-b-2 border-blue-500 dark:border-blue-400 focus:outline-hidden focus:border-blue-600 dark:focus:border-blue-300 w-full max-w-md mr-2 bg-transparent px-1"
                   placeholder="Chat title"
                   disabled={renamingInProgress}
                   autoFocus
@@ -41,7 +41,7 @@ const ChatHeader = ({
                   <button
                     onClick={onSaveTitle}
                     disabled={renamingInProgress}
-                    className="p-1.5 rounded-full text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 focus:outline-none transition-colors"
+                    className="p-1.5 rounded-full text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 focus:outline-hidden transition-colors"
                     title="Save title"
                   >
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -51,7 +51,7 @@ const ChatHeader = ({
                   <button
                     onClick={onCancelEditing}
                     disabled={renamingInProgress}
-                    className="p-1.5 rounded-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 focus:outline-none transition-colors"
+                    className="p-1.5 rounded-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 focus:outline-hidden transition-colors"
                     title="Cancel"
                   >
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -65,7 +65,7 @@ const ChatHeader = ({
                 <h2 className="text-lg font-medium text-gray-800 dark:text-dark-text-secondary mr-2 truncate">{chat?.title || 'New Chat'}</h2> {/* Added truncate */}
                 <button
                   onClick={onStartEditing}
-                  className="p-1.5 rounded-full text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors flex-shrink-0" // Added flex-shrink-0
+                  className="p-1.5 rounded-full text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-hidden transition-colors shrink-0" // Added shrink-0
                   title="Edit title"
                 >
                   <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

@@ -13,14 +13,14 @@ const BackupUploadSection = ({
   formatFileSize
 }) => {
   return (
-    <div className="bg-white dark:bg-dark-primary shadow rounded-lg p-6 mt-6 mb-6">
+    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-6 mt-6 mb-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Upload Backup</h3>
       </div>
       
       <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 border-l-4 border-blue-500 dark:border-blue-600 text-gray-700 dark:text-gray-300 mb-4">
         <p className="text-sm flex items-start">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0 text-blue-500 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 shrink-0 text-blue-500 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
           <span>
@@ -52,7 +52,7 @@ const BackupUploadSection = ({
             disabled={uploadProgress}
             className="block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
-              file:rounded file:border-0
+              file:rounded-sm file:border-0
               file:text-sm file:font-semibold
               file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300
               hover:file:bg-blue-100 dark:hover:file:bg-blue-800/30"

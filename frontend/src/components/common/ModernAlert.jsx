@@ -109,11 +109,11 @@ const ModernAlert = ({
   };
   
   return (
-    <div className={`mb-4 ${styles.bgColor} shadow-sm rounded-lg transform transition-transform duration-300 ${isExiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+    <div className={`mb-4 ${styles.bgColor} shadow-xs rounded-lg transform transition-transform duration-300 ${isExiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
       <div className="p-4">
         <div className="flex">
           {showIcon && (
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {getIcon()}
             </div>
           )}
@@ -124,7 +124,7 @@ const ModernAlert = ({
             <div className="-mx-1.5 -my-1.5">
               <button
                 onClick={handleDismiss}
-                className={`inline-flex rounded-md p-1.5 ${styles.bgColor} ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50`}
+                className={`inline-flex rounded-md p-1.5 ${styles.bgColor} ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50`}
               >
                 <span className="sr-only">Dismiss</span>
                 <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

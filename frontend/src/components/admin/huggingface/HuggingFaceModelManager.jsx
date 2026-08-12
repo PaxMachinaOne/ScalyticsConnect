@@ -119,11 +119,11 @@ const HuggingFaceModelManager = () => {
           </div>
         </div>
       )}
-      {error && <div className="text-red-500 p-4 bg-red-100 rounded">{error}</div>}
+      {error && <div className="text-red-500 p-4 bg-red-100 rounded-sm">{error}</div>}
       
       <PrimaryModelBanner />
       
-      <div className="bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden p-6">
+      <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden p-6">
         <div className="px-4 py-5 sm:px-6 -mx-6 -mt-6 mb-6 border-b border-gray-200 dark:border-dark-border">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Search Hugging Face Models</h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Search, download and install models directly from Hugging Face Hub.</p>
@@ -164,7 +164,7 @@ const HuggingFaceModelManager = () => {
           />
         )}
 
-        <div className="mt-8 bg-white dark:bg-dark-primary shadow rounded-lg overflow-hidden">
+        <div className="mt-8 bg-white dark:bg-dark-primary shadow-sm rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Installed Local Models</h3>
           </div>

@@ -2,7 +2,7 @@
 // Copyright 2024-present Scalytics, Inc. (https://www.scalytics.io)
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import modelService from '../services/modelService';
+import modelService from '../../services/modelService';
 
 const AgentSelector = ({ 
   selectedAgentId, 
@@ -53,13 +53,13 @@ const AgentSelector = ({
 
   if (loading) {
     return (
-      <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+      <div className="animate-pulse h-10 bg-gray-200 rounded-sm"></div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-500 text-sm p-2 border border-red-200 rounded bg-red-50">
+      <div className="text-red-500 text-sm p-2 border border-red-200 rounded-sm bg-red-50">
         {error}
       </div>
     );
@@ -67,7 +67,7 @@ const AgentSelector = ({
 
   if (agents.length === 0) {
     return (
-      <div className="text-yellow-700 text-sm p-2 border border-yellow-200 rounded bg-yellow-50">
+      <div className="text-yellow-700 text-sm p-2 border border-yellow-200 rounded-sm bg-yellow-50">
         No Scalytics MCP agents available.
       </div>
     );
@@ -85,7 +85,7 @@ const AgentSelector = ({
         disabled={disabled}
         className={`
           block w-full pl-3 pr-10 py-2 text-base border-gray-300 
-          focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+          focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 
           sm:text-sm rounded-md
           ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
         `}

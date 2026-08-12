@@ -61,7 +61,7 @@ const ScalyticsApiConfig = ({
   };
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-4 sm:p-6">
+    <div className="bg-white dark:bg-dark-primary shadow-xs rounded-lg p-4 sm:p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary">Scalytics API Configuration</h2>
         <a 
@@ -74,9 +74,9 @@ const ScalyticsApiConfig = ({
         </a>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded">{error}</div>}
-      {error && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded">{error}</div>}
-      {success && <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">{success}</div>}
+      {error && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-sm">{error}</div>}
+      {error && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-sm">{error}</div>}
+      {success && <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-sm">{success}</div>}
 
       <div className="space-y-6"> 
         <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-4 rounded-md border dark:border-gray-600">
@@ -98,7 +98,7 @@ const ScalyticsApiConfig = ({
               onChange={handleToggleChange} 
               disabled={saving} 
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
         </div>
 
@@ -120,7 +120,7 @@ const ScalyticsApiConfig = ({
                 onChange={(e) => handleRateLimitInputChange({ target: { name: 'windowMs', value: parseInt(e.target.value, 10) * 60000 } })}
                 min="1"
                 step="1"
-                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 disabled={saving} 
               />
             </div>
@@ -136,7 +136,7 @@ const ScalyticsApiConfig = ({
                 onChange={handleRateLimitInputChange}
                 min="0"
                 step="1"
-                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 disabled={saving} 
               />
             </div>
@@ -145,7 +145,7 @@ const ScalyticsApiConfig = ({
              <button
                type="button" 
                onClick={handleSaveRateLimits} 
-               className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+               className="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
                disabled={saving} 
              >
                {saving ? 'Saving...' : 'Save Rate Limit Settings'} 

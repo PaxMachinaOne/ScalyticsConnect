@@ -41,7 +41,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
             id="new-name"
             value={provider.name}
             onChange={(e) => handleChange(e, 'name')}
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
           />
         </div>
         
@@ -54,7 +54,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
             id="new-description"
             value={provider.description}
             onChange={(e) => handleChange(e, 'description')}
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
           />
         </div>
         
@@ -67,7 +67,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
             id="new-api-url"
             value={provider.api_url}
             onChange={(e) => handleChange(e, 'api_url')}
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
             placeholder="https://api.example.com"
           />
         </div>
@@ -81,7 +81,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
             id="new-is-external"
             value={provider.is_external === undefined ? 'true' : String(provider.is_external)} 
             onChange={(e) => handleChange(e, 'is_external')}
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
           >
             <option value="true">External</option>
             <option value="false">Internal</option>
@@ -95,7 +95,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
             id="new-is-active"
             checked={provider.is_active}
             onChange={(e) => handleChange(e, 'is_active')}
-            className="h-4 w-4 text-blue-600 dark:text-dark-link focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-dark-border rounded"
+            className="h-4 w-4 text-blue-600 dark:text-dark-link focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-dark-border rounded-sm"
           />
           <label htmlFor="new-is-active" className="ml-2 block text-sm text-gray-900 dark:text-dark-text-primary">
             Active
@@ -115,7 +115,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
               id="new-models-endpoint"
               value={provider.endpoints.models}
               onChange={(e) => handleChange(e, 'endpoints.models')}
-              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
               placeholder="/v1/models"
             />
           </div>
@@ -129,7 +129,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
               id="new-chat-endpoint"
               value={provider.endpoints.chat}
               onChange={(e) => handleChange(e, 'endpoints.chat')}
-              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
               placeholder="/v1/chat/completions"
             />
           </div>
@@ -143,7 +143,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
               id="new-validate-endpoint"
               value={provider.endpoints.validate}
               onChange={(e) => handleChange(e, 'endpoints.validate')}
-              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-dark-border bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary rounded-md shadow-xs focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm"
               placeholder="/v1/models"
             />
           </div>
@@ -154,7 +154,7 @@ const AddProviderForm = ({ provider, onChange, onSubmit }) => {
         <button
           type="button"
           onClick={onSubmit}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 dark:focus:ring-blue-400"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 dark:focus:ring-blue-400"
         >
           Add Provider
         </button>

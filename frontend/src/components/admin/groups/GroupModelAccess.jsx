@@ -125,10 +125,10 @@ const GroupModelAccess = ({ groupId, groupName }) => {
   if (loading) {
     return (
       <div className="p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
           ))}
         </div>
       </div>
@@ -138,7 +138,7 @@ const GroupModelAccess = ({ groupId, groupName }) => {
   const providerNames = Object.keys(modelAccess);
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+    <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Model Access for Group: {groupName}</h3>
@@ -150,7 +150,7 @@ const GroupModelAccess = ({ groupId, groupName }) => {
           <button
             onClick={() => handleResetAccess()}
             disabled={resetting}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-dark-border shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-dark-border shadow-xs text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
           >
             {resetting ? 'Resetting...' : 'Reset All to Defaults'}
           </button>
@@ -161,7 +161,7 @@ const GroupModelAccess = ({ groupId, groupName }) => {
       {error && (
         <div className="mx-4 mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
@@ -176,7 +176,7 @@ const GroupModelAccess = ({ groupId, groupName }) => {
       {success && (
         <div className="mx-4 mb-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 dark:border-green-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-green-400 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -205,7 +205,7 @@ const GroupModelAccess = ({ groupId, groupName }) => {
                   {modelAccess[provider]?.map(model => (
                     <div
                       key={model.id}
-                      className={`relative rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-secondary px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-500 ${model.can_access ? '' : 'opacity-50'}`}
+                      className={`relative rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-secondary px-6 py-5 shadow-xs flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-500 ${model.can_access ? '' : 'opacity-50'}`}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{model.name}</p>

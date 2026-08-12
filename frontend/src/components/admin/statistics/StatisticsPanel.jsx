@@ -208,7 +208,7 @@ const StatisticsPanel = () => {
       {error && (
         <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
@@ -222,7 +222,7 @@ const StatisticsPanel = () => {
       )}
 
       {/* Stats overview - RESTORED */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">System Overview</h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
@@ -234,8 +234,8 @@ const StatisticsPanel = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mb-2"></div>
-                  <div className="h-6 bg-gray-300 dark:bg-gray-500 rounded w-2/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded-sm w-1/2 mb-2"></div>
+                  <div className="h-6 bg-gray-300 dark:bg-gray-500 rounded-sm w-2/3"></div>
                 </div>
               ))}
             </div>
@@ -290,14 +290,14 @@ const StatisticsPanel = () => {
       </div>
 
       {/* Usage over time */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Usage Over Time</h3>
             <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Platform usage statistics by time period.</p>
           </div>
           <div>
-            <select value={period} onChange={(e) => setPeriod(e.target.value)} className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+            <select value={period} onChange={(e) => setPeriod(e.target.value)} className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
               {/* Hourly option removed as per requirement */}
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -306,7 +306,7 @@ const StatisticsPanel = () => {
           </div>
         </div>
         {loading.usage ? (
-          <div className="animate-pulse p-4"> <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded"></div> </div>
+          <div className="animate-pulse p-4"> <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded-sm"></div> </div>
         ) : (
           <div className="px-4 py-5 sm:p-6">
             {usageStats.length === 0 ? (
@@ -375,7 +375,7 @@ const StatisticsPanel = () => {
       </div>
 
       {/* Recent system logs - RESTORED */}
-      <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">Recent Activity</h3>
@@ -386,7 +386,7 @@ const StatisticsPanel = () => {
           {/* Changed <a> to <button> with onClick handler */}
           <button
             onClick={handleDownloadLogs}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             Download Full Log
           </button>
@@ -397,8 +397,8 @@ const StatisticsPanel = () => {
               <div key={i} className="flex space-x-4">
                 <div className="h-10 w-10 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded-sm w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded-sm w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -414,7 +414,7 @@ const StatisticsPanel = () => {
                 {logs && Array.isArray(logs) && logs.map((log) => (
                   <li key={log.id} className="py-4">
                     <div className="flex space-x-3">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="h-10 w-10 rounded-full bg-blue-600 dark:bg-blue-700 flex items-center justify-center text-white">
                           {log.username.charAt(0).toUpperCase()}
                         </div>

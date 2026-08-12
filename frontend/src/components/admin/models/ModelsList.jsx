@@ -115,7 +115,7 @@ const ModelsList = ({
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     {/* Icon */}
-                    <div className={`flex-shrink-0 h-10 w-10 rounded-full ${isEmbedding ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'} flex items-center justify-center`}>
+                    <div className={`shrink-0 h-10 w-10 rounded-full ${isEmbedding ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'} flex items-center justify-center`}>
                       {isExternal ? ( <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg> )
                        : isEmbedding ? ( <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg> )
                        : ( <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg> )}
@@ -160,7 +160,7 @@ const ModelsList = ({
                                 {Array.from({ length: tensorParallelSize }).map((_, i) => (
                                   <div
                                     key={i}
-                                    className="w-2 h-2 bg-green-500 rounded-sm"
+                                    className="w-2 h-2 bg-green-500 rounded-xs"
                                   ></div>
                                 ))}
                               </div>
@@ -278,7 +278,7 @@ const ModelsList = ({
                          </button>
                        )
                      )}
-                     <Tooltip id={`delete-tt-${model.id}`} place="top" effect="solid" className="z-[9999]" />
+                     <Tooltip id={`delete-tt-${model.id}`} place="top" effect="solid" className="z-9999" />
                  </td>
               </tr>
             );

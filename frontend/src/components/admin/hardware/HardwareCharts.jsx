@@ -63,7 +63,7 @@ const HardwareCharts = ({ type, data }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-dark-primary p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+        <div className="bg-white dark:bg-dark-primary p-2 border border-gray-200 dark:border-gray-700 rounded-sm shadow-lg">
           <p className="text-xs text-gray-500">{formatDateForTooltip(label)}</p>
           <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
             {`${type === 'cpu' ? 'CPU' : 'GPU'} Usage: ${payload[0].value.toFixed(1)}%`}

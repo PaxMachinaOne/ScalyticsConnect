@@ -28,7 +28,7 @@ const SimpleTooltip = ({ text, children }) => {
       {children}
       {isVisible && (
         <div
-           className="absolute z-10 top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 font-medium text-white bg-gray-900 rounded-md shadow-sm dark:bg-gray-700 max-w-md sm:max-w-lg md:max-w-xl"
+           className="absolute z-10 top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 font-medium text-white bg-gray-900 rounded-md shadow-xs dark:bg-gray-700 max-w-md sm:max-w-lg md:max-w-xl"
            style={{ fontSize: '0.55rem' }} 
         >
           {hasContent ? (
@@ -240,10 +240,10 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
       {isOwner && (
         <div className="border-b border-gray-100 dark:border-dark-border py-3 px-4 bg-white dark:bg-dark-primary">
           <div className="flex items-center justify-between space-x-4"> 
-            <div className="flex items-center space-x-4 flex-shrink-0 min-w-0"> 
+            <div className="flex items-center space-x-4 shrink-0 min-w-0"> 
               {model ? (
                 <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <span className="mr-1 flex-shrink-0">
+                  <span className="mr-1 shrink-0">
                     {model.provider === 'openai' ? '🔄' : 
                      model.provider === 'anthropic' ? '🔷' : 
                      model.provider === 'local' ? '💻' : '🤖'}
@@ -259,8 +259,8 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
                  </div>
               )}
             </div>
-            <div className="flex-grow"></div>
-            <div className="flex items-center space-x-3 flex-shrink-0"> 
+            <div className="grow"></div>
+            <div className="flex items-center space-x-3 shrink-0"> 
               {Boolean(model?.enable_scala_prompt) && ( 
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-dark-border rounded-full px-2 py-0.5 cursor-default">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -311,7 +311,7 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
             <div className="absolute inset-0 bg-gray-800 bg-opacity-60 pointer-events-auto" onClick={() => setApiKeyError(null)}></div>
             <div className="relative w-80 sm:w-96 bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow-2xl p-5 mx-auto z-10 pointer-events-auto">
               <div className="flex items-start">
-                <div className="flex-shrink-0 mt-0.5">
+                <div className="shrink-0 mt-0.5">
                   <svg className="h-6 w-6 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -325,7 +325,7 @@ const ChatView = ({ chatId, userSettings, onChatUpdated, currentUserId, openShar
                   <div className="mt-4 flex justify-end">
                     <button
                       type="button"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-yellow-800 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-yellow-800 bg-yellow-100 hover:bg-yellow-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
                       onClick={() => setApiKeyError(null)}
                     >
                       Dismiss

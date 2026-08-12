@@ -110,13 +110,13 @@ const ModelSelector = ({
 
   if (loading) {
     return (
-      <div className="animate-pulse h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="animate-pulse h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-500 dark:text-red-400 text-sm p-2 border border-red-200 dark:border-red-900 rounded bg-red-50 dark:bg-red-900/20">
+      <div className="text-red-500 dark:text-red-400 text-sm p-2 border border-red-200 dark:border-red-900 rounded-sm bg-red-50 dark:bg-red-900/20">
         {error}
       </div>
     );
@@ -124,7 +124,7 @@ const ModelSelector = ({
 
   if (models.length === 0) {
     return (
-      <div className="text-yellow-700 dark:text-yellow-400 text-sm p-2 border border-yellow-200 dark:border-yellow-900 rounded bg-yellow-50 dark:bg-yellow-900/20">
+      <div className="text-yellow-700 dark:text-yellow-400 text-sm p-2 border border-yellow-200 dark:border-yellow-900 rounded-sm bg-yellow-50 dark:bg-yellow-900/20">
         No models available. You may need to be added to a group with model access.
       </div>
     );
@@ -143,8 +143,8 @@ const ModelSelector = ({
           disabled={disabled}
           className={`
             w-3/5 pl-3 pr-10 py-2 text-sm border-gray-300 dark:border-gray-600
-            focus:outline-none focus:ring-blue-500 focus:border-blue-500 
-            rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary shadow-sm
+            focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 
+            rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary shadow-xs
             ${disabled ? 'bg-gray-100 dark:bg-dark-primary cursor-not-allowed' : ''}
             truncate
           `}
@@ -204,8 +204,8 @@ const ModelSelector = ({
             className={`
               w-2/5 whitespace-nowrap py-2 px-3 border border-transparent text-sm font-medium 
               rounded-md text-white bg-blue-600 hover:bg-blue-700 
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-              flex items-center justify-center shadow-sm
+              focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+              flex items-center justify-center shadow-xs
               ${!selectedModelId ? 'opacity-70 cursor-not-allowed' : ''}
             `}
           >

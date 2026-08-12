@@ -42,31 +42,6 @@ if [ -z "$DOMAIN" ]; then
 fi
 
 
-# Create a fixed PostCSS configuration for Tailwind CSS v3.3.3
-create_postcss_config() {
-  local target_dir="$1"
-  
-  if [ -z "$target_dir" ]; then
-    log_error "No target directory specified for PostCSS configuration"
-    return 1
-  fi
-  
-  log "Creating PostCSS configuration for Tailwind CSS v3.3.3..."
-  
-  cat > "$target_dir/postcss.config.js" << EOF
-// PostCSS Configuration for Tailwind CSS v3.3.3
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  }
-}
-EOF
-  
-  log_success "PostCSS configuration created"
-  return 0
-}
-
 # Install and build frontend applications
 # Assumes APP_DIR is correctly set in the environment
 build_frontend() {
@@ -91,35 +66,12 @@ build_frontend() {
     # Cannot call init_frontend_env here as we don't have the full URI
   fi
   
-  # Create fixed PostCSS configuration first
-  log "Setting up Tailwind CSS with stable v3.3.3 configuration..."
-  create_postcss_config "$frontend_dir"
-  
-  # Create .npmrc to ensure dev dependencies are always installed
-  log "Configuring npm to install all dependencies including dev dependencies..."
+  # Vite and the Tailwind PostCSS plugin are dev dependencies
   echo "production=false" > "$frontend_dir/.npmrc"
-  
-  # Always use npm install instead of npm ci to avoid version mismatches
-  log "Installing frontend dependencies with npm install..."
-  # Remove package-lock.json to ensure clean install
-  if [ -f "$frontend_dir/package-lock.json" ]; then
-    log "Removing existing package-lock.json for clean install..."
-    rm -f "$frontend_dir/package-lock.json"
-  fi
-  
-  # Use npm install with no-package-lock to avoid lock file issues
-  npm install --no-package-lock
-  
-  # Double-check specific Tailwind CSS plugins are installed
-  log "Ensuring Tailwind CSS plugins are available..."
-  if [ ! -d "node_modules/@tailwindcss/forms" ] || [ ! -d "node_modules/@tailwindcss/typography" ]; then
-    log "Installing specific Tailwind plugins..."
-    npm install --no-save @tailwindcss/forms@0.5.3 @tailwindcss/typography@0.5.9
-    npm install --no-save tailwindcss@3.3.3 postcss@8.4.31 autoprefixer@10.4.16
-  else
-    log_success "Tailwind plugins found in node_modules"
-  fi
-  
+
+  log "Installing frontend dependencies..."
+  npm ci
+
   # Run the build
   log "Building frontend..."
   NODE_ENV=production npm run build

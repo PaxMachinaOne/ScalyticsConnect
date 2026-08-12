@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:3000/api',
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ api.interceptors.response.use(
 
 // Export the base URL function separately so it can be used without importing the entire service
 export const getBaseUrl = () => {
-  return process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  return import.meta.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 };
 
 // Generic API service

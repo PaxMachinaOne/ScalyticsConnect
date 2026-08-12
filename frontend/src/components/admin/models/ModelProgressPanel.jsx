@@ -145,7 +145,7 @@ const ModelProgressPanel = ({ token, onClose }) => {
       {showDebugLogs && (
         <div className="border-t border-gray-200 dark:border-gray-700">
           <div className="px-4 py-3">
-            <div className="bg-gray-900 text-gray-300 font-mono text-xs p-3 rounded max-h-48 overflow-y-auto">
+            <div className="bg-gray-900 text-gray-300 font-mono text-xs p-3 rounded-sm max-h-48 overflow-y-auto">
               {logs.length === 0 ? (
                 <div className="text-gray-500">No logs available</div>
               ) : (

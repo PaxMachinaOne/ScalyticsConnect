@@ -123,10 +123,10 @@ const GroupUserManager = ({ groupId, groupName }) => {
   if (loading) {
     return (
       <div className="p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
           ))}
         </div>
       </div>
@@ -139,7 +139,7 @@ const GroupUserManager = ({ groupId, groupName }) => {
   );
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+    <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6">
         <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">
           Users in Group: {groupName}
@@ -153,7 +153,7 @@ const GroupUserManager = ({ groupId, groupName }) => {
       {error && (
         <div className="mx-4 mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
@@ -168,7 +168,7 @@ const GroupUserManager = ({ groupId, groupName }) => {
       {success && (
         <div className="mx-4 mb-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 dark:border-green-700 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-green-400 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -183,7 +183,7 @@ const GroupUserManager = ({ groupId, groupName }) => {
       {/* Add User Form */}
       <div className="border-t border-gray-200 dark:border-dark-border px-4 py-5 sm:p-6">
         <div className="flex items-end space-x-4">
-          <div className="flex-grow">
+          <div className="grow">
             <label htmlFor="user-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Add User to Group
             </label>
@@ -191,7 +191,7 @@ const GroupUserManager = ({ groupId, groupName }) => {
               id="user-select"
               value={selectedUser}
               onChange={handleUserSelect}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-dark-text-primary focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 sm:text-sm rounded-md"
               disabled={submitting || availableUsers.length === 0}
             >
               <option value="">Select a user</option>
@@ -207,8 +207,8 @@ const GroupUserManager = ({ groupId, groupName }) => {
             onClick={handleAddUser}
             disabled={!selectedUser || submitting}
             className={`
-              inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white 
-              bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800
+              inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white 
+              bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800
               ${(!selectedUser || submitting) ? 'opacity-50 cursor-not-allowed' : ''}
             `}
           >
@@ -242,9 +242,9 @@ const GroupUserManager = ({ groupId, groupName }) => {
           ) : (
             <ul className="divide-y divide-gray-200 dark:divide-dark-border">
               {assignedUsers.map(user => (
-                <li key={user.id} className="py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-dark-secondary px-2 -mx-2 rounded">
+                <li key={user.id} className="py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-dark-secondary px-2 -mx-2 rounded-sm">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                    <div className="shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
                       {user.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="ml-3">

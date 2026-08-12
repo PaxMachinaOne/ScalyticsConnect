@@ -97,7 +97,7 @@ const AirGappedTab = ({ onSettingChange }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow rounded-lg p-6 border border-gray-200 dark:border-dark-border">
+    <div className="bg-white dark:bg-dark-primary shadow-sm rounded-lg p-6 border border-gray-200 dark:border-dark-border">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary mb-4">Air-Gapped Mode</h2>
       
       {/* Display Error/Success Messages */}
@@ -132,7 +132,7 @@ const AirGappedTab = ({ onSettingChange }) => {
         {/* Status Card */}
          <div className={`mt-4 p-4 border rounded-lg ${isAirGapped ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900' : 'bg-gray-50 dark:bg-dark-primary/20 border-gray-200 dark:border-dark-border'}`}>
            <div className="flex items-start">
-             <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${isAirGapped ? 'bg-yellow-100 dark:bg-yellow-800' : 'bg-gray-100 dark:bg-dark-primary'}`}>
+             <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${isAirGapped ? 'bg-yellow-100 dark:bg-yellow-800' : 'bg-gray-100 dark:bg-dark-primary'}`}>
                <svg className={`h-6 w-6 ${isAirGapped ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                </svg>
@@ -151,7 +151,7 @@ const AirGappedTab = ({ onSettingChange }) => {
 
       {/* Information Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-         <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow">
+         <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-sm">
            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">What is Air-Gapped Mode?</h3>
            <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
              <p>Air-Gapped Mode completely isolates the application from the internet by blocking all outbound network requests. Only locally hosted models will function.</p>
@@ -165,7 +165,7 @@ const AirGappedTab = ({ onSettingChange }) => {
              </ul>
            </div>
          </div>
-         <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow">
+         <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-sm">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">How it Works</h3>
              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 <p>Air-Gapped Mode has important relationships with other system settings:</p>

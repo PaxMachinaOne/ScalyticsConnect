@@ -34,14 +34,14 @@ const HardwareInfoBanner = () => {
     return (
       <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-700 p-4 mb-6 animate-pulse">
         <div className="flex items-center">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg className="h-5 w-5 text-blue-400 dark:text-dark-link" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <div className="h-4 bg-blue-200 dark:bg-blue-700 rounded w-64 mb-2"></div>
-            <div className="h-3 bg-blue-200 dark:bg-blue-700 rounded w-96"></div>
+            <div className="h-4 bg-blue-200 dark:bg-blue-700 rounded-sm w-64 mb-2"></div>
+            <div className="h-3 bg-blue-200 dark:bg-blue-700 rounded-sm w-96"></div>
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@ const HardwareInfoBanner = () => {
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-700 p-4 mb-6">
       <div className="flex">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <svg className="h-5 w-5 text-blue-400 dark:text-dark-link" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
@@ -101,7 +101,7 @@ const HardwareInfoBanner = () => {
                 <p>
                   <span className="font-medium">GPU:</span> {gpus.length > 1 ? `${gpus.length}× ` : ''}{gpus.map(gpu => gpu.name).join(', ')} 
                   {totalGpuMemoryMB > 0 && ` (${totalGpuMemoryGB} GB VRAM)`}
-                  {cudaEnabled && <span className="ml-1 px-1 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs rounded">CUDA Enabled</span>}
+                  {cudaEnabled && <span className="ml-1 px-1 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs rounded-sm">CUDA Enabled</span>}
                 </p>
                 <p className="mt-1">
                   <span className="font-medium">Recommended models:</span> Up to {maxModelSize} parameter models with {recommendedQuantization} quantization

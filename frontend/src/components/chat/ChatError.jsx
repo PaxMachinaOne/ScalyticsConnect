@@ -90,9 +90,9 @@ const ChatError = ({ error, onDismiss }) => {
   
   return (
     <div className="flex flex-col h-full items-center justify-center p-4">
-      <div className={`w-full max-w-md ${bgColor} border ${borderColor} p-4 rounded-lg shadow-sm`}>
+      <div className={`w-full max-w-md ${bgColor} border ${borderColor} p-4 rounded-lg shadow-xs`}>
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg className={`h-6 w-6 ${iconColor}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {iconPath}
             </svg>
@@ -107,7 +107,7 @@ const ChatError = ({ error, onDismiss }) => {
               <div className="mt-4">
                 <a 
                   href={actionUrl} 
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {errorType === 'api_key' ? 'Go to Settings' : 'Resolve Issue'}
                 </a>

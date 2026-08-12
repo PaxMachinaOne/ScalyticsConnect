@@ -42,7 +42,7 @@ const ActivateButton = ({
       onClick={handleClick}
       disabled={isDisabled}
       title={isDisabled ? disabledReason : ''} 
-      className={`inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
+      className={`inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-xs text-white focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
         isDisabled ? disabledColor : buttonColor
       } ${isLoading ? 'opacity-75 cursor-wait' : ''}`}
     >

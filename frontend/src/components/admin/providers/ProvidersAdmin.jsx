@@ -315,8 +315,8 @@ const ProvidersAdmin = () => {
   if (initialLoading && providers.length === 0 && apiKeys.length === 0) {
     return (
       <div className="animate-pulse p-6 space-y-4">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
       </div>
     );
   }
@@ -329,7 +329,7 @@ const ProvidersAdmin = () => {
 
       <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-700 p-4">
          <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg className="h-5 w-5 text-blue-400 dark:text-dark-link" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
@@ -379,7 +379,7 @@ const ProvidersAdmin = () => {
 
       <div className="mt-4">
         {activeTab === 'providers' && (
-          <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+          <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6 flex justify-between">
                <div>
                 <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">API Providers</h3>

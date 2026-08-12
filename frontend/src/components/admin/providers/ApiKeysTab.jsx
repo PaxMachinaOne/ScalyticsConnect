@@ -33,9 +33,9 @@ const ApiKeysTab = ({
   if (loading) {
     return (
       <div className="animate-pulse p-6 space-y-4">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/4 mb-4"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
       </div>
     );
   }
@@ -55,7 +55,7 @@ const ApiKeysTab = ({
   }
 
   return (
-    <div className="bg-white dark:bg-dark-primary shadow overflow-hidden sm:rounded-lg">
+    <div className="bg-white dark:bg-dark-primary shadow-sm overflow-hidden sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6 flex justify-between">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text-primary">User API Keys</h3>
@@ -69,7 +69,7 @@ const ApiKeysTab = ({
       {privacyModeEnabled && (
         <div className="mx-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-dark-text-primary">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {/* Added dark variant for icon color */}
               <svg className="h-5 w-5 text-blue-400 dark:text-dark-link" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -156,7 +156,7 @@ const ApiKeysTab = ({
                   {!isScalyticsKey && key.is_active && (
                     <button
                       onClick={() => onDeactivate(key.id)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-offset-gray-800"
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-offset-gray-800"
                       title="Deactivate External Key"
                     >
                       {/* Deactivate Icon */}
@@ -166,7 +166,7 @@ const ApiKeysTab = ({
                    {!isScalyticsKey && !key.is_active && (
                      <button
                        onClick={privacyModeEnabled ? undefined : () => onActivate(key.id)}
-                       className={`inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white ${privacyModeEnabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 focus:ring-green-500'} focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800`}
+                       className={`inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white ${privacyModeEnabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 focus:ring-green-500'} focus:outline-hidden focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800`}
                        title={privacyModeEnabled ? "Cannot activate external API keys while Privacy Mode is enabled" : "Activate External Key"}
                        disabled={privacyModeEnabled}
                      >
@@ -177,7 +177,7 @@ const ApiKeysTab = ({
                    {/* Delete Button (Always available) */}
                    <button
                      onClick={() => onDelete(key.id)} // Use onDelete prop
-                     className="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
+                     className="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
                      title="Delete Key"
                    >
                      {/* Delete Icon */}

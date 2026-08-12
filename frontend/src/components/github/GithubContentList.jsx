@@ -86,7 +86,7 @@ const GithubContentList = ({ chatId, onAddFile }) => {
     localStorage.setItem('githubReturnPath', window.location.pathname);
     
     // Get GitHub client ID from environment variable
-    const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    const clientId = import.meta.env.REACT_APP_GITHUB_CLIENT_ID;
     if (!clientId) {
       alert('GitHub Client ID is not configured. Please add REACT_APP_GITHUB_CLIENT_ID to your environment variables.');
       return;
@@ -255,7 +255,7 @@ const GithubContentList = ({ chatId, onAddFile }) => {
               <button
                 key={repo.id}
                 onClick={() => handleRepoSelect(repo)}
-                className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               >
                 <div className="font-medium">{repo.full_name}</div>
                 {repo.description && (
@@ -271,14 +271,14 @@ const GithubContentList = ({ chatId, onAddFile }) => {
           <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 text-sm flex items-center overflow-x-auto">
             <button
               onClick={() => setSelectedRepo(null)}
-              className="text-blue-600 hover:text-blue-800 flex-shrink-0 mr-2"
+              className="text-blue-600 hover:text-blue-800 shrink-0 mr-2"
               title="Back to repositories"
             >
               <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            <div className="flex items-center flex-shrink-0 overflow-x-auto">
+            <div className="flex items-center shrink-0 overflow-x-auto">
               {breadcrumbs.map((crumb, index) => (
                 <React.Fragment key={crumb.path}>
                   {index > 0 && <span className="mx-1 text-gray-500">/</span>}

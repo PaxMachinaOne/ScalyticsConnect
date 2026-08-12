@@ -448,7 +448,7 @@ const DocumentationPage = () => {
       {/* This div becomes the main content area, which will be split into two columns below */}
       <div className="flex h-full"> {/* Use flex and h-full for the two-column layout */}
         {/* Left Column for DocSidebar (Table of Contents) */}
-        <div className="hidden md:flex md:flex-shrink-0"> {/* Hidden on small screens, flex on medium+ */}
+        <div className="hidden md:flex md:shrink-0"> {/* Hidden on small screens, flex on medium+ */}
           <div className="flex flex-col w-80"> {/* Changed w-64 to w-80 for wider sidebar */}
             <div className="h-0 flex-1 flex flex-col overflow-y-auto py-6 px-4"> {/* Add padding and scrolling */}
               <DocSidebar currentDocId={docId} />
@@ -458,7 +458,7 @@ const DocumentationPage = () => {
 
         {/* Right Column for Markdown Content */}
         <div className="flex flex-col w-0 flex-1 overflow-hidden"> {/* Takes remaining width and handles overflow */}
-          <div className="relative z-0 flex-1 overflow-y-auto focus:outline-none py-6 px-4 sm:px-6 md:px-8">
+          <div className="relative z-0 flex-1 overflow-y-auto focus:outline-hidden py-6 px-4 sm:px-6 md:px-8">
             <div className="bg-white dark:bg-dark-primary rounded-lg shadow-md border border-gray-100 dark:border-dark-border p-6 overflow-hidden">
               {loading ? (
                 <div className="flex justify-center items-center h-64">
@@ -550,7 +550,7 @@ const DocumentationPage = () => {
                                 // Handling for inline code (GitHub style)
                                 if (inline) {
                                   return (
-                                    <code className="px-1 py-0.5 bg-[#f6f8fa] dark:bg-[#161b22] text-[#24292e] dark:text-[#c9d1d9] rounded font-mono text-sm" {...props}>
+                                    <code className="px-1 py-0.5 bg-[#f6f8fa] dark:bg-[#161b22] text-[#24292e] dark:text-[#c9d1d9] rounded-sm font-mono text-sm" {...props}>
                                       {value}
                                     </code>
                                   );
@@ -560,7 +560,7 @@ const DocumentationPage = () => {
                                 // This matches GitHub's behavior where single-line code without language is not boxed
                                 if (!language && !value.includes("\n")) {
                                   return (
-                                    <code className="px-2 py-1 bg-[#f6f8fa] dark:bg-[#161b22] text-[#24292e] dark:text-[#c9d1d9] rounded font-mono text-sm" {...props}>
+                                    <code className="px-2 py-1 bg-[#f6f8fa] dark:bg-[#161b22] text-[#24292e] dark:text-[#c9d1d9] rounded-sm font-mono text-sm" {...props}>
                                       {value}
                                     </code>
                                   );
