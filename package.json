@@ -59,7 +59,6 @@
     "sqlite3": "^6.0.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
-    "tokenizers": "^0.13.3",
     "uuid": "^14.0.1",
     "web-streams-polyfill": "^4.3.0",
     "winston": "^3.19.0",
