@@ -308,30 +308,27 @@ async function streamVllmRequest(modelApiUrl, payload, onToken, streamingContext
     let fullContent = '';
     let usage = null;
 
-    const onParse = (event) => {
-      if (event.type === 'event') {
-        if (event.data === '[DONE]') {
-          // Stream finished
-          return;
-        }
-        try {
-          const json = JSON.parse(event.data);
-          const token = json.choices?.[0]?.delta?.content || '';
-          if (token) {
-            fullContent += token;
-            if (onToken) {
-              onToken(token);
-            }
+    const onEvent = (event) => {
+      if (event.data === '[DONE]') {
+        return;
+      }
+      try {
+        const json = JSON.parse(event.data);
+        const token = json.choices?.[0]?.delta?.content || '';
+        if (token) {
+          fullContent += token;
+          if (onToken) {
+            onToken(token);
           }
-          if (json.usage) {
-            usage = json.usage;
-          }
-        } catch (e) {
         }
+        if (json.usage) {
+          usage = json.usage;
+        }
+      } catch (e) {
       }
     };
 
-    const parser = createParser(onParse);
+    const parser = createParser({ onEvent });
 
     const decoder = new TextDecoder();
     
